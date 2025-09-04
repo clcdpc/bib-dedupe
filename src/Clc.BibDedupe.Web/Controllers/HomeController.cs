@@ -1,7 +1,9 @@
 using Clc.BibDedupe.Web.Models;
 using Clc.Polaris.Api;
 using Microsoft.AspNetCore.Mvc;
+using System;
 using System.Diagnostics;
+using System.Linq;
 
 namespace Clc.BibDedupe.Web.Controllers
 {
@@ -31,6 +33,18 @@ namespace Clc.BibDedupe.Web.Controllers
             ViewBag.RightBibXML = MarcXmlRenderer.TransformFile(bibs.Data.GetBibsByIDRows.Last().BibliographicRecordXML, "marc-to-html.xslt");
 
             return View();
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult Resolve([FromForm] string action)
+        {
+            if (!Enum.TryParse<DupeBibPairActions>(action, out _))
+            {
+                return BadRequest();
+            }
+
+            return Ok();
         }
     }
 }
