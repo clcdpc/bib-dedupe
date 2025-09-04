@@ -1,4 +1,4 @@
-﻿@using Clc.BibDedupe.Web.Models
+@using Clc.BibDedupe.Web.Models
 @{
     Layout = null;
 }
@@ -112,8 +112,8 @@
               setTitle(el, label ? `Ind${pos}: ${val} — ${label}` : `Ind${pos}: ${val}`);
             });
           }
-
-          document.addEventListener('DOMContentLoaded', ()=> initTooltips(document));
+          window.initTooltips = initTooltips;
+          document.addEventListener('DOMContentLoaded', () => initTooltips(document));
         })();
     </script>
 
@@ -323,11 +323,9 @@
                 const map = {};
                 tbody.querySelectorAll('tr').forEach(row => {
                     const tagEl = row.querySelector('.t');
-                    const tag = tagEl ? tagEl.dataset.marcTag : '';
-                    if (!map[tag]) {
-                        map[tag] = [];
-                    }
-                    map[tag].push(row);
+                    const tag = tagEl && tagEl.dataset.marcTag;
+                    if (!tag) return; // skip rows without a tag
+                    (map[tag] ||= []).push(row);
                 });
                 return map;
             }
@@ -369,6 +367,25 @@
                         rightBody.appendChild(rrows[i] || createPlaceholder(tag));
                     }
                 });
+                if (typeof initTooltips === 'function') {
+                    initTooltips(leftDiv);
+                    initTooltips(rightDiv);
+                }
+                syncRowHeights();
+            }
+
+            function syncRowHeights() {
+                const leftRows = leftDiv.querySelectorAll('tbody tr');
+                const rightRows = rightDiv.querySelectorAll('tbody tr');
+                const len = Math.max(leftRows.length, rightRows.length);
+                for (let i = 0; i < len; i++) {
+                    const l = leftRows[i];
+                    const r = rightRows[i];
+                    if (!l || !r) continue;
+                    l.style.height = r.style.height = 'auto';
+                    const h = Math.max(l.offsetHeight, r.offsetHeight);
+                    l.style.height = r.style.height = `${h}px`;
+                }
             }
 
             function bindScrollSync(a, b) {
@@ -383,6 +400,7 @@
             alignTables();
             bindScrollSync(leftDiv, rightDiv);
             bindScrollSync(rightDiv, leftDiv);
+            window.addEventListener('resize', syncRowHeights);
         })();
     </script>
 </body>
