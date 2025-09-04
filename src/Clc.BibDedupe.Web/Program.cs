@@ -14,7 +14,7 @@ namespace Clc.BibDedupe.Web
                 .AddJsonFile($"Config\\settings.{Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")}.json", true, true)
                 .AddEnvironmentVariables();
 
-            IPapiSettings papiConfig = builder.Configuration.GetSection("Papi").Get<PapiSettings>()!;
+            IPapiSettings papiConfig = builder.Configuration.GetSection("Papi").Get<PapiSettings>()! ?? new PapiSettings();
 
             builder.Services
                 .AddSingleton(papiConfig)
