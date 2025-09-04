@@ -10,8 +10,8 @@ namespace Clc.BibDedupe.Web
             var builder = WebApplication.CreateBuilder(args);
 
             builder.Configuration.SetBasePath(Directory.GetCurrentDirectory())
-                .AddJsonFile("Config\\settings.json", false, true)
-                .AddJsonFile($"Config\\settings.{Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")}.json", false, true)
+                .AddJsonFile("Config\\settings.json", true, true)
+                .AddJsonFile($"Config\\settings.{Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")}.json", true, true)
                 .AddEnvironmentVariables();
 
             IPapiSettings papiConfig = builder.Configuration.GetSection("Papi").Get<PapiSettings>()!;
