@@ -1,8 +1,407 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+@using Clc.BibDedupe.Web.Models
+@{
+    Layout = null;
 }
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Two Divs</title>
+    <script>
+        (function(){
+          const TAGS = {
+            "LDR":"Leader","001":"Control Number","005":"Date/Time of Latest Transaction",
+            "008":"Fixed-Length Data Elements","010":"LCCN","020":"ISBN","022":"ISSN",
+            "035":"System Control Number","040":"Cataloging Source","041":"Language Code",
+            "082":"Dewey Number","100":"Main Entry—Personal Name","110":"Main Entry—Corporate Name",
+            "111":"Main Entry—Meeting Name","130":"Uniform Title","240":"Uniform Title",
+            "245":"Title Statement","246":"Varying Form of Title","250":"Edition Statement",
+            "260":"Publication, Distribution, etc.","264":"Production/Publication/Distribution/Manufacture/Copyright",
+            "300":"Physical Description","336":"Content Type","337":"Media Type","338":"Carrier Type",
+            "490":"Series Statement","500":"General Note","504":"Bibliography Note","505":"Formatted Contents Note",
+            "520":"Summary","538":"System Details Note","546":"Language Note",
+            "600":"Subject Added Entry—Personal","610":"Subject Added Entry—Corporate",
+            "611":"Subject Added Entry—Meeting","630":"Subject Added Entry—Uniform Title",
+            "650":"Subject Added Entry—Topical","651":"Subject Added Entry—Geographic","655":"Index Term—Genre/Form",
+            "700":"Added Entry—Personal","710":"Added Entry—Corporate","711":"Added Entry—Meeting",
+            "730":"Added Entry—Uniform Title","740":"Added Entry—Uncontrolled Title",
+            "776":"Additional Physical Form","780":"Preceding Entry","785":"Succeeding Entry",
+            "830":"Series Added Entry—Uniform Title","852":"Location","856":"Electronic Location and Access",
+            "880":"Alternate Graphic Representation","886":"Foreign MARC"
+          };
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
-</div>
+          const SUBF = {
+            "010":{a:"LCCN"},
+            "020":{a:"ISBN",q:"Qualifying information",z:"Canceled/invalid ISBN"},
+            "022":{a:"ISSN",y:"Incorrect ISSN",z:"Canceled ISSN"},
+            "035":{a:"System control number"},
+            "040":{a:"Original cataloging agency",b:"Language of cataloging",e:"Description conventions",c:"Transcribing agency",d:"Modifying agency"},
+            "041":{a:"Language code of text/sound track",b:"Language code of summary/abstract",h:"Original language"},
+            "082":{a:"Classification number",b:"Item number","2":"Edition number"},
+            "100":{a:"Personal name",b:"Numeration",c:"Titles and other words",d:"Dates",q:"Fuller form of name",e:"Relator term"},
+            "110":{a:"Corporate name",b:"Subordinate unit",e:"Relator term"},
+            "111":{a:"Meeting name",c:"Location of meeting",d:"Date of meeting",e:"Subordinate unit"},
+            "245":{a:"Title",b:"Remainder of title",c:"Statement of responsibility",n:"Number of part/section",p:"Name of part/section"},
+            "246":{a:"Varying form of title",b:"Remainder of title",i:"Display text",n:"Number of part/section",p:"Name of part/section"},
+            "250":{a:"Edition statement",b:"Remainder of edition statement"},
+            "260":{a:"Place of publication",b:"Publisher",c:"Date of publication"},
+            "264":{a:"Place",b:"Publisher",c:"Date"},
+            "300":{a:"Extent",b:"Other physical details",c:"Dimensions",e:"Accompanying material"},
+            "336":{a:"Content type term",b:"Content type code","2":"Source"},
+            "337":{a:"Media type term",b:"Media type code","2":"Source"},
+            "338":{a:"Carrier type term",b:"Carrier type code","2":"Source"},
+            "490":{a:"Series statement",v:"Volume/sequential designation",x:"ISSN"},
+            "500":{a:"Note"},
+            "504":{a:"Bibliography, etc. note"},
+            "505":{a:"Formatted contents",t:"Title of a work",r:"Statement of responsibility",g:"Miscellaneous information"},
+            "520":{a:"Summary, etc."},
+            "538":{a:"System details"},
+            "546":{a:"Language note"},
+            "600":{a:"Personal name",d:"Dates",q:"Fuller form",x:"Topical subdivision",y:"Chronological subdivision",z:"Geographic subdivision","2":"Source"},
+            "610":{a:"Corporate name",b:"Subordinate unit",x:"Topical subdivision",y:"Chronological subdivision",z:"Geographic subdivision","2":"Source"},
+            "611":{a:"Meeting name",c:"Location",d:"Date",x:"Topical subdivision",y:"Chronological subdivision",z:"Geographic subdivision","2":"Source"},
+            "630":{a:"Uniform title",x:"Topical subdivision",y:"Chronological subdivision",z:"Geographic subdivision","2":"Source"},
+            "650":{a:"Topical term",v:"Form subdivision",x:"Topical subdivision",y:"Chronological subdivision",z:"Geographic subdivision","2":"Source"},
+            "651":{a:"Geographic name",v:"Form subdivision",x:"Topical subdivision",y:"Chronological subdivision",z:"Geographic subdivision","2":"Source"},
+            "655":{a:"Genre/form term","2":"Source of term"},
+            "700":{a:"Personal name",b:"Numeration",c:"Titles",d:"Dates",e:"Relator term",q:"Fuller form",t:"Title of work"},
+            "710":{a:"Corporate name",b:"Subordinate unit",e:"Relator term",t:"Title of work"},
+            "711":{a:"Meeting name",c:"Location",d:"Date",e:"Subordinate unit",t:"Title of work"},
+            "730":{a:"Uniform title"},
+            "740":{a:"Uncontrolled related/analytical title"},
+            "776":{i:"Display text",t:"Title",w:"Record control number",z:"ISBN"},
+            "780":{t:"Title",w:"Record control number"},
+            "785":{t:"Title",w:"Record control number"},
+            "830":{a:"Series added entry—uniform title",v:"Volume/sequential designation"},
+            "852":{a:"Location",b:"Sublocation",h:"Classification",i:"Item number"},
+            "856":{u:"URL",y:"Link text",z:"Public note","3":"Materials specified"}
+          };
+          const INDS = {
+            "245":{ "1": {"0":"No added entry","1":"Added entry"," ":"No information"},
+                    "2": {"0":"0 nonfiling","1":"1 nonfiling","2":"2","3":"3","4":"4","5":"5","6":"6","7":"7","8":"8","9":"9"," ":"No information"} },
+            "100":{ "1": {"0":"Forename","1":"Surname","3":"Family name"," ":"Not applicable"} },
+            "700":{ "1": {"0":"Forename","1":"Surname","3":"Family name"," ":"Not applicable"} },
+            "264":{ "2": {"0":"Production","1":"Publication","2":"Distribution","3":"Manufacture","4":"Copyright notice date"," ":"No information"} },
+            "650":{ "2": {"0":"LCSH","1":"LC children’s","2":"MeSH","3":"NAL","4":"Source not specified","5":"Canadian Subject Headings","6":"RVM","7":"Source in $2"," ":"No information"} },
+            "856":{ "1": {"0":"Email","1":"FTP","2":"Remote login (Telnet)","3":"Dial-up","4":"HTTP","7":"Method in $2"," ":"No information"},
+                    "2": {"0":"Resource","1":"Version of resource","2":"Related resource","8":"No display constant"," ":"No information"} },
+            "041":{ "1": {"0":"Item not a translation","1":"Item is or includes translation"," ":"No information"},
+                    "2": {" ":"MARC code","7":"Source in $2"} },
+            "082":{ "1": {"0":"Full edition","1":"Abridged"},
+                    "2": {"0":"LC assigned","4":"Assigned by other agency"} }
+          };
+
+          function setTitle(el, text){ if(!el.getAttribute('title')) el.setAttribute('title', text); }
+
+          function initTooltips(root){
+            root.querySelectorAll('.t[data-marc-tag]').forEach(el=>{
+              const tag = el.dataset.marcTag;
+              setTitle(el, TAGS[tag] ? `${tag} — ${TAGS[tag]}` : tag);
+            });
+            root.querySelectorAll('.sf[data-marc-tag][data-marc-code]').forEach(el=>{
+              const tag = el.dataset.marcTag, code = el.dataset.marcCode;
+              const desc = (SUBF[tag] && SUBF[tag][code]) || "";
+              setTitle(el, desc ? `${tag} $${code} — ${desc}` : `${tag} $${code}`);
+            });
+            root.querySelectorAll('.i[data-marc-tag][data-ind-pos]').forEach(el=>{
+              const tag = el.dataset.marcTag, pos = el.dataset.indPos, raw = el.dataset.indVal || " ";
+              const val = raw === " " ? "(blank)" : raw;
+              const map = (INDS[tag] && INDS[tag][pos]) || null;
+              const label = map ? (map[raw] || map[" "] || "") : "";
+              setTitle(el, label ? `Ind${pos}: ${val} — ${label}` : `Ind${pos}: ${val}`);
+            });
+          }
+          window.initTooltips = initTooltips;
+          document.addEventListener('DOMContentLoaded', () => initTooltips(document));
+        })();
+    </script>
+
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        .page {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .frames {
+            flex: 1 1 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            padding: 0;
+            min-height: 0;
+        }
+
+            .frames .frame {
+                width: 100%;
+                height: 100%;
+                background: #fafafa;
+                overflow: auto;
+                box-sizing: border-box;
+            }
+
+        .controls {
+            display: flex;
+            gap: 12px;
+        }
+
+            .controls button {
+                flex: 1 1 0;
+                padding: 12px 16px;
+                border: 1px solid #ddd;
+                background: #f7f7f7;
+                cursor: pointer;
+                font: inherit;
+            }
+
+                .controls button:active {
+                    transform: translateY(1px);
+                }
+
+        :root {
+            --tag: #6b7280; /* tag */
+            --ind: #9ca3af; /* indicators */
+            --code: #2563eb; /* $a,$b,... */
+            --val: #111827; /* values */
+            --grid: #e5e7eb; /* borders */
+            --bg: #ffffff; /* table bg */
+        }
+
+        @@media (prefers-color-scheme: dark) {
+            :root {
+                --tag: #a1a1aa;
+                --ind: #71717a;
+                --code: #60a5fa;
+                --val: #e5e7eb;
+                --grid: #27272a;
+                --bg: #0b0b0c;
+            }
+        }
+
+        .marc-table {
+            border-collapse: collapse;
+            table-layout: fixed;
+            width: 100%;
+            background: var(--bg);
+            font-family: ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+            font-size: 13px;
+            --fz: 13px; /* used to restore font in children after zero-font trick */
+        }
+
+            .marc-table th, .marc-table td {
+                border: 1px solid var(--grid);
+                padding: 2px 4px;
+                vertical-align: top;
+                line-height: 1.2;
+            }
+
+            .marc-table th {
+                font-weight: 600
+            }
+
+            /* fixed widths via <colgroup> classes from XSLT */
+            .marc-table .col-tag {
+                width: 4.5ch;
+            }
+
+            .marc-table .col-ind {
+                width: 2.5ch;
+            }
+
+            .marc-table .col-data {
+                width: auto;
+            }
+
+            .marc-table .tag {
+                text-align: right;
+                white-space: nowrap;
+                color: var(--tag);
+            }
+
+            .marc-table .ind {
+                text-align: center;
+                white-space: nowrap;
+                color: var(--ind);
+            }
+
+            .marc-table .data {
+                padding-right: 6px;
+            }
+
+                /* remove all inter-span whitespace and allow wrapping ONLY in data */
+                .marc-table .data .wrap {
+                    font-size: 0; /* kill gaps between inline elements */
+                    white-space: normal; /* allow wrap */
+                    overflow-wrap: anywhere; /* break long tokens if needed */
+                    word-break: normal; /* avoid mid-word unless necessary */
+                    min-width: 0;
+                }
+
+                /* restore font and colors for inline parts */
+                .marc-table .data .sf,
+                .marc-table .data .code,
+                .marc-table .data .val {
+                    font-size: var(--fz);
+                    line-height: 1.2;
+                    display: inline;
+                    margin: 0;
+                    padding: 0;
+                    letter-spacing: normal;
+                }
+
+            .marc-table .code {
+                color: var(--code);
+                font-weight: 700;
+            }
+
+            .marc-table .val {
+                color: var(--val);
+            }
+                /* no padding-left so $aValue$tValue has no spaces */
+
+                /* URLs can still break if needed */
+                .marc-table .val a {
+                    word-break: break-all;
+                }
+
+    </style>
+</head>
+    <body>
+        <form id="token-form" method="post" asp-antiforgery="true" style="display:none"></form>
+        <div class="page">
+            <div class="frames">
+            <div class="frame" id="leftDiv">
+                @Html.Raw(ViewBag.LeftBibXML)
+            </div>
+            <div class="frame" id="rightDiv">
+                @Html.Raw(ViewBag.RightBibXML)
+            </div>
+        </div>
+
+        <div class="controls">
+            <button data-action="@nameof(DupeBibPairActions.KeepLeft)" id="btnOne" type="button">Keep Left</button>
+            <button data-action="@nameof(DupeBibPairActions.NotDupe)" id="btnTwo" type="button">Not Dupe</button>
+            <button data-action="@nameof(DupeBibPairActions.Skip)" id="btnThree" type="button">Skip</button>
+            <button data-action="@nameof(DupeBibPairActions.KeepRight)" id="btnFour" type="button">Keep Right</button>
+        </div>
+    </div>
+
+    <script>
+        (function () {
+            const token = document.querySelector('#token-form input[name="__RequestVerificationToken"]').value;
+            const url = '@Url.Action("Resolve")';
+            document.querySelectorAll('.controls button').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    const body = new URLSearchParams({ action: btn.dataset.action });
+                    try {
+                        await fetch(url, {
+                            method: 'POST',
+                            headers: {
+                                'RequestVerificationToken': token,
+                                'X-Requested-With': 'XMLHttpRequest',
+                                'Content-Type': 'application/x-www-form-urlencoded'
+                            },
+                            body: body.toString()
+                        });
+                    } catch (err) {
+                        console.error(err);
+                    }
+                });
+            });
+
+            const leftDiv = document.getElementById('leftDiv');
+            const rightDiv = document.getElementById('rightDiv');
+
+            function collectMap(tbody) {
+                const map = {};
+                tbody.querySelectorAll('tr').forEach(row => {
+                    const tagEl = row.querySelector('.t');
+                    const tag = tagEl && tagEl.dataset.marcTag;
+                    if (!tag) return; // skip rows without a tag
+                    (map[tag] ||= []).push(row);
+                });
+                return map;
+            }
+
+            function createPlaceholder(tag) {
+                const tr = document.createElement('tr');
+                tr.innerHTML =
+                    `<td class="tag"><span class="t" data-marc-tag="${tag}">${tag}</span></td>` +
+                    `<td class="ind"><span class="i" data-marc-tag="${tag}" data-ind-pos="1" data-ind-val=" ">&nbsp;</span></td>` +
+                    `<td class="ind"><span class="i" data-marc-tag="${tag}" data-ind-pos="2" data-ind-val=" ">&nbsp;</span></td>` +
+                    `<td class="data"><div class="wrap"></div></td>`;
+                return tr;
+            }
+
+            function alignTables() {
+                const leftBody = leftDiv.querySelector('tbody');
+                const rightBody = rightDiv.querySelector('tbody');
+                if (!leftBody || !rightBody) return;
+
+                const leftMap = collectMap(leftBody);
+                const rightMap = collectMap(rightBody);
+
+                const tags = Array.from(new Set([...Object.keys(leftMap), ...Object.keys(rightMap)]))
+                    .sort((a, b) => {
+                        if (a === 'LDR') return b === 'LDR' ? 0 : -1;
+                        if (b === 'LDR') return 1;
+                        return parseInt(a, 10) - parseInt(b, 10);
+                    });
+
+                leftBody.innerHTML = '';
+                rightBody.innerHTML = '';
+
+                tags.forEach(tag => {
+                    const lrows = leftMap[tag] || [];
+                    const rrows = rightMap[tag] || [];
+                    const max = Math.max(lrows.length, rrows.length);
+                    for (let i = 0; i < max; i++) {
+                        leftBody.appendChild(lrows[i] || createPlaceholder(tag));
+                        rightBody.appendChild(rrows[i] || createPlaceholder(tag));
+                    }
+                });
+                if (typeof initTooltips === 'function') {
+                    initTooltips(leftDiv);
+                    initTooltips(rightDiv);
+                }
+                syncRowHeights();
+            }
+
+            function syncRowHeights() {
+                const leftRows = leftDiv.querySelectorAll('tbody tr');
+                const rightRows = rightDiv.querySelectorAll('tbody tr');
+                const len = Math.max(leftRows.length, rightRows.length);
+                for (let i = 0; i < len; i++) {
+                    const l = leftRows[i];
+                    const r = rightRows[i];
+                    if (!l || !r) continue;
+                    l.style.height = r.style.height = 'auto';
+                    const h = Math.max(l.offsetHeight, r.offsetHeight);
+                    l.style.height = r.style.height = `${h}px`;
+                }
+            }
+
+            function bindScrollSync(a, b) {
+                a.addEventListener('scroll', () => {
+                    if (a.__syncing) { a.__syncing = false; return; }
+                    b.__syncing = true;
+                    b.scrollTop = a.scrollTop;
+                    b.scrollLeft = a.scrollLeft;
+                });
+            }
+
+            alignTables();
+            bindScrollSync(leftDiv, rightDiv);
+            bindScrollSync(rightDiv, leftDiv);
+            window.addEventListener('resize', syncRowHeights);
+        })();
+    </script>
+</body>
+</html>

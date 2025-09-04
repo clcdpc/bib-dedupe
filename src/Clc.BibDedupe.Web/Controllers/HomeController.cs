@@ -11,6 +11,11 @@ namespace Clc.BibDedupe.Web.Controllers
     {
         public IActionResult Index()
         {
+            var bibs = papi.Synch_BibsByIdGet([3628715, 4001657], true);
+
+            ViewBag.LeftBibXML = MarcXmlRenderer.TransformFile(bibs.Data.GetBibsByIDRows.First().BibliographicRecordXML, "marc-to-html.xslt");
+            ViewBag.RightBibXML = MarcXmlRenderer.TransformFile(bibs.Data.GetBibsByIDRows.Last().BibliographicRecordXML, "marc-to-html.xslt");
+
             return View();
         }
 
@@ -23,16 +28,6 @@ namespace Clc.BibDedupe.Web.Controllers
         public IActionResult Error()
         {
             return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
-        }
-
-        public IActionResult mftest()
-        {
-            var bibs = papi.Synch_BibsByIdGet([3628715, 4001657], true);
-
-            ViewBag.LeftBibXML = MarcXmlRenderer.TransformFile(bibs.Data.GetBibsByIDRows.First().BibliographicRecordXML, "marc-to-html.xslt");
-            ViewBag.RightBibXML = MarcXmlRenderer.TransformFile(bibs.Data.GetBibsByIDRows.Last().BibliographicRecordXML, "marc-to-html.xslt");
-
-            return View();
         }
 
         [HttpPost]
