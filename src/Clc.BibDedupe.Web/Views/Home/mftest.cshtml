@@ -315,6 +315,74 @@
                     }
                 });
             });
+
+            const leftDiv = document.getElementById('leftDiv');
+            const rightDiv = document.getElementById('rightDiv');
+
+            function collectMap(tbody) {
+                const map = {};
+                tbody.querySelectorAll('tr').forEach(row => {
+                    const tagEl = row.querySelector('.t');
+                    const tag = tagEl ? tagEl.dataset.marcTag : '';
+                    if (!map[tag]) {
+                        map[tag] = [];
+                    }
+                    map[tag].push(row);
+                });
+                return map;
+            }
+
+            function createPlaceholder(tag) {
+                const tr = document.createElement('tr');
+                tr.innerHTML =
+                    `<td class="tag"><span class="t" data-marc-tag="${tag}">${tag}</span></td>` +
+                    `<td class="ind"><span class="i" data-marc-tag="${tag}" data-ind-pos="1" data-ind-val=" ">&nbsp;</span></td>` +
+                    `<td class="ind"><span class="i" data-marc-tag="${tag}" data-ind-pos="2" data-ind-val=" ">&nbsp;</span></td>` +
+                    `<td class="data"><div class="wrap"></div></td>`;
+                return tr;
+            }
+
+            function alignTables() {
+                const leftBody = leftDiv.querySelector('tbody');
+                const rightBody = rightDiv.querySelector('tbody');
+                if (!leftBody || !rightBody) return;
+
+                const leftMap = collectMap(leftBody);
+                const rightMap = collectMap(rightBody);
+
+                const tags = Array.from(new Set([...Object.keys(leftMap), ...Object.keys(rightMap)]))
+                    .sort((a, b) => {
+                        if (a === 'LDR') return b === 'LDR' ? 0 : -1;
+                        if (b === 'LDR') return 1;
+                        return parseInt(a, 10) - parseInt(b, 10);
+                    });
+
+                leftBody.innerHTML = '';
+                rightBody.innerHTML = '';
+
+                tags.forEach(tag => {
+                    const lrows = leftMap[tag] || [];
+                    const rrows = rightMap[tag] || [];
+                    const max = Math.max(lrows.length, rrows.length);
+                    for (let i = 0; i < max; i++) {
+                        leftBody.appendChild(lrows[i] || createPlaceholder(tag));
+                        rightBody.appendChild(rrows[i] || createPlaceholder(tag));
+                    }
+                });
+            }
+
+            function bindScrollSync(a, b) {
+                a.addEventListener('scroll', () => {
+                    if (a.__syncing) { a.__syncing = false; return; }
+                    b.__syncing = true;
+                    b.scrollTop = a.scrollTop;
+                    b.scrollLeft = a.scrollLeft;
+                });
+            }
+
+            alignTables();
+            bindScrollSync(leftDiv, rightDiv);
+            bindScrollSync(rightDiv, leftDiv);
         })();
     </script>
 </body>
