@@ -1,4 +1,5 @@
-﻿@{
+﻿@using Clc.BibDedupe.Web.Models
+@{
     Layout = null;
 }
 <!DOCTYPE html>
@@ -271,9 +272,10 @@
 
     </style>
 </head>
-<body>
-    <div class="page">
-        <div class="frames">
+    <body>
+        <form id="token-form" method="post" asp-antiforgery="true" style="display:none"></form>
+        <div class="page">
+            <div class="frames">
             <div class="frame" id="leftDiv">
                 @Html.Raw(ViewBag.LeftBibXML)
             </div>
@@ -283,15 +285,36 @@
         </div>
 
         <div class="controls">
-            <button id="btnOne" type="button">Action 1</button>
-            <button id="btnTwo" type="button">Action 2</button>
-            <button id="btnThree" type="button">Action 3</button>
-            <button id="btnFour" type="button">Action 4</button>
+            <button data-action="@nameof(DupeBibPairActions.KeepLeft)" id="btnOne" type="button">Keep Left</button>
+            <button data-action="@nameof(DupeBibPairActions.NotDupe)" id="btnTwo" type="button">Not Dupe</button>
+            <button data-action="@nameof(DupeBibPairActions.Skip)" id="btnThree" type="button">Skip</button>
+            <button data-action="@nameof(DupeBibPairActions.KeepRight)" id="btnFour" type="button">Keep Right</button>
         </div>
     </div>
 
     <script>
-
+        (function () {
+            const token = document.querySelector('#token-form input[name="__RequestVerificationToken"]').value;
+            const url = '@Url.Action("Resolve")';
+            document.querySelectorAll('.controls button').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    const body = new URLSearchParams({ action: btn.dataset.action });
+                    try {
+                        await fetch(url, {
+                            method: 'POST',
+                            headers: {
+                                'RequestVerificationToken': token,
+                                'X-Requested-With': 'XMLHttpRequest',
+                                'Content-Type': 'application/x-www-form-urlencoded'
+                            },
+                            body: body.toString()
+                        });
+                    } catch (err) {
+                        console.error(err);
+                    }
+                });
+            });
+        })();
     </script>
 </body>
 </html>
