@@ -182,7 +182,7 @@
 
         :root {
             --tag: #7c3aed; /* tag */
-            --ind: #9ca3af; /* indicators */
+            --ind: #d97706; /* indicators */
             --code: #0d9488; /* $a,$b,... */
             --val: #111827; /* values */
             --grid: #e5e7eb; /* borders */
@@ -193,7 +193,7 @@
         @@media (prefers-color-scheme: dark) {
             :root {
                 --tag: #d8b4fe;
-                --ind: #9ca3af;
+                --ind: #fbbf24;
                 --code: #5eead4;
                 --val: #f3f4f6;
                 --grid: #323639;
@@ -226,15 +226,11 @@
             --fz: 13px; /* used to restore font in children after zero-font trick */
         }
 
-            .marc-table th, .marc-table td {
+            .marc-table td {
                 border: 1px solid var(--grid);
                 padding: 2px 4px;
                 vertical-align: top;
                 line-height: 1.2;
-            }
-
-            .marc-table th {
-                font-weight: 600
             }
 
             /* fixed widths via <colgroup> classes from XSLT */
