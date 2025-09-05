@@ -1,14 +1,8 @@
 @using Clc.BibDedupe.Web.Models
 @{
-    Layout = null;
+    Layout = "_IndexLayout";
 }
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Two Divs</title>
-    <script>
+<script>
         (function(){
           const TAGS = {
             "LDR":"Leader","001":"Control Number","005":"Date/Time of Latest Transaction",
@@ -142,7 +136,7 @@
             .frames .frame {
                 width: 100%;
                 height: 100%;
-                background: #fafafa;
+                background: var(--bg);
                 overflow: auto;
                 box-sizing: border-box;
             }
@@ -285,10 +279,8 @@
                 }
 
     </style>
-</head>
-    <body>
-        <form id="token-form" method="post" asp-antiforgery="true" style="display:none"></form>
-        <div class="page">
+<form id="token-form" method="post" asp-antiforgery="true" style="display:none"></form>
+<div class="page">
             <div class="frames">
             <div class="frame" id="leftDiv">
                 @Html.Raw(ViewBag.LeftBibXML)
@@ -416,5 +408,3 @@
             window.addEventListener('resize', syncRowHeights);
         })();
     </script>
-</body>
-</html>
