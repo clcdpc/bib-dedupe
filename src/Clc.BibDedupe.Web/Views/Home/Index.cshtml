@@ -192,13 +192,27 @@
 
         @@media (prefers-color-scheme: dark) {
             :root {
-                --tag: #a1a1aa;
-                --ind: #71717a;
-                --code: #60a5fa;
-                --val: #e5e7eb;
-                --grid: #27272a;
-                --bg: #212529;
-                --frame-border: #9ca3af;
+                --tag: #cbd5e1;
+                --ind: #9ca3af;
+                --code: #93c5fd;
+                --val: #f3f4f6;
+                --grid: #323639;
+                --bg: #1b1e22;
+                --frame-border: #4b5563;
+            }
+
+            .controls button {
+                border-color: #60a5fa;
+                background: #1e3a8a;
+                color: #f3f4f6;
+            }
+
+            .controls button:hover {
+                background: #1d4ed8;
+            }
+
+            .controls button:active {
+                background: #1e40af;
             }
         }
 
