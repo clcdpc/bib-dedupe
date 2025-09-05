@@ -1,7 +1,15 @@
 @using Clc.BibDedupe.Web.Models
 @{
-    Layout = "_IndexLayout";
+    Layout = null;
 }
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body>
 <script>
         (function(){
           const TAGS = {
@@ -110,7 +118,6 @@
           document.addEventListener('DOMContentLoaded', () => initTooltips(document));
         })();
     </script>
-
     <style>
         html, body {
             height: 100%;
@@ -188,7 +195,7 @@
                 --code: #60a5fa;
                 --val: #e5e7eb;
                 --grid: #27272a;
-                --bg: #0b0b0c;
+                --bg: #212529;
             }
         }
 
@@ -408,3 +415,5 @@
             window.addEventListener('resize', syncRowHeights);
         })();
     </script>
+</body>
+</html>
