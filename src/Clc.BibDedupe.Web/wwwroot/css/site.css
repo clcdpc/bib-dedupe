@@ -21,4 +21,39 @@ body {
   margin-bottom: 60px;
 }
 
+.navbar {
+  background-color: #fff;
+}
 
+@media (prefers-color-scheme: dark) {
+  body {
+    background-color: #1b1e22;
+    color: #f8f9fa;
+  }
+
+  .navbar {
+    background-color: #272b30;
+  }
+
+  .navbar .nav-link,
+  .navbar-brand {
+    color: #f8f9fa;
+  }
+
+  .navbar .nav-link:hover,
+  .navbar .nav-link:focus {
+    color: #ffffff;
+  }
+
+  .navbar-toggler {
+    border-color: rgba(255, 255, 255, 0.25);
+  }
+
+  .navbar-toggler-icon {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba(255,255,255,0.8)' stroke-width='2' stroke-linecap='round' stroke-miterlimit='10' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+  }
+
+  .text-muted {
+    color: #adb5bd !important;
+  }
+}
