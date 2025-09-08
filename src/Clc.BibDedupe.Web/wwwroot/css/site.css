@@ -8,41 +8,31 @@ html {
   }
 }
 
-.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
-  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
-}
-
-html {
-  position: relative;
-  min-height: 100%;
-}
-
-body {
-  margin-bottom: 60px;
-}
-
-.navbar {
-  background-color: #fff;
+:root {
+  --color-bg: #ffffff;
+  --color-text: #212529;
+  --color-link: #0a58ca;
+  --color-link-hover: #084298;
+  --color-nav-bg: #f8f9fa;
+  --color-nav-link: #212529;
+  --color-nav-link-hover: #000000;
+  --color-border: #e5e5e5;
+  --color-primary-bg: #0d6efd;
+  --color-primary-border: #0a58ca;
 }
 
 @media (prefers-color-scheme: dark) {
-  body {
-    background-color: #1b1e22;
-    color: #f8f9fa;
-  }
-
-  .navbar {
-    background-color: #272b30;
-  }
-
-  .navbar .nav-link,
-  .navbar-brand {
-    color: #f8f9fa;
-  }
-
-  .navbar .nav-link:hover,
-  .navbar .nav-link:focus {
-    color: #ffffff;
+  :root {
+    --color-bg: #121212;
+    --color-text: #e0e0e0;
+    --color-link: #79b8ff;
+    --color-link-hover: #a0cfff;
+    --color-nav-bg: #1f2933;
+    --color-nav-link: #e0e0e0;
+    --color-nav-link-hover: #ffffff;
+    --color-border: #3a3f44;
+    --color-primary-bg: #1f6feb;
+    --color-primary-border: #1f6feb;
   }
 
   .navbar-toggler {
@@ -56,4 +46,46 @@ body {
   .text-muted {
     color: #adb5bd !important;
   }
+}
+
+.btn:focus,
+.btn:active:focus,
+.btn-link.nav-link:focus,
+.form-control:focus,
+.form-check-input:focus {
+  box-shadow: 0 0 0 0.1rem var(--color-bg), 0 0 0 0.25rem var(--color-link);
+}
+
+html {
+  position: relative;
+  min-height: 100%;
+}
+
+body {
+  margin-bottom: 60px;
+  background-color: var(--color-bg);
+  color: var(--color-text);
+}
+
+.navbar {
+  background-color: var(--color-nav-bg);
+}
+
+.navbar .nav-link,
+.navbar-brand {
+  color: var(--color-nav-link);
+}
+
+.navbar .nav-link:hover,
+.navbar .nav-link:focus {
+  color: var(--color-nav-link-hover);
+}
+
+a {
+  color: var(--color-link);
+}
+
+a:hover,
+a:focus {
+  color: var(--color-link-hover);
 }
