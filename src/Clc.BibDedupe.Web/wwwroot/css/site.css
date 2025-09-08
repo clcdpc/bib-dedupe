@@ -9,7 +9,7 @@ html {
 }
 
 .btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
-  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #0d6efd;
 }
 
 html {
@@ -22,22 +22,32 @@ body {
 }
 
 .navbar {
-  background-color: #fff;
+  background-color: #0d6efd;
+}
+
+.navbar .nav-link,
+.navbar-brand {
+  color: #ffffff;
+}
+
+.navbar .nav-link:hover,
+.navbar .nav-link:focus {
+  color: #e2e6ea;
 }
 
 @media (prefers-color-scheme: dark) {
   body {
-    background-color: #1b1e22;
-    color: #f8f9fa;
+    background-color: #0d1117;
+    color: #e6e6e6;
   }
 
   .navbar {
-    background-color: #272b30;
+    background-color: #161b22;
   }
 
   .navbar .nav-link,
   .navbar-brand {
-    color: #f8f9fa;
+    color: #e6e6e6;
   }
 
   .navbar .nav-link:hover,
@@ -46,7 +56,7 @@ body {
   }
 
   .navbar-toggler {
-    border-color: rgba(255, 255, 255, 0.25);
+    border-color: rgba(255, 255, 255, 0.35);
   }
 
   .navbar-toggler-icon {
@@ -54,6 +64,6 @@ body {
   }
 
   .text-muted {
-    color: #adb5bd !important;
+    color: #9aa0a6 !important;
   }
 }
