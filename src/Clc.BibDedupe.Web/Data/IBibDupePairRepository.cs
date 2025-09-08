@@ -7,8 +7,7 @@ namespace Clc.BibDedupe.Web.Data
     public interface IBibDupePairRepository
     {
         Task<IEnumerable<BibDupePair>> GetAsync();
-        Task KeepLeftAsync(int leftBibId, int rightBibId, string userEmail);
-        Task KeepRightAsync(int leftBibId, int rightBibId, string userEmail);
+        Task MergeAsync(int keepBibId, int deleteBibId, string userEmail);
         Task KeepBothAsync(int leftBibId, int rightBibId, string userEmail);
         Task SkipAsync(int leftBibId, int rightBibId, string userEmail);
     }

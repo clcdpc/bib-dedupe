@@ -21,16 +21,10 @@ namespace Clc.BibDedupe.Web.Data
             return await _db.QueryAsync<BibDupePair>(sql);
         }
 
-        public Task KeepLeftAsync(int leftBibId, int rightBibId, string userEmail) =>
+        public Task MergeAsync(int keepBibId, int deleteBibId, string userEmail) =>
             _db.ExecuteAsync(
-                "BibDupePairs_KeepLeft",
-                new { LeftBibId = leftBibId, RightBibId = rightBibId, UserEmail = userEmail },
-                commandType: CommandType.StoredProcedure);
-
-        public Task KeepRightAsync(int leftBibId, int rightBibId, string userEmail) =>
-            _db.ExecuteAsync(
-                "BibDupePairs_KeepRight",
-                new { LeftBibId = leftBibId, RightBibId = rightBibId, UserEmail = userEmail },
+                "MergeBibPair",
+                new { KeepBibId = keepBibId, DeleteBibId = deleteBibId, UserEmail = userEmail },
                 commandType: CommandType.StoredProcedure);
 
         public Task KeepBothAsync(int leftBibId, int rightBibId, string userEmail) =>
