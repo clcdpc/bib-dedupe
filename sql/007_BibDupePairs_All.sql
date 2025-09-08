@@ -10,6 +10,17 @@ CREATE TABLE dbo.BibDupePairs (
 );
 GO
 
+IF OBJECT_ID('dbo.BibDupePairDecisions','U') IS NOT NULL
+    DROP TABLE dbo.BibDupePairDecisions;
+GO
+CREATE TABLE dbo.BibDupePairDecisions (
+    DecisionTimestamp DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
+    UserEmail NVARCHAR(256) NOT NULL,
+    KeptBibId INT NOT NULL,
+    DeletedBibId INT NULL
+);
+GO
+
 IF OBJECT_ID('dbo.vwBibDupePairs','V') IS NOT NULL
     DROP VIEW dbo.vwBibDupePairs;
 GO
@@ -28,10 +39,9 @@ CREATE PROCEDURE dbo.MergeBibPair
 AS
 BEGIN
     SET NOCOUNT ON;
-    -- TODO: implement logic to merge records and remove deleted record
-    DELETE FROM dbo.BibDupePairs
-    WHERE (LeftBibId = @KeepBibId AND RightBibId = @DeleteBibId)
-       OR (LeftBibId = @DeleteBibId AND RightBibId = @KeepBibId);
+    -- TODO: implement logic to merge records
+    INSERT INTO dbo.BibDupePairDecisions (DecisionTimestamp, UserEmail, KeptBibId, DeletedBibId)
+    VALUES (SYSDATETIME(), @UserEmail, @KeepBibId, @DeleteBibId);
 END
 GO
 
@@ -46,7 +56,8 @@ AS
 BEGIN
     SET NOCOUNT ON;
     -- TODO: implement logic to keep both records as separate
-    DELETE FROM dbo.BibDupePairs WHERE LeftBibId = @LeftBibId AND RightBibId = @RightBibId;
+    INSERT INTO dbo.BibDupePairDecisions (DecisionTimestamp, UserEmail, KeptBibId, DeletedBibId)
+    VALUES (SYSDATETIME(), @UserEmail, @LeftBibId, @RightBibId);
 END
 GO
 
@@ -61,6 +72,7 @@ AS
 BEGIN
     SET NOCOUNT ON;
     -- TODO: implement logic to skip processing this pair
-    DELETE FROM dbo.BibDupePairs WHERE LeftBibId = @LeftBibId AND RightBibId = @RightBibId;
+    INSERT INTO dbo.BibDupePairDecisions (DecisionTimestamp, UserEmail, KeptBibId, DeletedBibId)
+    VALUES (SYSDATETIME(), @UserEmail, @LeftBibId, @RightBibId);
 END
 GO

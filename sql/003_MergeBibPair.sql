@@ -9,9 +9,8 @@ CREATE PROCEDURE dbo.MergeBibPair
 AS
 BEGIN
     SET NOCOUNT ON;
-    -- TODO: implement logic to merge records and remove deleted record
-    DELETE FROM dbo.BibDupePairs
-    WHERE (LeftBibId = @KeepBibId AND RightBibId = @DeleteBibId)
-       OR (LeftBibId = @DeleteBibId AND RightBibId = @KeepBibId);
+    -- TODO: implement logic to merge records
+    INSERT INTO dbo.BibDupePairDecisions (DecisionTimestamp, UserEmail, KeptBibId, DeletedBibId)
+    VALUES (SYSDATETIME(), @UserEmail, @KeepBibId, @DeleteBibId);
 END
 GO
