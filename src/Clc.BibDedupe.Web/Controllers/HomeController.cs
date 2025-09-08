@@ -1,35 +1,29 @@
 using Clc.BibDedupe.Web.Data;
 using Clc.BibDedupe.Web.Models;
-using Clc.Polaris.Api;
+using Clc.BibDedupe.Web.Services;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Diagnostics;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace Clc.BibDedupe.Web.Controllers
 {
-    public class HomeController(ILogger<HomeController> logger, IPapiClient papi, IBibDupePairRepository repository) : Controller
+    public class HomeController(ILogger<HomeController> logger, IRecordXmlLoader loader, IBibDupePairRepository repository) : Controller
     {
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
-            //var bibs = papi.Synch_BibsByIdGet([3628715, 4001657], true);
+            const int leftBibId = 3628715;
+            const int rightBibId = 4001657;
 
-            var leftBibXml = "<marc:collection xsi:schemaLocation=\"http://www.loc.gov/MARC21/slim http://www.loc.gov/standards/marcxml/schema/MARC21slim.xsd\"";
-            var rightBibXml = "<marc:collection xsi:schemaLocation=\"http://www.loc.gov/MARC21/slim http://www.loc.gov/standards/marcxml/schema/MARC21slim.xsd\"";
+            var (leftBibXml, rightBibXml) = await loader.LoadAsync(leftBibId, rightBibId);
 
             var model = new IndexViewModel
             {
-                LeftBibId = 3628715,
-                RightBibId = 4001657,
+                LeftBibId = leftBibId,
+                RightBibId = rightBibId,
                 LeftBibXml = MarcXmlRenderer.TransformFile(leftBibXml, "marc-to-html.xslt"),
                 RightBibXml = MarcXmlRenderer.TransformFile(rightBibXml, "marc-to-html.xslt")
             };
-
-            /*
-            model.LeftBibXml = MarcXmlRenderer.TransformFile(bibs.Data.GetBibsByIDRows.First().BibliographicRecordXML, "marc-to-html.xslt");
-            model.RightBibXml = MarcXmlRenderer.TransformFile(bibs.Data.GetBibsByIDRows.Last().BibliographicRecordXML, "marc-to-html.xslt");
-            */
 
             return View(model);
         }
