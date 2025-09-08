@@ -3,6 +3,7 @@ using Clc.Polaris.Api.Configuration;
 using System.Data;
 using Microsoft.Data.SqlClient;
 using Clc.BibDedupe.Web.Data;
+using Clc.BibDedupe.Web.Services;
 
 namespace Clc.BibDedupe.Web
 {
@@ -18,11 +19,19 @@ namespace Clc.BibDedupe.Web
                 .AddJsonFile($"Config/settings.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true)
                 .AddEnvironmentVariables();
 
-            IPapiSettings papiConfig = builder.Configuration.GetSection("Papi").Get<PapiSettings>()! ?? new PapiSettings();
+            IPapiSettings? papiConfig = builder.Configuration.GetSection("Papi").Get<PapiSettings>();
 
-            builder.Services
-                .AddSingleton(papiConfig)
-                .AddSingleton<IPapiClient, PapiClient>();
+            if (papiConfig is null)
+            {
+                builder.Services.AddSingleton<IRecordXmlLoader, TestFileRecordXmlLoader>();
+            }
+            else
+            {
+                builder.Services
+                    .AddSingleton(papiConfig)
+                    .AddSingleton<IPapiClient, PapiClient>()
+                    .AddSingleton<IRecordXmlLoader, PapiRecordXmlLoader>();
+            }
 
             builder.Services
                 .AddScoped<IDbConnection>(sp => new SqlConnection(builder.Configuration.GetConnectionString("BibDedupeDb")))
