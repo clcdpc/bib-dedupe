@@ -1,5 +1,8 @@
 using Clc.Polaris.Api;
 using Clc.Polaris.Api.Configuration;
+using System.Data;
+using Microsoft.Data.SqlClient;
+using Clc.BibDedupe.Web.Data;
 
 namespace Clc.BibDedupe.Web
 {
@@ -9,9 +12,10 @@ namespace Clc.BibDedupe.Web
         {
             var builder = WebApplication.CreateBuilder(args);
 
-            builder.Configuration.SetBasePath(Directory.GetCurrentDirectory())
-                .AddJsonFile("Config\\settings.json", true, true)
-                .AddJsonFile($"Config\\settings.{Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")}.json", true, true)
+            builder.Configuration
+                .SetBasePath(builder.Environment.ContentRootPath)
+                .AddJsonFile("Config/settings.json", optional: true, reloadOnChange: true)
+                .AddJsonFile($"Config/settings.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true)
                 .AddEnvironmentVariables();
 
             IPapiSettings papiConfig = builder.Configuration.GetSection("Papi").Get<PapiSettings>()! ?? new PapiSettings();
@@ -19,6 +23,10 @@ namespace Clc.BibDedupe.Web
             builder.Services
                 .AddSingleton(papiConfig)
                 .AddSingleton<IPapiClient, PapiClient>();
+
+            builder.Services
+                .AddScoped<IDbConnection>(sp => new SqlConnection(builder.Configuration.GetConnectionString("BibDedupeDb")))
+                .AddScoped<IBibDupePairRepository, BibDupePairRepository>();
 
 
             // Add services to the container.
