@@ -20,14 +20,6 @@
         <col class="col-ind"/>
         <col class="col-data"/>
       </colgroup>
-      <thead>
-        <tr>
-          <th>Tag</th>
-          <th>Ind1</th>
-          <th>Ind2</th>
-          <th>Data</th>
-        </tr>
-      </thead>
       <tbody>
         <!-- Leader -->
         <tr>

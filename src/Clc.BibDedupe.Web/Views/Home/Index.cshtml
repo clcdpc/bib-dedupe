@@ -7,8 +7,10 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Two Divs</title>
-    <script>
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body>
+<script>
         (function(){
           const TAGS = {
             "LDR":"Leader","001":"Control Number","005":"Date/Time of Latest Transaction",
@@ -116,7 +118,6 @@
           document.addEventListener('DOMContentLoaded', () => initTooltips(document));
         })();
     </script>
-
     <style>
         html, body {
             height: 100%;
@@ -142,9 +143,10 @@
             .frames .frame {
                 width: 100%;
                 height: 100%;
-                background: #fafafa;
+                background: var(--bg);
                 overflow: auto;
                 box-sizing: border-box;
+                border: 1px solid var(--frame-border);
             }
 
         .controls {
@@ -158,8 +160,9 @@
                 flex: 0 0 auto;
                 width: 170px;
                 padding: 4px 20px;
-                border: 1px solid #3b82f6;
-                background: #dbeafe;
+                border: 1px solid #7ecae6;
+                background: #87ceeb;
+                color: #082f49;
                 cursor: pointer;
                 font: inherit;
                 border-radius: 4px;
@@ -169,32 +172,49 @@
             }
 
                 .controls button:hover {
-                    background: #bfdbfe;
+                    background: #7cc6e4;
                 }
 
                 .controls button:active {
+                    background: #6cb6da;
                     transform: translateY(1px);
                 }
 
 
 
         :root {
-            --tag: #6b7280; /* tag */
-            --ind: #9ca3af; /* indicators */
-            --code: #2563eb; /* $a,$b,... */
+            --tag: #7c3aed; /* tag */
+            --ind: #d97706; /* indicators */
+            --code: #0d9488; /* $a,$b,... */
             --val: #111827; /* values */
             --grid: #e5e7eb; /* borders */
             --bg: #ffffff; /* table bg */
+            --frame-border: #d1d5db; /* frame border */
         }
 
         @@media (prefers-color-scheme: dark) {
             :root {
-                --tag: #a1a1aa;
-                --ind: #71717a;
-                --code: #60a5fa;
-                --val: #e5e7eb;
-                --grid: #27272a;
-                --bg: #0b0b0c;
+                --tag: #d8b4fe;
+                --ind: #fbbf24;
+                --code: #5eead4;
+                --val: #f3f4f6;
+                --grid: #323639;
+                --bg: #1b1e22;
+                --frame-border: #4b5563;
+            }
+
+            .controls button {
+                border-color: #7ecae6;
+                background: #87ceeb;
+                color: #082f49;
+            }
+
+            .controls button:hover {
+                background: #7cc6e4;
+            }
+
+            .controls button:active {
+                background: #6cb6da;
             }
         }
 
@@ -208,15 +228,11 @@
             --fz: 13px; /* used to restore font in children after zero-font trick */
         }
 
-            .marc-table th, .marc-table td {
+            .marc-table td {
                 border: 1px solid var(--grid);
                 padding: 2px 4px;
                 vertical-align: top;
                 line-height: 1.2;
-            }
-
-            .marc-table th {
-                font-weight: 600
             }
 
             /* fixed widths via <colgroup> classes from XSLT */
@@ -285,10 +301,8 @@
                 }
 
     </style>
-</head>
-    <body>
-        <form id="token-form" method="post" asp-antiforgery="true" style="display:none"></form>
-        <div class="page">
+<form id="token-form" method="post" asp-antiforgery="true" style="display:none"></form>
+<div class="page">
             <div class="frames">
             <div class="frame" id="leftDiv">
                 @Html.Raw(ViewBag.LeftBibXML)
