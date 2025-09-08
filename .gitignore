@@ -400,6 +400,5 @@ FodyWeavers.xsd
 *.sln.iml
 
 
-#Config
-[Cc]onfig
+[Cc]onfig/
 **/wwwroot/custom/image/*
