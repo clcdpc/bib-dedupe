@@ -1,4 +1,5 @@
 @using Clc.BibDedupe.Web.Models
+@model IndexViewModel
 @{
     Layout = null;
 }
@@ -311,10 +312,10 @@
 <div class="page">
             <div class="frames">
             <div class="frame" id="leftDiv">
-                @Html.Raw(ViewBag.LeftBibXML)
+                @Html.Raw(Model.LeftBibXml)
             </div>
             <div class="frame" id="rightDiv">
-                @Html.Raw(ViewBag.RightBibXML)
+                @Html.Raw(Model.RightBibXml)
             </div>
         </div>
 
@@ -330,9 +331,15 @@
         (function () {
             const token = document.querySelector('#token-form input[name="__RequestVerificationToken"]').value;
             const url = '@Url.Action("Resolve")';
+            const leftBibId = @Model.LeftBibId;
+            const rightBibId = @Model.RightBibId;
             document.querySelectorAll('.controls button').forEach(btn => {
                 btn.addEventListener('click', async () => {
-                    const body = new URLSearchParams({ action: btn.dataset.action });
+                    const body = new URLSearchParams({
+                        action: btn.dataset.action,
+                        leftBibId,
+                        rightBibId
+                    });
                     try {
                         await fetch(url, {
                             method: 'POST',
