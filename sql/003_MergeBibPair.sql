@@ -10,7 +10,7 @@ AS
 BEGIN
     SET NOCOUNT ON;
     -- TODO: implement logic to merge records
-    INSERT INTO dbo.BibDupePairDecisions (DecisionTimestamp, UserEmail, KeptBibId, DeletedBibId)
-    VALUES (SYSDATETIME(), @UserEmail, @KeepBibId, @DeleteBibId);
+    INSERT INTO dbo.BibDupePairDecisions (DecisionTimestamp, UserEmail, KeptBibId, DeletedBibId, Action)
+    VALUES (SYSDATETIME(), @UserEmail, @KeepBibId, @DeleteBibId, 1);
 END
 GO

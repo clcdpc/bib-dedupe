@@ -17,7 +17,8 @@ CREATE TABLE dbo.BibDupePairDecisions (
     DecisionTimestamp DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
     UserEmail NVARCHAR(256) NOT NULL,
     KeptBibId INT NOT NULL,
-    DeletedBibId INT NULL
+    DeletedBibId INT NULL,
+    Action INT NOT NULL -- 1 = merge, 2 = skip, 3 = keep both
 );
 GO
 
@@ -40,8 +41,8 @@ AS
 BEGIN
     SET NOCOUNT ON;
     -- TODO: implement logic to merge records
-    INSERT INTO dbo.BibDupePairDecisions (DecisionTimestamp, UserEmail, KeptBibId, DeletedBibId)
-    VALUES (SYSDATETIME(), @UserEmail, @KeepBibId, @DeleteBibId);
+    INSERT INTO dbo.BibDupePairDecisions (DecisionTimestamp, UserEmail, KeptBibId, DeletedBibId, Action)
+    VALUES (SYSDATETIME(), @UserEmail, @KeepBibId, @DeleteBibId, 1);
 END
 GO
 
@@ -56,8 +57,8 @@ AS
 BEGIN
     SET NOCOUNT ON;
     -- TODO: implement logic to keep both records as separate
-    INSERT INTO dbo.BibDupePairDecisions (DecisionTimestamp, UserEmail, KeptBibId, DeletedBibId)
-    VALUES (SYSDATETIME(), @UserEmail, @LeftBibId, @RightBibId);
+    INSERT INTO dbo.BibDupePairDecisions (DecisionTimestamp, UserEmail, KeptBibId, DeletedBibId, Action)
+    VALUES (SYSDATETIME(), @UserEmail, @LeftBibId, @RightBibId, 3);
 END
 GO
 
@@ -72,7 +73,7 @@ AS
 BEGIN
     SET NOCOUNT ON;
     -- TODO: implement logic to skip processing this pair
-    INSERT INTO dbo.BibDupePairDecisions (DecisionTimestamp, UserEmail, KeptBibId, DeletedBibId)
-    VALUES (SYSDATETIME(), @UserEmail, @LeftBibId, @RightBibId);
+    INSERT INTO dbo.BibDupePairDecisions (DecisionTimestamp, UserEmail, KeptBibId, DeletedBibId, Action)
+    VALUES (SYSDATETIME(), @UserEmail, @LeftBibId, @RightBibId, 2);
 END
 GO
