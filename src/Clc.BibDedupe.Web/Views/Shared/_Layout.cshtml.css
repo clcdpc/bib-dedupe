@@ -8,7 +8,13 @@ a.navbar-brand {
 }
 
 a {
-  color: #3b82f6;
+  color: #2563eb;
+}
+
+@media (prefers-color-scheme: dark) {
+  a {
+    color: #93c5fd;
+  }
 }
 
 .btn-primary {
