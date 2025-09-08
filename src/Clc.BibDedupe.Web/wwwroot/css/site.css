@@ -28,7 +28,7 @@ body {
 @media (prefers-color-scheme: dark) {
   body {
     background-color: #1b1e22;
-    color: #f8f9fa;
+    color: #e2e8f0;
   }
 
   .navbar {
@@ -37,12 +37,12 @@ body {
 
   .navbar .nav-link,
   .navbar-brand {
-    color: #f8f9fa;
+    color: #e2e8f0;
   }
 
   .navbar .nav-link:hover,
   .navbar .nav-link:focus {
-    color: #ffffff;
+    color: #f1f5f9;
   }
 
   .navbar-toggler {
@@ -54,6 +54,6 @@ body {
   }
 
   .text-muted {
-    color: #adb5bd !important;
+    color: #94a3b8 !important;
   }
 }
