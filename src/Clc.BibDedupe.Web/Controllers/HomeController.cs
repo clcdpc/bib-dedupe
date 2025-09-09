@@ -2,6 +2,8 @@ using Clc.BibDedupe.Web.Data;
 using Clc.BibDedupe.Web.Models;
 using Clc.BibDedupe.Web.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 using System;
 using System.Diagnostics;
 using System.Linq;
@@ -9,6 +11,7 @@ using System.Threading.Tasks;
 
 namespace Clc.BibDedupe.Web.Controllers
 {
+    [Authorize]
     public class HomeController(ILogger<HomeController> logger, IRecordXmlLoader loader, IBibDupePairRepository repository, IDecisionStore decisionStore) : Controller
     {
         public async Task<IActionResult> Index(int? leftBibId, int? rightBibId)
@@ -53,7 +56,7 @@ namespace Clc.BibDedupe.Web.Controllers
             {
                 return BadRequest();
             }
-            var userEmail = User?.Identity?.Name ?? string.Empty;
+            var userEmail = User.FindFirst(ClaimTypes.Email)?.Value ?? User.FindFirst("preferred_username")?.Value ?? string.Empty;
             var decision = new DecisionItem { LeftBibId = leftBibId, RightBibId = rightBibId, Action = parsed };
             await decisionStore.AddAsync(userEmail, decision);
             return Ok();

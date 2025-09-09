@@ -1,9 +1,11 @@
 using Clc.BibDedupe.Web.Data;
 using Clc.BibDedupe.Web.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Clc.BibDedupe.Web.Controllers;
 
+[Authorize]
 public class PairsController(IBibDupePairRepository repository) : Controller
 {
     private readonly IBibDupePairRepository _repository = repository;

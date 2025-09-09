@@ -1,11 +1,15 @@
 @using Clc.BibDedupe.Web.Services
+@using System.Security.Claims
 @inject IDecisionStore DecisionStore
 @{
-    var user = Context.User?.Identity?.Name ?? string.Empty;
-    var decisionCount = await DecisionStore.CountAsync(user);
+    var email = Context.User?.FindFirst(ClaimTypes.Email)?.Value
+        ?? Context.User?.FindFirst("preferred_username")?.Value
+        ?? string.Empty;
+    var decisionCount = await DecisionStore.CountAsync(email);
 }
 <nav class="menu">
     <a asp-controller="Pairs" asp-action="Index">Dupe List</a>
     <a asp-controller="Decisions" asp-action="Index">Decisions <span class="badge">@decisionCount</span></a>
     <a asp-controller="Home" asp-action="Index">Current Pair</a>
+    <a asp-area="MicrosoftIdentity" asp-controller="Account" asp-action="SignOut">Sign out</a>
 </nav>
