@@ -21,6 +21,24 @@ body {
   margin-bottom: 60px;
 }
 
+.menu {
+  background-color: #e9ecef;
+  padding: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.menu a {
+  margin-right: 1rem;
+  text-decoration: none;
+}
+
+.menu .badge {
+  background-color: #0d6efd;
+  color: #fff;
+  border-radius: 0.5rem;
+  padding: 0 0.4rem;
+}
+
 .navbar {
   background-color: #fff;
 }

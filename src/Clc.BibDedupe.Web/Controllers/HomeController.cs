@@ -2,25 +2,34 @@ using Clc.BibDedupe.Web.Data;
 using Clc.BibDedupe.Web.Models;
 using Clc.BibDedupe.Web.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 using System;
 using System.Diagnostics;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace Clc.BibDedupe.Web.Controllers
 {
-    public class HomeController(ILogger<HomeController> logger, IRecordXmlLoader loader, IBibDupePairRepository repository) : Controller
+    [Authorize]
+    public class HomeController(ILogger<HomeController> logger, IRecordXmlLoader loader, IBibDupePairRepository repository, IDecisionStore decisionStore) : Controller
     {
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(int? leftBibId, int? rightBibId)
         {
-            const int leftBibId = 3628715;
-            const int rightBibId = 4001657;
+            if (leftBibId is null || rightBibId is null)
+            {
+                var first = (await repository.GetAsync()).FirstOrDefault();
+                if (first is null) return View(new IndexViewModel());
+                leftBibId = first.LeftBibId;
+                rightBibId = first.RightBibId;
+            }
 
-            var (leftBibXml, rightBibXml) = await loader.LoadAsync(leftBibId, rightBibId);
+            var (leftBibXml, rightBibXml) = await loader.LoadAsync(leftBibId.Value, rightBibId.Value);
 
             var model = new IndexViewModel
             {
-                LeftBibId = leftBibId,
-                RightBibId = rightBibId,
+                LeftBibId = leftBibId.Value,
+                RightBibId = rightBibId.Value,
                 LeftBibXml = MarcXmlRenderer.TransformFile(leftBibXml, "marc-to-html.xslt"),
                 RightBibXml = MarcXmlRenderer.TransformFile(rightBibXml, "marc-to-html.xslt")
             };
@@ -47,27 +56,9 @@ namespace Clc.BibDedupe.Web.Controllers
             {
                 return BadRequest();
             }
-
-            var userEmail = User?.Identity?.Name ?? string.Empty;
-
-            switch (parsed)
-            {
-                case DupeBibPairActions.KeepLeft:
-                    await repository.MergeAsync(leftBibId, rightBibId, userEmail);
-                    break;
-                case DupeBibPairActions.KeepRight:
-                    await repository.MergeAsync(rightBibId, leftBibId, userEmail);
-                    break;
-                case DupeBibPairActions.KeepBoth:
-                    await repository.KeepBothAsync(leftBibId, rightBibId, userEmail);
-                    break;
-                case DupeBibPairActions.Skip:
-                    await repository.SkipAsync(leftBibId, rightBibId, userEmail);
-                    break;
-                default:
-                    return BadRequest();
-            }
-
+            var userEmail = User.FindFirst(ClaimTypes.Email)?.Value ?? User.FindFirst("preferred_username")?.Value ?? string.Empty;
+            var decision = new DecisionItem { LeftBibId = leftBibId, RightBibId = rightBibId, Action = parsed };
+            await decisionStore.AddAsync(userEmail, decision);
             return Ok();
         }
     }

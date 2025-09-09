@@ -4,6 +4,10 @@ using System.Data;
 using Microsoft.Data.SqlClient;
 using Clc.BibDedupe.Web.Data;
 using Clc.BibDedupe.Web.Services;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Authentication.OpenIdConnect;
+using Microsoft.Identity.Web;
+using Microsoft.Identity.Web.UI;
 
 namespace Clc.BibDedupe.Web
 {
@@ -35,11 +39,20 @@ namespace Clc.BibDedupe.Web
 
             builder.Services
                 .AddScoped<IDbConnection>(sp => new SqlConnection(builder.Configuration.GetConnectionString("BibDedupeDb")))
-                .AddScoped<IBibDupePairRepository, BibDupePairRepository>();
+                .AddScoped<IBibDupePairRepository, BibDupePairRepository>()
+                .AddSingleton<IHttpContextAccessor, HttpContextAccessor>()
+                .AddSingleton<IDecisionStore, SessionDecisionStore>();
+
+            builder.Services.AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
+                .AddMicrosoftIdentityWebApp(builder.Configuration.GetSection("AzureAd"));
+
+            builder.Services.AddDistributedMemoryCache();
+            builder.Services.AddSession();
 
 
             // Add services to the container.
-            builder.Services.AddControllersWithViews();
+            builder.Services.AddControllersWithViews()
+                .AddMicrosoftIdentityUI();
 
             var app = builder.Build();
 
@@ -56,6 +69,9 @@ namespace Clc.BibDedupe.Web
 
             app.UseRouting();
 
+            app.UseSession();
+
+            app.UseAuthentication();
             app.UseAuthorization();
 
             app.MapControllerRoute(
