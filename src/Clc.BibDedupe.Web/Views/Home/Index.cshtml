@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
 </head>
 <body>
+@await Html.PartialAsync("_Menu")
 <script>
         (function(){
           const TAGS = {
@@ -350,6 +351,10 @@
                             },
                             body: body.toString()
                         });
+                        const badge = document.querySelector('.menu .badge');
+                        if (badge) {
+                            badge.textContent = (parseInt(badge.textContent || '0', 10) + 1).toString();
+                        }
                     } catch (err) {
                         console.error(err);
                     }

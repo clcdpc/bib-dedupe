@@ -4,6 +4,7 @@ using System.Data;
 using Microsoft.Data.SqlClient;
 using Clc.BibDedupe.Web.Data;
 using Clc.BibDedupe.Web.Services;
+using Microsoft.AspNetCore.Http;
 
 namespace Clc.BibDedupe.Web
 {
@@ -35,7 +36,12 @@ namespace Clc.BibDedupe.Web
 
             builder.Services
                 .AddScoped<IDbConnection>(sp => new SqlConnection(builder.Configuration.GetConnectionString("BibDedupeDb")))
-                .AddScoped<IBibDupePairRepository, BibDupePairRepository>();
+                .AddScoped<IBibDupePairRepository, BibDupePairRepository>()
+                .AddSingleton<IHttpContextAccessor, HttpContextAccessor>()
+                .AddSingleton<IDecisionStore, SessionDecisionStore>();
+
+            builder.Services.AddDistributedMemoryCache();
+            builder.Services.AddSession();
 
 
             // Add services to the container.
@@ -55,6 +61,8 @@ namespace Clc.BibDedupe.Web
             app.UseStaticFiles();
 
             app.UseRouting();
+
+            app.UseSession();
 
             app.UseAuthorization();
 
