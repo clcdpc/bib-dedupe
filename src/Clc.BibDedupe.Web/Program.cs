@@ -19,8 +19,8 @@ namespace Clc.BibDedupe.Web
 
             builder.Configuration
                 .SetBasePath(builder.Environment.ContentRootPath)
-                .AddJsonFile("Config/settings.json", optional: true, reloadOnChange: true)
-                .AddJsonFile($"Config/settings.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true)
+                .AddJsonFile("settings.json", optional: true, reloadOnChange: true)
+                .AddJsonFile($"settings.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true)
                 .AddEnvironmentVariables();
 
             IPapiSettings? papiConfig = builder.Configuration.GetSection("Papi").Get<PapiSettings>();
