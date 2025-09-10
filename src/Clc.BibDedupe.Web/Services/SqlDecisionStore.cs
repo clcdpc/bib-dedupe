@@ -7,7 +7,7 @@ namespace Clc.BibDedupe.Web.Services;
 public class SqlDecisionStore(IDbConnection db) : IDecisionStore
 {
     private readonly IDbConnection _db = db;
-    private const string Table = "BibDedupe.Queue";
+    private const string Table = "BibDedupe.DecisionQueue";
 
     public async Task AddAsync(string userId, DecisionItem decision)
     {
