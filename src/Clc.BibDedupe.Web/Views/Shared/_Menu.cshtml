@@ -8,7 +8,7 @@
     var decisionCount = await DecisionStore.CountAsync(email);
 }
 <nav class="menu">
-    <a asp-controller="Pairs" asp-action="Index">Dupe List</a>
+    <a asp-controller="Pairs" asp-action="Index">Pair List</a>
     <a asp-controller="Decisions" asp-action="Index">Decisions <span class="badge">@decisionCount</span></a>
     <a asp-controller="Home" asp-action="Index">Current Pair</a>
     <a asp-area="MicrosoftIdentity" asp-controller="Account" asp-action="SignOut">Sign out</a>

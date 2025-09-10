@@ -1,5 +1,3 @@
-using System;
-
 namespace Clc.BibDedupe.Web.Models
 {
     public class BibDupePair

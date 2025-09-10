@@ -53,7 +53,7 @@ namespace Clc.BibDedupe.Web.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Resolve([FromForm] string action, [FromForm] int leftBibId, [FromForm] int rightBibId)
         {
-            if (!Enum.TryParse(action, out DupeBibPairActions parsed))
+            if (!Enum.TryParse(action, out BibDupePairAction parsed))
             {
                 return BadRequest();
             }
