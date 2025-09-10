@@ -128,6 +128,7 @@
     const url = page.dataset.resolveUrl;
     const leftBibId = parseInt(page.dataset.leftBibId, 10);
     const rightBibId = parseInt(page.dataset.rightBibId, 10);
+    const returnUrl = page.dataset.returnUrl;
     document.querySelectorAll('.controls button').forEach(btn => {
         btn.addEventListener('click', async () => {
             const body = new URLSearchParams({
@@ -148,6 +149,9 @@
                 const badge = document.querySelector('.menu .badge');
                 if (badge) {
                     badge.textContent = (parseInt(badge.textContent || '0', 10) + 1).toString();
+                }
+                if (returnUrl) {
+                    window.location.href = returnUrl;
                 }
             } catch (err) {
                 console.error(err);

@@ -6,5 +6,6 @@ namespace Clc.BibDedupe.Web.Models
         public int RightBibId { get; set; }
         public string LeftBibXml { get; set; } = string.Empty;
         public string RightBibXml { get; set; } = string.Empty;
+        public string? ReturnUrl { get; set; }
     }
 }

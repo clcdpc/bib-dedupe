@@ -27,6 +27,8 @@ public class SessionDecisionStore(IHttpContextAccessor accessor) : IDecisionStor
         if (existing is not null)
         {
             existing.Action = decision.Action;
+            existing.MatchType = decision.MatchType;
+            existing.MatchValue = decision.MatchValue;
         }
         else
         {

@@ -14,7 +14,7 @@ namespace Clc.BibDedupe.Web.Controllers
     [Authorize]
     public class HomeController(ILogger<HomeController> logger, IRecordXmlLoader loader, IBibDupePairRepository repository, IDecisionStore decisionStore) : Controller
     {
-        public async Task<IActionResult> Index(int? leftBibId, int? rightBibId)
+        public async Task<IActionResult> Index(int? leftBibId, int? rightBibId, string? returnUrl)
         {
             if (leftBibId is null || rightBibId is null)
             {
@@ -31,7 +31,8 @@ namespace Clc.BibDedupe.Web.Controllers
                 LeftBibId = leftBibId.Value,
                 RightBibId = rightBibId.Value,
                 LeftBibXml = MarcXmlRenderer.TransformFile(leftBibXml, "marc-to-html.xslt"),
-                RightBibXml = MarcXmlRenderer.TransformFile(rightBibXml, "marc-to-html.xslt")
+                RightBibXml = MarcXmlRenderer.TransformFile(rightBibXml, "marc-to-html.xslt"),
+                ReturnUrl = returnUrl
             };
 
             return View(model);
@@ -57,7 +58,15 @@ namespace Clc.BibDedupe.Web.Controllers
                 return BadRequest();
             }
             var userEmail = User.FindFirst(ClaimTypes.Email)?.Value ?? User.FindFirst("preferred_username")?.Value ?? string.Empty;
-            var decision = new DecisionItem { LeftBibId = leftBibId, RightBibId = rightBibId, Action = parsed };
+            var pair = (await repository.GetAsync()).FirstOrDefault(p => p.LeftBibId == leftBibId && p.RightBibId == rightBibId);
+            var decision = new DecisionItem
+            {
+                LeftBibId = leftBibId,
+                RightBibId = rightBibId,
+                MatchType = pair?.MatchType ?? string.Empty,
+                MatchValue = pair?.MatchValue ?? string.Empty,
+                Action = parsed
+            };
             await decisionStore.AddAsync(userEmail, decision);
             return Ok();
         }
