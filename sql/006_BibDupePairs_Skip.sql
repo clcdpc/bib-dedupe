@@ -10,7 +10,7 @@ AS
 BEGIN
     SET NOCOUNT ON;
     -- TODO: implement logic to skip processing this pair
-    INSERT INTO dbo.BibDupePairDecisions (DecisionTimestamp, UserEmail, KeptBibId, DeletedBibId, Action)
+    INSERT INTO dbo.BibDupePairDecisions (DecisionTimestamp, UserEmail, KeptBibId, DeletedBibId, ActionId)
     VALUES (SYSDATETIME(), @UserEmail, @LeftBibId, @RightBibId, 2);
 END
 GO

@@ -10,6 +10,16 @@ CREATE TABLE dbo.BibDupePairs (
 );
 GO
 
+IF OBJECT_ID('dbo.BibDupeActions','U') IS NOT NULL
+    DROP TABLE dbo.BibDupeActions;
+GO
+CREATE TABLE dbo.BibDupeActions (
+    ActionId INT NOT NULL PRIMARY KEY,
+    ActionName NVARCHAR(50) NOT NULL
+);
+INSERT INTO dbo.BibDupeActions (ActionId, ActionName) VALUES (1, 'merge'), (2, 'skip'), (3, 'keep both');
+GO
+
 IF OBJECT_ID('dbo.BibDupePairDecisions','U') IS NOT NULL
     DROP TABLE dbo.BibDupePairDecisions;
 GO
@@ -18,7 +28,9 @@ CREATE TABLE dbo.BibDupePairDecisions (
     UserEmail NVARCHAR(256) NOT NULL,
     KeptBibId INT NOT NULL,
     DeletedBibId INT NULL,
-    Action INT NOT NULL -- 1 = merge, 2 = skip, 3 = keep both
+    ActionId INT NOT NULL,
+    CONSTRAINT FK_BibDupePairDecisions_ActionId FOREIGN KEY (ActionId)
+        REFERENCES dbo.BibDupeActions(ActionId)
 );
 GO
 
@@ -29,17 +41,23 @@ CREATE TABLE dbo.DecisionQueue (
     UserEmail NVARCHAR(256) NOT NULL,
     LeftBibId INT NOT NULL,
     RightBibId INT NOT NULL,
-    Action INT NOT NULL,
-    CONSTRAINT PK_DecisionQueue PRIMARY KEY (UserEmail, LeftBibId, RightBibId)
+    ActionId INT NOT NULL,
+    CONSTRAINT PK_DecisionQueue PRIMARY KEY (UserEmail, LeftBibId, RightBibId),
+    CONSTRAINT FK_DecisionQueue_ActionId FOREIGN KEY (ActionId)
+        REFERENCES dbo.BibDupeActions(ActionId)
 );
 GO
 
-IF OBJECT_ID('dbo.vwBibDupePairs','V') IS NOT NULL
-    DROP VIEW dbo.vwBibDupePairs;
+IF OBJECT_ID('dbo.tvfBibDupePairs','IF') IS NOT NULL
+    DROP FUNCTION dbo.tvfBibDupePairs;
 GO
-CREATE VIEW dbo.vwBibDupePairs AS
-    SELECT MatchType, MatchValue, LeftBibId, RightBibId
-    FROM dbo.BibDupePairs;
+CREATE FUNCTION dbo.tvfBibDupePairs (@Top INT = 1000)
+RETURNS TABLE
+AS
+RETURN (
+    SELECT TOP (@Top) MatchType, MatchValue, LeftBibId, RightBibId
+    FROM dbo.BibDupePairs
+);
 GO
 
 IF OBJECT_ID('dbo.MergeBibPair','P') IS NOT NULL
@@ -53,7 +71,7 @@ AS
 BEGIN
     SET NOCOUNT ON;
     -- TODO: implement logic to merge records
-    INSERT INTO dbo.BibDupePairDecisions (DecisionTimestamp, UserEmail, KeptBibId, DeletedBibId, Action)
+    INSERT INTO dbo.BibDupePairDecisions (DecisionTimestamp, UserEmail, KeptBibId, DeletedBibId, ActionId)
     VALUES (SYSDATETIME(), @UserEmail, @KeepBibId, @DeleteBibId, 1);
 END
 GO
@@ -69,7 +87,7 @@ AS
 BEGIN
     SET NOCOUNT ON;
     -- TODO: implement logic to keep both records as separate
-    INSERT INTO dbo.BibDupePairDecisions (DecisionTimestamp, UserEmail, KeptBibId, DeletedBibId, Action)
+    INSERT INTO dbo.BibDupePairDecisions (DecisionTimestamp, UserEmail, KeptBibId, DeletedBibId, ActionId)
     VALUES (SYSDATETIME(), @UserEmail, @LeftBibId, @RightBibId, 3);
 END
 GO
@@ -85,7 +103,7 @@ AS
 BEGIN
     SET NOCOUNT ON;
     -- TODO: implement logic to skip processing this pair
-    INSERT INTO dbo.BibDupePairDecisions (DecisionTimestamp, UserEmail, KeptBibId, DeletedBibId, Action)
+    INSERT INTO dbo.BibDupePairDecisions (DecisionTimestamp, UserEmail, KeptBibId, DeletedBibId, ActionId)
     VALUES (SYSDATETIME(), @UserEmail, @LeftBibId, @RightBibId, 2);
 END
 GO

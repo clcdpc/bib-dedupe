@@ -10,7 +10,7 @@ AS
 BEGIN
     SET NOCOUNT ON;
     -- TODO: implement logic to keep both records as separate
-    INSERT INTO dbo.BibDupePairDecisions (DecisionTimestamp, UserEmail, KeptBibId, DeletedBibId, Action)
+    INSERT INTO dbo.BibDupePairDecisions (DecisionTimestamp, UserEmail, KeptBibId, DeletedBibId, ActionId)
     VALUES (SYSDATETIME(), @UserEmail, @LeftBibId, @RightBibId, 3);
 END
 GO
