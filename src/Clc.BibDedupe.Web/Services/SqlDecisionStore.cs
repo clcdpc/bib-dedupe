@@ -28,7 +28,12 @@ public class SqlDecisionStore(IDbConnection db) : IDecisionStore
     }
 
     public async Task<IEnumerable<DecisionItem>> GetAllAsync(string userId) =>
-        await _db.QueryAsync<DecisionItem>($"SELECT LeftBibId, RightBibId, Action FROM {Table} WHERE UserEmail = @UserEmail", new { UserEmail = userId });
+        await _db.QueryAsync<DecisionItem>(
+            $@"SELECT d.LeftBibId, d.RightBibId, d.Action, p.MatchType, p.MatchValue
+               FROM {Table} d
+               JOIN vwBibDupePairs p ON d.LeftBibId = p.LeftBibId AND d.RightBibId = p.RightBibId
+               WHERE d.UserEmail = @UserEmail",
+            new { UserEmail = userId });
 
     public Task RemoveAsync(string userId, int leftBibId, int rightBibId) =>
         _db.ExecuteAsync($"DELETE FROM {Table} WHERE UserEmail = @UserEmail AND LeftBibId = @LeftBibId AND RightBibId = @RightBibId",

@@ -10,6 +10,8 @@
         <tr>
             <th>Left Bib</th>
             <th>Right Bib</th>
+            <th>Match Type</th>
+            <th>Match Value</th>
             <th>Action</th>
             <th>Review</th>
         </tr>
@@ -20,6 +22,8 @@
         <tr>
             <td>@d.LeftBibId</td>
             <td>@d.RightBibId</td>
+            <td>@d.MatchType</td>
+            <td>@d.MatchValue</td>
             <td>@d.Action</td>
             <td>
                 <a asp-action="Review" asp-route-leftBibId="@d.LeftBibId" asp-route-rightBibId="@d.RightBibId" class="btn btn-sm btn-primary">Review</a>

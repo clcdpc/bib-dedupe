@@ -58,7 +58,15 @@ namespace Clc.BibDedupe.Web.Controllers
                 return BadRequest();
             }
             var userEmail = User.FindFirst(ClaimTypes.Email)?.Value ?? User.FindFirst("preferred_username")?.Value ?? string.Empty;
-            var decision = new DecisionItem { LeftBibId = leftBibId, RightBibId = rightBibId, Action = parsed };
+            var pair = (await repository.GetAsync()).FirstOrDefault(p => p.LeftBibId == leftBibId && p.RightBibId == rightBibId);
+            var decision = new DecisionItem
+            {
+                LeftBibId = leftBibId,
+                RightBibId = rightBibId,
+                MatchType = pair?.MatchType ?? string.Empty,
+                MatchValue = pair?.MatchValue ?? string.Empty,
+                Action = parsed
+            };
             await decisionStore.AddAsync(userEmail, decision);
             return Ok();
         }
