@@ -1,180 +1,180 @@
-        html, body {
-            height: 100%;
+html, body {
+    height: 100%;
+    margin: 0;
+    overflow: hidden;
+}
+
+.page {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.frames {
+    flex: 1 1 auto;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    padding: 0;
+    min-height: 0;
+}
+
+    .frames .frame {
+        width: 100%;
+        height: 100%;
+        background: var(--bg);
+        overflow: auto;
+        box-sizing: border-box;
+        border: 1px solid var(--frame-border);
+    }
+
+.controls {
+    display: flex;
+    gap: 20px;
+    padding: 12px;
+    justify-content: center;
+}
+
+    .controls button {
+        flex: 0 0 auto;
+        width: 170px;
+        padding: 4px 20px;
+        border: 1px solid #7ecae6;
+        background: #87ceeb;
+        color: #082f49;
+        cursor: pointer;
+        font: inherit;
+        border-radius: 4px;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        box-sizing: border-box;
+        white-space: nowrap;
+    }
+
+        .controls button:hover {
+            background: #7cc6e4;
+        }
+
+        .controls button:active {
+            background: #6cb6da;
+            transform: translateY(1px);
+        }
+
+
+
+:root {
+    --tag: #7c3aed; /* tag */
+    --ind: #d97706; /* indicators */
+    --code: #0d9488; /* $a,$b,... */
+    --val: #111827; /* values */
+    --grid: #e5e7eb; /* borders */
+    --bg: #ffffff; /* table bg */
+    --frame-border: #d1d5db; /* frame border */
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --tag: #d8b4fe;
+        --ind: #fbbf24;
+        --code: #5eead4;
+        --val: #f3f4f6;
+        --grid: #323639;
+        --bg: #1b1e22;
+        --frame-border: #4b5563;
+    }
+
+    .controls button {
+        border-color: #7ecae6;
+        background: #87ceeb;
+        color: #082f49;
+    }
+
+        .controls button:hover {
+            background: #7cc6e4;
+        }
+
+        .controls button:active {
+            background: #6cb6da;
+        }
+}
+
+.marc-table {
+    border-collapse: collapse;
+    table-layout: fixed;
+    width: 100%;
+    background: var(--bg);
+    font-family: ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+    font-size: 13px;
+    --fz: 13px; /* used to restore font in children after zero-font trick */
+}
+
+    .marc-table td {
+        border: 1px solid var(--grid);
+        padding: 2px 4px;
+        vertical-align: top;
+        line-height: 1.2;
+    }
+
+    /* fixed widths via <colgroup> classes from XSLT */
+    .marc-table .col-tag {
+        width: 4.5ch;
+    }
+
+    .marc-table .col-ind {
+        width: 2.5ch;
+    }
+
+    .marc-table .col-data {
+        width: auto;
+    }
+
+    .marc-table .tag {
+        text-align: right;
+        white-space: nowrap;
+        color: var(--tag);
+    }
+
+    .marc-table .ind {
+        text-align: center;
+        white-space: nowrap;
+        color: var(--ind);
+    }
+
+    .marc-table .data {
+        padding-right: 6px;
+    }
+
+        /* remove all inter-span whitespace and allow wrapping ONLY in data */
+        .marc-table .data .wrap {
+            font-size: 0; /* kill gaps between inline elements */
+            white-space: normal; /* allow wrap */
+            overflow-wrap: anywhere; /* break long tokens if needed */
+            word-break: normal; /* avoid mid-word unless necessary */
+            min-width: 0;
+        }
+
+        /* restore font and colors for inline parts */
+        .marc-table .data .sf,
+        .marc-table .data .code,
+        .marc-table .data .val {
+            font-size: var(--fz);
+            line-height: 1.2;
+            display: inline;
             margin: 0;
-            overflow: hidden;
-        }
-
-        .page {
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .frames {
-            flex: 1 1 auto;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
             padding: 0;
-            min-height: 0;
+            letter-spacing: normal;
         }
 
-            .frames .frame {
-                width: 100%;
-                height: 100%;
-                background: var(--bg);
-                overflow: auto;
-                box-sizing: border-box;
-                border: 1px solid var(--frame-border);
-            }
+    .marc-table .code {
+        color: var(--code);
+        font-weight: 700;
+    }
 
-        .controls {
-            display: flex;
-            gap: 20px;
-            padding: 12px;
-            justify-content: center;
+    .marc-table .val {
+        color: var(--val);
+    }
+        /* no padding-left so $aValue$tValue has no spaces */
+
+        /* URLs can still break if needed */
+        .marc-table .val a {
+            word-break: break-all;
         }
-
-            .controls button {
-                flex: 0 0 auto;
-                width: 170px;
-                padding: 4px 20px;
-                border: 1px solid #7ecae6;
-                background: #87ceeb;
-                color: #082f49;
-                cursor: pointer;
-                font: inherit;
-                border-radius: 4px;
-                box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-                box-sizing: border-box;
-                white-space: nowrap;
-            }
-
-                .controls button:hover {
-                    background: #7cc6e4;
-                }
-
-                .controls button:active {
-                    background: #6cb6da;
-                    transform: translateY(1px);
-                }
-
-
-
-        :root {
-            --tag: #7c3aed; /* tag */
-            --ind: #d97706; /* indicators */
-            --code: #0d9488; /* $a,$b,... */
-            --val: #111827; /* values */
-            --grid: #e5e7eb; /* borders */
-            --bg: #ffffff; /* table bg */
-            --frame-border: #d1d5db; /* frame border */
-        }
-
-        @media (prefers-color-scheme: dark) {
-            :root {
-                --tag: #d8b4fe;
-                --ind: #fbbf24;
-                --code: #5eead4;
-                --val: #f3f4f6;
-                --grid: #323639;
-                --bg: #1b1e22;
-                --frame-border: #4b5563;
-            }
-
-            .controls button {
-                border-color: #7ecae6;
-                background: #87ceeb;
-                color: #082f49;
-            }
-
-            .controls button:hover {
-                background: #7cc6e4;
-            }
-
-            .controls button:active {
-                background: #6cb6da;
-            }
-        }
-
-        .marc-table {
-            border-collapse: collapse;
-            table-layout: fixed;
-            width: 100%;
-            background: var(--bg);
-            font-family: ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
-            font-size: 13px;
-            --fz: 13px; /* used to restore font in children after zero-font trick */
-        }
-
-            .marc-table td {
-                border: 1px solid var(--grid);
-                padding: 2px 4px;
-                vertical-align: top;
-                line-height: 1.2;
-            }
-
-            /* fixed widths via <colgroup> classes from XSLT */
-            .marc-table .col-tag {
-                width: 4.5ch;
-            }
-
-            .marc-table .col-ind {
-                width: 2.5ch;
-            }
-
-            .marc-table .col-data {
-                width: auto;
-            }
-
-            .marc-table .tag {
-                text-align: right;
-                white-space: nowrap;
-                color: var(--tag);
-            }
-
-            .marc-table .ind {
-                text-align: center;
-                white-space: nowrap;
-                color: var(--ind);
-            }
-
-            .marc-table .data {
-                padding-right: 6px;
-            }
-
-                /* remove all inter-span whitespace and allow wrapping ONLY in data */
-                .marc-table .data .wrap {
-                    font-size: 0; /* kill gaps between inline elements */
-                    white-space: normal; /* allow wrap */
-                    overflow-wrap: anywhere; /* break long tokens if needed */
-                    word-break: normal; /* avoid mid-word unless necessary */
-                    min-width: 0;
-                }
-
-                /* restore font and colors for inline parts */
-                .marc-table .data .sf,
-                .marc-table .data .code,
-                .marc-table .data .val {
-                    font-size: var(--fz);
-                    line-height: 1.2;
-                    display: inline;
-                    margin: 0;
-                    padding: 0;
-                    letter-spacing: normal;
-                }
-
-            .marc-table .code {
-                color: var(--code);
-                font-weight: 700;
-            }
-
-            .marc-table .val {
-                color: var(--val);
-            }
-                /* no padding-left so $aValue$tValue has no spaces */
-
-                /* URLs can still break if needed */
-                .marc-table .val a {
-                    word-break: break-all;
-                }

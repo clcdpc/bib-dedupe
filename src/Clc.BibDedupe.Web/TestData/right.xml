@@ -1,6 +1,113 @@
-<marc:collection xmlns:marc="http://www.loc.gov/MARC21/slim" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.loc.gov/MARC21/slim http://www.loc.gov/standards/marcxml/schema/MARC21slim.xsd">
+<marc:collection xsi:schemaLocation="http://www.loc.gov/MARC21/slim http://www.loc.gov/standards/marcxml/schema/MARC21slim.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:marc="http://www.loc.gov/MARC21/slim">
   <marc:record>
-    <marc:leader>00000cam a2200000 i 4500</marc:leader>
-    <marc:controlfield tag="001">right</marc:controlfield>
+    <marc:leader>00000dam a22000008a 4500</marc:leader>
+    <marc:controlfield tag="001">4001657</marc:controlfield>
+    <marc:controlfield tag="005">20241225153238.0</marc:controlfield>
+    <marc:controlfield tag="008">000412s2001    mau    e      000 1 eng  </marc:controlfield>
+    <marc:datafield tag="010" ind1=" " ind2=" ">
+      <marc:subfield code="a">00031025</marc:subfield>
+    </marc:datafield>
+    <marc:datafield tag="020" ind1=" " ind2=" ">
+      <marc:subfield code="a">9781455550678</marc:subfield>
+    </marc:datafield>
+    <marc:datafield tag="020" ind1=" " ind2=" ">
+      <marc:subfield code="a">978-0446667906 </marc:subfield>
+    </marc:datafield>
+    <marc:datafield tag="020" ind1=" " ind2=" ">
+      <marc:subfield code="a">0316154075 (hardcover)</marc:subfield>
+    </marc:datafield>
+    <marc:datafield tag="020" ind1=" " ind2=" ">
+      <marc:subfield code="a">0446667900</marc:subfield>
+    </marc:datafield>
+    <marc:datafield tag="035" ind1=" " ind2=" ">
+      <marc:subfield code="a">(OCoLC)43903575</marc:subfield>
+    </marc:datafield>
+    <marc:datafield tag="040" ind1=" " ind2=" ">
+      <marc:subfield code="a">DLC</marc:subfield>
+      <marc:subfield code="c">DLC</marc:subfield>
+    </marc:datafield>
+    <marc:datafield tag="043" ind1=" " ind2=" ">
+      <marc:subfield code="a">n-us-ca</marc:subfield>
+    </marc:datafield>
+    <marc:datafield tag="049" ind1=" " ind2=" ">
+      <marc:subfield code="a">OWLA</marc:subfield>
+    </marc:datafield>
+    <marc:datafield tag="082" ind1="0" ind2="0">
+      <marc:subfield code="a">813/.54</marc:subfield>
+      <marc:subfield code="2">21</marc:subfield>
+    </marc:datafield>
+    <marc:datafield tag="099" ind1=" " ind2=" ">
+      <marc:subfield code="a">FICTION</marc:subfield>
+      <marc:subfield code="a">CONNELLY</marc:subfield>
+      <marc:subfield code="a">MICHAEL</marc:subfield>
+    </marc:datafield>
+    <marc:datafield tag="100" ind1="1" ind2=" ">
+      <marc:subfield code="a">Connelly, Michael,</marc:subfield>
+      <marc:subfield code="d">1956-</marc:subfield>
+    </marc:datafield>
+    <marc:datafield tag="245" ind1="1" ind2="2">
+      <marc:subfield code="a">A darkness more than night :</marc:subfield>
+      <marc:subfield code="b">a novel /</marc:subfield>
+      <marc:subfield code="c">by Michael Connelly.</marc:subfield>
+    </marc:datafield>
+    <marc:datafield tag="250" ind1=" " ind2=" ">
+      <marc:subfield code="a">1st. ed.</marc:subfield>
+    </marc:datafield>
+    <marc:datafield tag="260" ind1=" " ind2=" ">
+      <marc:subfield code="a">Boston :</marc:subfield>
+      <marc:subfield code="b">Little, Brown and Company,</marc:subfield>
+      <marc:subfield code="c">2001.</marc:subfield>
+    </marc:datafield>
+    <marc:datafield tag="263" ind1=" " ind2=" ">
+      <marc:subfield code="a">0101</marc:subfield>
+    </marc:datafield>
+    <marc:datafield tag="300" ind1=" " ind2=" ">
+      <marc:subfield code="a">418 p. ;</marc:subfield>
+      <marc:subfield code="c">24 cm.</marc:subfield>
+    </marc:datafield>
+    <marc:datafield tag="520" ind1=" " ind2=" ">
+      <marc:subfield code="a">Harry Bosch is up to his neck in a case that has transfixed all of celebrity-mad Los Angeles: a movie director is charged with murdering an actress during sex, and then staging her death to make it look like a suicide. Bosch is both the arresting officer and the star witness in a trial that has brought the Hollywood media pack out in full-throated frenzy.  Meanwhile, Terry McCaleb is enjoying an idyllic retirement on Catalina Island when a visit from an old colleague brings his former world rushing back. It's a murder, the unreadable kind of murder he specialized in solving back in his FBI days. The investigation has stalled, and the sheriff's office is asking McCaleb to take a quick look at the murder book to see if he turns up something they've missed.  McCaleb's first reading of the crime scene leads him to look for a methodical killer with a taste for rituals and revenge. As his quick look accelerates into a full-sprint investigation, the two crimes -- his murdered loner and Bosch's movie director -- begin to overlap strangely. With one unsettling revelation after another, they merge, becoming one impossible, terrifying case, involving almost inconceivable calculation. McCaleb believes he has unmasked the most frightening killer ever to cross his sights. But his investigation tangles with Bosch's lines, and the two men find themselves at odds in the most dangerous investigation of their lives.</marc:subfield>
+    </marc:datafield>
+    <marc:datafield tag="650" ind1=" " ind2="0">
+      <marc:subfield code="a">Private investigators</marc:subfield>
+      <marc:subfield code="z">California</marc:subfield>
+      <marc:subfield code="z">Los Angeles</marc:subfield>
+      <marc:subfield code="v">Fiction.</marc:subfield>
+    </marc:datafield>
+    <marc:datafield tag="650" ind1=" " ind2="0">
+      <marc:subfield code="a">Serial murders</marc:subfield>
+      <marc:subfield code="v">Fiction.</marc:subfield>
+    </marc:datafield>
+    <marc:datafield tag="651" ind1=" " ind2="0">
+      <marc:subfield code="a">Los Angeles (Calif.)</marc:subfield>
+      <marc:subfield code="v">Fiction.</marc:subfield>
+    </marc:datafield>
+    <marc:datafield tag="655" ind1=" " ind2="7">
+      <marc:subfield code="a">Detective and mystery fiction.</marc:subfield>
+      <marc:subfield code="2">lcgft</marc:subfield>
+    </marc:datafield>
+    <marc:datafield tag="830" ind1=" " ind2="0">
+      <marc:subfield code="a">Harry Bosch series ;</marc:subfield>
+      <marc:subfield code="v">book 7</marc:subfield>
+    </marc:datafield>
+    <marc:datafield tag="830" ind1=" " ind2="0">
+      <marc:subfield code="a">Terry McCaleb series ;</marc:subfield>
+      <marc:subfield code="v">book 2.</marc:subfield>
+    </marc:datafield>
+    <marc:datafield tag="998" ind1=" " ind2=" ">
+      <marc:subfield code="a">adsvc</marc:subfield>
+      <marc:subfield code="b">11-30-00</marc:subfield>
+      <marc:subfield code="c">m</marc:subfield>
+      <marc:subfield code="d">a  </marc:subfield>
+      <marc:subfield code="e">-</marc:subfield>
+      <marc:subfield code="f">eng</marc:subfield>
+      <marc:subfield code="g">mau</marc:subfield>
+      <marc:subfield code="h">2</marc:subfield>
+    </marc:datafield>
+    <marc:datafield tag="906" ind1=" " ind2=" ">
+      <marc:subfield code="a">.b12330358</marc:subfield>
+      <marc:subfield code="b">01-24-24</marc:subfield>
+      <marc:subfield code="c">11-30-00</marc:subfield>
+    </marc:datafield>
   </marc:record>
 </marc:collection>
