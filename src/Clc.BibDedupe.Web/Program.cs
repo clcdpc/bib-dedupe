@@ -37,9 +37,20 @@ namespace Clc.BibDedupe.Web
                     .AddSingleton<IRecordXmlLoader, PapiRecordXmlLoader>();
             }
 
+            var bibDedupeConn = builder.Configuration.GetConnectionString("BibDedupeDb");
+
+            if (string.IsNullOrWhiteSpace(bibDedupeConn))
+            {
+                builder.Services.AddSingleton<IBibDupePairRepository, TestFileBibDupePairRepository>();
+            }
+            else
+            {
+                builder.Services
+                    .AddScoped<IDbConnection>(sp => new SqlConnection(bibDedupeConn))
+                    .AddScoped<IBibDupePairRepository, BibDupePairRepository>();
+            }
+
             builder.Services
-                .AddScoped<IDbConnection>(sp => new SqlConnection(builder.Configuration.GetConnectionString("BibDedupeDb")))
-                .AddScoped<IBibDupePairRepository, BibDupePairRepository>()
                 .AddSingleton<IHttpContextAccessor, HttpContextAccessor>()
                 .AddSingleton<IDecisionStore, SessionDecisionStore>();
 
