@@ -74,4 +74,12 @@ body {
   .text-muted {
     color: #adb5bd !important;
   }
+
+  .table {
+    --bs-table-color: #f8f9fa;
+    --bs-table-bg: #1b1e22;
+    --bs-table-striped-bg: #2c3034;
+    --bs-table-striped-color: #f8f9fa;
+    --bs-table-border-color: #373b3e;
+  }
 }
