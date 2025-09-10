@@ -5,7 +5,16 @@ IF OBJECT_ID('BibDedupe.PairDecisions','U') IS NOT NULL
     DROP TABLE BibDedupe.PairDecisions;
 GO
 IF OBJECT_ID('BibDedupe.Actions','U') IS NOT NULL
+BEGIN
+    DECLARE @sql NVARCHAR(MAX) = N'';
+    SELECT @sql += N'ALTER TABLE ' + QUOTENAME(OBJECT_SCHEMA_NAME(parent_object_id))
+                + N'.' + QUOTENAME(OBJECT_NAME(parent_object_id))
+                + N' DROP CONSTRAINT ' + QUOTENAME(name) + N';'
+    FROM sys.foreign_keys
+    WHERE referenced_object_id = OBJECT_ID('BibDedupe.Actions');
+    EXEC sp_executesql @sql;
     DROP TABLE BibDedupe.Actions;
+END
 GO
 CREATE TABLE BibDedupe.Actions (
     ActionId INT NOT NULL PRIMARY KEY,
