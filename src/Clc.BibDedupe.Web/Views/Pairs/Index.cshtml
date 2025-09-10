@@ -1,46 +1,50 @@
 @using Clc.BibDedupe.Web.Models
 @model PairsListViewModel
 @{
-    Layout = null;
+    ViewData["Title"] = "Dupe Pairs";
 }
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="utf-8" />
-    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <title>Dupe Pairs</title>
-</head>
-<body>
-@await Html.PartialAsync("_Menu")
-<form method="get">
-    Page Size: <input type="number" name="pageSize" value="@Model.PageSize" min="1" />
-    <button type="submit">Apply</button>
+
+<h1>Dupe Pairs</h1>
+<form class="row g-2 mb-3" method="get">
+    <div class="col-auto">
+        <label for="pageSize" class="col-form-label">Page Size:</label>
+    </div>
+    <div class="col-auto">
+        <input type="number" class="form-control" id="pageSize" name="pageSize" value="@Model.PageSize" min="1" />
+    </div>
+    <div class="col-auto">
+        <button type="submit" class="btn btn-primary">Apply</button>
+    </div>
 </form>
-<table>
-    <thead>
+<table class="table table-striped">
+    <thead class="table-dark">
         <tr>
             <th>Left Bib</th>
             <th>Right Bib</th>
             <th>Match Type</th>
             <th>Match Value</th>
+            <th>Review</th>
         </tr>
     </thead>
     <tbody>
 @foreach (var p in Model.Items)
 {
-    <tr>
-        <td><a asp-controller="Home" asp-action="Index" asp-route-leftBibId="@p.LeftBibId" asp-route-rightBibId="@p.RightBibId">@p.LeftBibId</a></td>
-        <td>@p.RightBibId</td>
-        <td>@p.MatchType</td>
-        <td>@p.MatchValue</td>
-    </tr>
+        <tr>
+            <td>@p.LeftBibId</td>
+            <td>@p.RightBibId</td>
+            <td>@p.MatchType</td>
+            <td>@p.MatchValue</td>
+            <td>
+                <a asp-controller="Home" asp-action="Index" asp-route-leftBibId="@p.LeftBibId" asp-route-rightBibId="@p.RightBibId" asp-route-returnUrl="@Url.Action("Index", new { page = Model.Page, pageSize = Model.PageSize })" class="btn btn-sm btn-primary">Review</a>
+            </td>
+        </tr>
 }
     </tbody>
 </table>
-<div>
-    Page @Model.Page of @Model.TotalPages
-    @if(Model.Page>1){<a asp-action="Index" asp-route-page="@(Model.Page-1)" asp-route-pageSize="@Model.PageSize">Prev</a>}
-    @if(Model.Page<Model.TotalPages){<a asp-action="Index" asp-route-page="@(Model.Page+1)" asp-route-pageSize="@Model.PageSize">Next</a>}
+<div class="d-flex justify-content-between">
+    <div>Page @Model.Page of @Model.TotalPages</div>
+    <div>
+        @if(Model.Page>1){<a class="btn btn-secondary btn-sm" asp-action="Index" asp-route-page="@(Model.Page-1)" asp-route-pageSize="@Model.PageSize">Prev</a>}
+        @if(Model.Page<Model.TotalPages){<a class="btn btn-secondary btn-sm" asp-action="Index" asp-route-page="@(Model.Page+1)" asp-route-pageSize="@Model.PageSize">Next</a>}
+    </div>
 </div>
-</body>
-</html>

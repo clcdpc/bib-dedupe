@@ -18,22 +18,9 @@ public class DecisionsController(IDecisionStore store) : Controller
         return View(items);
     }
 
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Update(int leftBibId, int rightBibId, DupeBibPairActions action)
+    public IActionResult Review(int leftBibId, int rightBibId)
     {
-        var email = User.FindFirst(ClaimTypes.Email)?.Value ?? User.FindFirst("preferred_username")?.Value ?? string.Empty;
-        var decision = new DecisionItem { LeftBibId = leftBibId, RightBibId = rightBibId, Action = action };
-        await _store.UpdateAsync(email, decision);
-        return RedirectToAction(nameof(Index));
-    }
-
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Delete(int leftBibId, int rightBibId)
-    {
-        var email = User.FindFirst(ClaimTypes.Email)?.Value ?? User.FindFirst("preferred_username")?.Value ?? string.Empty;
-        await _store.RemoveAsync(email, leftBibId, rightBibId);
-        return RedirectToAction(nameof(Index));
+        var returnUrl = Url.Action(nameof(Index));
+        return RedirectToAction("Index", "Home", new { leftBibId, rightBibId, returnUrl });
     }
 }

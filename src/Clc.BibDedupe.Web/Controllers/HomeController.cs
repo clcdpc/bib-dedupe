@@ -14,7 +14,7 @@ namespace Clc.BibDedupe.Web.Controllers
     [Authorize]
     public class HomeController(ILogger<HomeController> logger, IRecordXmlLoader loader, IBibDupePairRepository repository, IDecisionStore decisionStore) : Controller
     {
-        public async Task<IActionResult> Index(int? leftBibId, int? rightBibId)
+        public async Task<IActionResult> Index(int? leftBibId, int? rightBibId, string? returnUrl)
         {
             if (leftBibId is null || rightBibId is null)
             {
@@ -31,7 +31,8 @@ namespace Clc.BibDedupe.Web.Controllers
                 LeftBibId = leftBibId.Value,
                 RightBibId = rightBibId.Value,
                 LeftBibXml = MarcXmlRenderer.TransformFile(leftBibXml, "marc-to-html.xslt"),
-                RightBibXml = MarcXmlRenderer.TransformFile(rightBibXml, "marc-to-html.xslt")
+                RightBibXml = MarcXmlRenderer.TransformFile(rightBibXml, "marc-to-html.xslt"),
+                ReturnUrl = returnUrl
             };
 
             return View(model);
