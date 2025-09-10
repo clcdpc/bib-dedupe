@@ -2,17 +2,32 @@ IF SCHEMA_ID('BibDedupe') IS NULL
     EXEC('CREATE SCHEMA BibDedupe');
 GO
 
+-- Drop programmable objects first so dependent tables can be removed
+IF OBJECT_ID('BibDedupe.MergePair','P') IS NOT NULL
+    DROP PROCEDURE BibDedupe.MergePair;
+GO
+IF OBJECT_ID('BibDedupe.KeepBoth','P') IS NOT NULL
+    DROP PROCEDURE BibDedupe.KeepBoth;
+GO
+IF OBJECT_ID('BibDedupe.Skip','P') IS NOT NULL
+    DROP PROCEDURE BibDedupe.Skip;
+GO
+IF OBJECT_ID('BibDedupe.GetPairs','IF') IS NOT NULL
+    DROP FUNCTION BibDedupe.GetPairs;
+GO
+
+-- Drop tables in foreign key order
 IF OBJECT_ID('BibDedupe.DecisionQueue','U') IS NOT NULL
     DROP TABLE BibDedupe.DecisionQueue;
 GO
 IF OBJECT_ID('BibDedupe.PairDecisions','U') IS NOT NULL
     DROP TABLE BibDedupe.PairDecisions;
 GO
-IF OBJECT_ID('BibDedupe.Actions','U') IS NOT NULL
-    DROP TABLE BibDedupe.Actions;
-GO
 IF OBJECT_ID('BibDedupe.Pairs','U') IS NOT NULL
     DROP TABLE BibDedupe.Pairs;
+GO
+IF OBJECT_ID('BibDedupe.Actions','U') IS NOT NULL
+    DROP TABLE BibDedupe.Actions;
 GO
 
 CREATE TABLE BibDedupe.Pairs (
@@ -54,10 +69,7 @@ CREATE TABLE BibDedupe.DecisionQueue (
 );
 GO
 
-IF OBJECT_ID('BibDedupe.GetPairs','IF') IS NOT NULL
-    DROP FUNCTION BibDedupe.GetPairs;
-GO
-CREATE FUNCTION BibDedupe.GetPairs (@Top INT = 1000)
+CREATE OR ALTER FUNCTION BibDedupe.GetPairs (@Top INT = 1000)
 RETURNS TABLE
 AS
 RETURN (
@@ -66,10 +78,7 @@ RETURN (
 );
 GO
 
-IF OBJECT_ID('BibDedupe.MergePair','P') IS NOT NULL
-    DROP PROCEDURE BibDedupe.MergePair;
-GO
-CREATE PROCEDURE BibDedupe.MergePair
+CREATE OR ALTER PROCEDURE BibDedupe.MergePair
     @KeepBibId INT,
     @DeleteBibId INT,
     @UserEmail NVARCHAR(256),
@@ -83,10 +92,7 @@ BEGIN
 END
 GO
 
-IF OBJECT_ID('BibDedupe.KeepBoth','P') IS NOT NULL
-    DROP PROCEDURE BibDedupe.KeepBoth;
-GO
-CREATE PROCEDURE BibDedupe.KeepBoth
+CREATE OR ALTER PROCEDURE BibDedupe.KeepBoth
     @LeftBibId INT,
     @RightBibId INT,
     @UserEmail NVARCHAR(256)
@@ -99,10 +105,7 @@ BEGIN
 END
 GO
 
-IF OBJECT_ID('BibDedupe.Skip','P') IS NOT NULL
-    DROP PROCEDURE BibDedupe.Skip;
-GO
-CREATE PROCEDURE BibDedupe.Skip
+CREATE OR ALTER PROCEDURE BibDedupe.Skip
     @LeftBibId INT,
     @RightBibId INT,
     @UserEmail NVARCHAR(256)
