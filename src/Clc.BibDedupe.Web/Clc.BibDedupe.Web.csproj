@@ -10,6 +10,8 @@
     <PackageReference Include="Clc.Polaris.Api" Version="3.1.2-alpha" />
     <PackageReference Include="Dapper" Version="2.0.123" />
     <PackageReference Include="Microsoft.Data.SqlClient" Version="5.1.0" />
+    <PackageReference Include="Microsoft.Identity.Web" Version="3.14.0" />
+    <PackageReference Include="Microsoft.Identity.Web.UI" Version="3.14.0" />
   </ItemGroup>
 
   <ItemGroup>

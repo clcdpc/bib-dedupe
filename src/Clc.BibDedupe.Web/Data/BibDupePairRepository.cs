@@ -21,6 +21,20 @@ namespace Clc.BibDedupe.Web.Data
             return await _db.QueryAsync<BibDupePair>(sql);
         }
 
+        public async Task<(IEnumerable<BibDupePair> Items, int TotalCount)> GetPagedAsync(int page, int pageSize)
+        {
+            const string sql = @"SELECT MatchType, MatchValue, LeftBibId, RightBibId
+FROM vwBibDupePairs
+ORDER BY LeftBibId, RightBibId
+OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY;
+SELECT COUNT(*) FROM vwBibDupePairs;";
+            var offset = (page - 1) * pageSize;
+            using var multi = await _db.QueryMultipleAsync(sql, new { Offset = offset, PageSize = pageSize });
+            var items = await multi.ReadAsync<BibDupePair>();
+            var total = await multi.ReadFirstAsync<int>();
+            return (items, total);
+        }
+
         public Task MergeAsync(int keepBibId, int deleteBibId, string userEmail) =>
             _db.ExecuteAsync(
                 "MergeBibPair",

@@ -125,7 +125,7 @@
           document.addEventListener('DOMContentLoaded', () => initTooltips(document));
         })();
     </script>
-    <style>
+<style>
         html, body {
             height: 100%;
             margin: 0;
@@ -308,8 +308,9 @@
                 }
 
     </style>
-<form id="token-form" method="post" asp-antiforgery="true" style="display:none"></form>
 <div class="page">
+    @await Html.PartialAsync("_Menu")
+    <form id="token-form" method="post" asp-antiforgery="true" style="display:none"></form>
             <div class="frames">
             <div class="frame" id="leftDiv">
                 @Html.Raw(Model.LeftBibXml)
@@ -350,6 +351,10 @@
                             },
                             body: body.toString()
                         });
+                        const badge = document.querySelector('.menu .badge');
+                        if (badge) {
+                            badge.textContent = (parseInt(badge.textContent || '0', 10) + 1).toString();
+                        }
                     } catch (err) {
                         console.error(err);
                     }

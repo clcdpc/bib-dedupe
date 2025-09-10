@@ -401,4 +401,7 @@ FodyWeavers.xsd
 
 
 [Cc]onfig/
+!src/Clc.BibDedupe.Web/Config/
+src/Clc.BibDedupe.Web/Config/settings*.json
+!src/Clc.BibDedupe.Web/Config/settings.json.template
 **/wwwroot/custom/image/*
