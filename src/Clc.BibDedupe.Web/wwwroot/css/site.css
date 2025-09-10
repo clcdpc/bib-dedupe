@@ -81,5 +81,6 @@ body {
     --bs-table-striped-bg: #2c3034;
     --bs-table-striped-color: #f8f9fa;
     --bs-table-border-color: #373b3e;
+    color: #f8f9fa;
   }
 }
