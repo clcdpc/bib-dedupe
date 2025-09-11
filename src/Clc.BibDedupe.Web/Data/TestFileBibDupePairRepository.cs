@@ -16,13 +16,19 @@ public class TestFileBibDupePairRepository : IBibDupePairRepository
         _pairCount = pairCount;
     }
 
-    private BibDupePair CreatePair() => new()
+    private BibDupePair CreatePair()
     {
-        MatchType = "Test",
-        MatchValue = "Test",
-        LeftBibId = Interlocked.Increment(ref _nextId),
-        RightBibId = Interlocked.Increment(ref _nextId)
-    };
+        var left = Interlocked.Increment(ref _nextId);
+        var right = Interlocked.Increment(ref _nextId);
+        return new BibDupePair
+        {
+            MatchType = "Test",
+            MatchValue = "Test",
+            LeftBibId = left,
+            RightBibId = right,
+            PrimaryMarcTomId = left
+        };
+    }
 
     private IEnumerable<BibDupePair> GeneratePairs(int count)
         => Enumerable.Range(0, count).Select(_ => CreatePair());

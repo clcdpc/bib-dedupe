@@ -29,6 +29,7 @@ public class SessionDecisionStore(IHttpContextAccessor accessor) : IDecisionStor
             existing.Action = decision.Action;
             existing.MatchType = decision.MatchType;
             existing.MatchValue = decision.MatchValue;
+            existing.PrimaryMarcTomId = decision.PrimaryMarcTomId;
         }
         else
         {

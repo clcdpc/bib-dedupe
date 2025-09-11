@@ -44,6 +44,7 @@ CREATE TABLE BibDedupe.Pairs (
     MatchValue NVARCHAR(256) NOT NULL,
     LeftBibId INT NOT NULL,
     RightBibId INT NOT NULL,
+    PrimaryMARCTOMID INT NOT NULL,
     CONSTRAINT PK_Pairs PRIMARY KEY (LeftBibId, RightBibId)
 );
 GO
@@ -82,7 +83,7 @@ CREATE OR ALTER FUNCTION BibDedupe.GetPairs (@Top INT = 1000)
 RETURNS TABLE
 AS
 RETURN (
-    SELECT TOP (@Top) MatchType, MatchValue, LeftBibId, RightBibId
+    SELECT TOP (@Top) MatchType, MatchValue, LeftBibId, RightBibId, PrimaryMARCTOMID
     FROM BibDedupe.Pairs
 );
 GO

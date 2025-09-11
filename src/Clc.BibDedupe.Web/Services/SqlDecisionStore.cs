@@ -29,7 +29,7 @@ public class SqlDecisionStore(IDbConnection db) : IDecisionStore
 
     public async Task<IEnumerable<DecisionItem>> GetAllAsync(string userId) =>
         await _db.QueryAsync<DecisionItem>(
-            $@"SELECT d.LeftBibId, d.RightBibId, d.ActionId AS Action, p.MatchType, p.MatchValue
+            $@"SELECT d.LeftBibId, d.RightBibId, d.ActionId AS Action, p.MatchType, p.MatchValue, p.PrimaryMARCTOMID AS PrimaryMarcTomId
                FROM {Table} d
                JOIN BibDedupe.GetPairs(DEFAULT) p ON d.LeftBibId = p.LeftBibId AND d.RightBibId = p.RightBibId
                WHERE d.UserEmail = @UserEmail",

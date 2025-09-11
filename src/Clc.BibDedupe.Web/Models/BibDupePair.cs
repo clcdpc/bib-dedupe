@@ -6,5 +6,6 @@ namespace Clc.BibDedupe.Web.Models
         public string MatchValue { get; set; } = string.Empty;
         public int LeftBibId { get; set; }
         public int RightBibId { get; set; }
+        public int PrimaryMarcTomId { get; set; }
     }
 }

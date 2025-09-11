@@ -65,6 +65,7 @@ namespace Clc.BibDedupe.Web.Controllers
                 RightBibId = rightBibId,
                 MatchType = pair?.MatchType ?? string.Empty,
                 MatchValue = pair?.MatchValue ?? string.Empty,
+                PrimaryMarcTomId = pair?.PrimaryMarcTomId ?? 0,
                 Action = parsed
             };
             await decisionStore.AddAsync(userEmail, decision);
