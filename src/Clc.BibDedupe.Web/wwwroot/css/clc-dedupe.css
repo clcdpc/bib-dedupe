@@ -23,9 +23,41 @@ html, body {
         width: 100%;
         height: 100%;
         background: var(--bg);
-        overflow: auto;
         box-sizing: border-box;
         border: 1px solid var(--frame-border);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+    .frame .tab-bar {
+        display: flex;
+        border-bottom: 1px solid var(--frame-border);
+    }
+
+    .frame .tab-bar button {
+        flex: 1 1 auto;
+        padding: 4px 8px;
+        border: none;
+        background: var(--bg);
+        cursor: pointer;
+        font: inherit;
+        border-bottom: 2px solid transparent;
+    }
+
+    .frame .tab-bar button.active {
+        border-bottom-color: #3b82f6;
+        font-weight: 600;
+    }
+
+    .frame .tab-pane {
+        flex: 1 1 auto;
+        overflow: auto;
+        display: none;
+    }
+
+    .frame .tab-pane.active {
+        display: block;
     }
 
 .controls {
