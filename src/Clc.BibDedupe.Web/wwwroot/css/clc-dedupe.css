@@ -23,10 +23,47 @@ html, body {
         width: 100%;
         height: 100%;
         background: var(--bg);
-        overflow: auto;
         box-sizing: border-box;
         border: 1px solid var(--frame-border);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
     }
+
+        .frame .tab-buttons {
+            display: flex;
+            margin: 0;
+            padding: 0;
+            border-bottom: 1px solid var(--frame-border);
+        }
+
+            .frame .tab-buttons .tab-button {
+                flex: 1 1 auto;
+                padding: 4px 8px;
+                background: var(--grid);
+                border: none;
+                border-right: 1px solid var(--frame-border);
+                cursor: pointer;
+            }
+
+            .frame .tab-buttons .tab-button:last-child {
+                border-right: 0;
+            }
+
+            .frame .tab-buttons .tab-button.active {
+                background: var(--bg);
+                font-weight: 700;
+            }
+
+        .frame .tab-pane {
+            flex: 1 1 auto;
+            overflow: auto;
+            display: none;
+        }
+
+        .frame .tab-pane.active {
+            display: block;
+        }
 
 .controls {
     display: flex;

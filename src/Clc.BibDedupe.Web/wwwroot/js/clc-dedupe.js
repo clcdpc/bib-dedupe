@@ -240,8 +240,26 @@
         });
     }
 
+    function initTabs() {
+        document.querySelectorAll('.frame').forEach(frame => {
+            const buttons = frame.querySelectorAll('.tab-buttons .tab-button');
+            const panes = frame.querySelectorAll('.tab-pane');
+            buttons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const target = btn.dataset.tab;
+                    buttons.forEach(b => b.classList.toggle('active', b === btn));
+                    panes.forEach(p => p.classList.toggle('active', p.dataset.tab === target));
+                    if (target.endsWith('marc')) {
+                        syncRowHeights();
+                    }
+                });
+            });
+        });
+    }
+
     alignTables();
     bindScrollSync(leftDiv, rightDiv);
     bindScrollSync(rightDiv, leftDiv);
     window.addEventListener('resize', syncRowHeights);
+    initTabs();
 })();
