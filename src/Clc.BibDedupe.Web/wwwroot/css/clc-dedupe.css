@@ -39,9 +39,9 @@ html, body {
         flex: 0 0 auto;
         width: 170px;
         padding: 4px 20px;
-        border: 1px solid #9ec5fe;
-        background: #cfe2ff;
-        color: #084298;
+        border: 1px solid #6ea8fe;
+        background: #9ec5fe;
+        color: #052c65;
         cursor: pointer;
         font: inherit;
         border-radius: 4px;
@@ -51,13 +51,13 @@ html, body {
     }
 
         .controls button:hover {
-            background: #9ec5fe;
-            color: #052c65;
+            background: #6ea8fe;
+            color: #041f4a;
         }
 
         .controls button:active {
-            background: #9ec5fe;
-            color: #052c65;
+            background: #6ea8fe;
+            color: #041f4a;
             transform: translateY(1px);
         }
 
@@ -85,19 +85,19 @@ html, body {
     }
 
     .controls button {
-        border-color: #2563eb;
-        background: #3b82f6;
-        color: #f8f9fa;
+        border-color: #3b82f6;
+        background: #60a5fa;
+        color: #172554;
     }
 
         .controls button:hover {
-            background: #60a5fa;
-            color: #ffffff;
+            background: #93c5fd;
+            color: #1e3a8a;
         }
 
         .controls button:active {
-            background: #2563eb;
-            color: #ffffff;
+            background: #3b82f6;
+            color: #f8f9fa;
         }
 }
 
