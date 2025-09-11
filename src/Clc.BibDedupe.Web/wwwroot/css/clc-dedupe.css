@@ -44,6 +44,7 @@ html, body {
                 border: none;
                 border-right: 1px solid var(--frame-border);
                 cursor: pointer;
+                color: var(--val);
             }
 
             .frame .tab-buttons .tab-button:last-child {
@@ -53,6 +54,7 @@ html, body {
             .frame .tab-buttons .tab-button.active {
                 background: var(--bg);
                 font-weight: 700;
+                color: var(--val);
             }
 
         .frame .tab-pane {
