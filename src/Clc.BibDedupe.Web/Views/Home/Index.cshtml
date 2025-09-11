@@ -1,5 +1,3 @@
-@using Clc.BibDedupe.Web.Models
-@model IndexViewModel
 @{
     Layout = null;
 }
@@ -7,48 +5,13 @@
 <html lang="en">
 <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Log in</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/css/clc-dedupe.css" asp-append-version="true" />
 </head>
 <body>
-<div class="page" data-resolve-url="@Url.Action("Resolve")" data-left-bib-id="@Model.LeftBibId" data-right-bib-id="@Model.RightBibId" data-return-url="@Model.ReturnUrl">
-    @await Html.PartialAsync("_Menu")
-    <form id="token-form" method="post" asp-antiforgery="true" style="display:none"></form>
-    <div class="frames">
-        <div class="frame">
-            <div class="tab-buttons">
-                <button class="tab-button active" type="button" data-tab="left-marc">MARC</button>
-                <button class="tab-button" type="button" data-tab="left-items">Items</button>
-            </div>
-            <div class="tab-pane active" id="leftDiv" data-tab="left-marc">
-                @Html.Raw(Model.LeftBibXml)
-            </div>
-            <div class="tab-pane" id="leftItems" data-tab="left-items">
-                @await Html.PartialAsync("_ItemsTable", new ItemsTableViewModel { Items = Model.LeftItems, Fields = Model.ItemFields })
-            </div>
-        </div>
-        <div class="frame">
-            <div class="tab-buttons">
-                <button class="tab-button active" type="button" data-tab="right-marc">MARC</button>
-                <button class="tab-button" type="button" data-tab="right-items">Items</button>
-            </div>
-            <div class="tab-pane active" id="rightDiv" data-tab="right-marc">
-                @Html.Raw(Model.RightBibXml)
-            </div>
-            <div class="tab-pane" id="rightItems" data-tab="right-items">
-                @await Html.PartialAsync("_ItemsTable", new ItemsTableViewModel { Items = Model.RightItems, Fields = Model.ItemFields })
-            </div>
-        </div>
+    <div class="text-center mt-5">
+        <a asp-controller="Pairs" asp-action="Index" class="btn btn-primary">Log in</a>
     </div>
-    <div class="controls">
-        <button data-action="@nameof(BibDupePairAction.KeepLeft)" type="button">⬅️ Keep Left</button>
-        <button data-action="@nameof(BibDupePairAction.KeepBoth)" type="button">↔️ Keep Both</button>
-        <button data-action="@nameof(BibDupePairAction.Skip)" type="button">⏭️ Skip</button>
-        <button data-action="@nameof(BibDupePairAction.KeepRight)" type="button">➡️ Keep Right</button>
-    </div>
-</div>
-<script src="~/js/clc-dedupe.js" asp-append-version="true"></script>
 </body>
 </html>
-

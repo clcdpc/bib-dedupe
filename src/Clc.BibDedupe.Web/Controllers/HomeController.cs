@@ -14,7 +14,17 @@ namespace Clc.BibDedupe.Web.Controllers
     [Authorize]
     public class HomeController(ILogger<HomeController> logger, IRecordLoader loader, IBibDupePairRepository repository, IDecisionStore decisionStore) : Controller
     {
-        public async Task<IActionResult> Index(int? leftBibId, int? rightBibId, string? returnUrl)
+        [AllowAnonymous]
+        public IActionResult Index()
+        {
+            if (User.Identity?.IsAuthenticated == true)
+            {
+                return RedirectToAction("Index", "Pairs");
+            }
+            return View();
+        }
+
+        public async Task<IActionResult> Review(int? leftBibId, int? rightBibId, string? returnUrl)
         {
             BibDupePair? pair;
             if (leftBibId is null || rightBibId is null)
