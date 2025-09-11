@@ -35,14 +35,14 @@ body {
   border-radius: 0.25rem;
   color: #084298;
   text-decoration: none;
-  background-color: #cfe2ff;
-  border: 1px solid #b6d4fe;
+  background-color: #e7f1ff;
+  border: 1px solid #c9ddff;
   transition: background-color 0.15s ease-in-out, color 0.15s ease-in-out;
 }
 
 .menu a:hover,
 .menu a:focus {
-  background-color: #b6d4fe;
+  background-color: #d0e5ff;
   color: #06357a;
   text-decoration: none;
 }
@@ -61,7 +61,7 @@ body {
 }
 
 .menu .badge {
-  background-color: #0d6efd;
+  background-color: #3d8bfd;
   color: #fff;
   border-radius: 0.5rem;
   padding: 0 0.4rem;
@@ -98,13 +98,13 @@ body {
 
   .menu a {
     color: #ffffff;
-    background-color: #0d6efd;
-    border: 1px solid #0a58ca;
+    background-color: #3d8bfd;
+    border: 1px solid #0d6efd;
   }
 
   .menu a:hover,
   .menu a:focus {
-    background-color: #0b5ed7;
+    background-color: #0d6efd;
     color: #ffffff;
   }
 
