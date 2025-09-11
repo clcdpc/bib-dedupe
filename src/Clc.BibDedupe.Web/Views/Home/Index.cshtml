@@ -8,6 +8,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/clc-dedupe.css" asp-append-version="true" />
 </head>
@@ -16,11 +17,41 @@
     @await Html.PartialAsync("_Menu")
     <form id="token-form" method="post" asp-antiforgery="true" style="display:none"></form>
     <div class="frames">
-        <div class="frame" id="leftDiv">
-            @Html.Raw(Model.LeftBibXml)
+        <div class="frame">
+            <ul class="nav nav-tabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#leftDiv" type="button" role="tab">MARC</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#leftItems" type="button" role="tab">Items</button>
+                </li>
+            </ul>
+            <div class="tab-content">
+                <div class="tab-pane fade show active" id="leftDiv" role="tabpanel">
+                    @Html.Raw(Model.LeftBibXml)
+                </div>
+                <div class="tab-pane fade" id="leftItems" role="tabpanel">
+                    <!-- Items view placeholder -->
+                </div>
+            </div>
         </div>
-        <div class="frame" id="rightDiv">
-            @Html.Raw(Model.RightBibXml)
+        <div class="frame">
+            <ul class="nav nav-tabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#rightDiv" type="button" role="tab">MARC</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#rightItems" type="button" role="tab">Items</button>
+                </li>
+            </ul>
+            <div class="tab-content">
+                <div class="tab-pane fade show active" id="rightDiv" role="tabpanel">
+                    @Html.Raw(Model.RightBibXml)
+                </div>
+                <div class="tab-pane fade" id="rightItems" role="tabpanel">
+                    <!-- Items view placeholder -->
+                </div>
+            </div>
         </div>
     </div>
     <div class="controls">
@@ -30,6 +61,7 @@
         <button data-action="@nameof(BibDupePairAction.KeepRight)" type="button">➡️ Keep Right</button>
     </div>
 </div>
+<script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
 <script src="~/js/clc-dedupe.js" asp-append-version="true"></script>
 </body>
 </html>
