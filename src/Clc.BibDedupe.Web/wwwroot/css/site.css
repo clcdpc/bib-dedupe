@@ -77,16 +77,16 @@ body {
   padding: 0.25rem 0.75rem;
   border-radius: 0.25rem;
   color: #084298;
-  background-color: #cfe2ff;
-  border: 1px solid #9ec5fe;
+  background-color: #e7f1ff;
+  border: 1px solid #c5d9ff;
   text-decoration: none;
   transition: background-color 0.15s ease-in-out, color 0.15s ease-in-out;
 }
 
 .pager .btn:hover,
 .pager .btn:focus {
-  background-color: #9ec5fe;
-  color: #052c65;
+  background-color: #d0e3ff;
+  color: #06357a;
   text-decoration: none;
 }
 
@@ -150,15 +150,15 @@ body {
   }
 
   .pager .btn {
-    color: #f8f9fa;
-    background-color: #3b82f6;
-    border: 1px solid #2563eb;
+    color: #1e3a8a;
+    background-color: #60a5fa;
+    border: 1px solid #3b82f6;
   }
 
   .pager .btn:hover,
   .pager .btn:focus {
-    background-color: #60a5fa;
-    color: #ffffff;
+    background-color: #93c5fd;
+    color: #172554;
   }
 
   .navbar-toggler {
