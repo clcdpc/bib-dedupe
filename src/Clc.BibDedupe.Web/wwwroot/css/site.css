@@ -97,28 +97,33 @@ body {
   }
 
   .menu a {
-    color: #1e3a8a;
-    background-color: #93c5fd;
-    border: 1px solid #60a5fa;
+    color: #f8f9fa;
+    background-color: #1d4ed8;
+    border: 1px solid #1e40af;
   }
 
   .menu a:hover,
   .menu a:focus {
-    background-color: #60a5fa;
-    color: #1e3a8a;
+    background-color: #2563eb;
+    color: #ffffff;
   }
 
   .menu a.signout {
     margin-left: auto;
-    background-color: #fca5a5;
-    color: #58151c;
-    border-color: #f87171;
+    background-color: #dc2626;
+    color: #f8f9fa;
+    border-color: #b91c1c;
   }
 
   .menu a.signout:hover,
   .menu a.signout:focus {
-    background-color: #f87171;
-    color: #58151c;
+    background-color: #ef4444;
+    color: #ffffff;
+  }
+
+  .menu .badge {
+    background-color: #2563eb;
+    color: #f8f9fa;
   }
 
   .navbar-toggler {
