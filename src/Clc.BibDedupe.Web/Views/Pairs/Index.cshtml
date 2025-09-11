@@ -51,8 +51,14 @@
 </table>
 <div class="d-flex justify-content-between">
     <div>Page @Model.Page of @Model.TotalPages</div>
-    <div>
-        @if(Model.Page>1){<a class="btn btn-secondary btn-sm" asp-action="Index" asp-route-page="@(Model.Page-1)" asp-route-pageSize="@Model.PageSize">Prev</a>}
-        @if(Model.Page<Model.TotalPages){<a class="btn btn-secondary btn-sm" asp-action="Index" asp-route-page="@(Model.Page+1)" asp-route-pageSize="@Model.PageSize">Next</a>}
+    <div class="pager">
+        @if (Model.Page > 1)
+        {
+            <a class="btn btn-sm" asp-action="Index" asp-route-page="@(Model.Page - 1)" asp-route-pageSize="@Model.PageSize">Prev</a>
+        }
+        @if (Model.Page < Model.TotalPages)
+        {
+            <a class="btn btn-sm" asp-action="Index" asp-route-page="@(Model.Page + 1)" asp-route-pageSize="@Model.PageSize">Next</a>
+        }
     </div>
 </div>
