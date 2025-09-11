@@ -22,14 +22,25 @@ body {
 }
 
 .menu {
-  background-color: #e9ecef;
-  padding: 0.5rem;
+  background-color: #f8f9fa;
+  padding: 0.5rem 1rem;
   margin-bottom: 1rem;
+  display: flex;
+  gap: 0.5rem;
+  border-bottom: 1px solid #dee2e6;
 }
 
 .menu a {
-  margin-right: 1rem;
+  color: #0d6efd;
   text-decoration: none;
+  padding: 0.25rem 0.75rem;
+  border-radius: 0.25rem;
+  font-weight: 500;
+}
+
+.menu a:hover,
+.menu a:focus {
+  background-color: rgba(13, 110, 253, 0.1);
 }
 
 .menu .badge {
@@ -82,5 +93,24 @@ body {
     --bs-table-striped-color: #f8f9fa;
     --bs-table-border-color: #373b3e;
     color: #f8f9fa;
+  }
+
+  .menu {
+    background-color: #272b30;
+    border-bottom: 1px solid #373b3e;
+  }
+
+  .menu a {
+    color: #0d6efd;
+  }
+
+  .menu a:hover,
+  .menu a:focus {
+    background-color: rgba(13, 110, 253, 0.2);
+  }
+
+  .menu .badge {
+    background-color: #0d6efd;
+    color: #fff;
   }
 }
