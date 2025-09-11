@@ -35,14 +35,14 @@ body {
   border-radius: 0.25rem;
   color: #084298;
   text-decoration: none;
-  background-color: #e7f1ff;
-  border: 1px solid #c9ddff;
+  background-color: #87ceeb;
+  border: 1px solid #6cb8e6;
   transition: background-color 0.15s ease-in-out, color 0.15s ease-in-out;
 }
 
 .menu a:hover,
 .menu a:focus {
-  background-color: #d0e5ff;
+  background-color: #6cb8e6;
   color: #06357a;
   text-decoration: none;
 }
@@ -98,13 +98,13 @@ body {
 
   .menu a {
     color: #ffffff;
-    background-color: #3d8bfd;
-    border: 1px solid #0d6efd;
+    background-color: #0ea5e9;
+    border: 1px solid #0284c7;
   }
 
   .menu a:hover,
   .menu a:focus {
-    background-color: #0d6efd;
+    background-color: #0284c7;
     color: #ffffff;
   }
 
