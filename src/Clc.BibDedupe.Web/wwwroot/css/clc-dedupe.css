@@ -140,6 +140,31 @@ html, body {
         }
 }
 
+.items-table {
+    border-collapse: collapse;
+    width: 100%;
+    table-layout: fixed;
+    background: var(--bg);
+    font-size: 13px;
+}
+
+    .items-table th,
+    .items-table td {
+        border: 1px solid var(--grid);
+        padding: 2px 4px;
+        line-height: 1.2;
+        vertical-align: top;
+    }
+
+    .items-table th {
+        text-align: left;
+        font-weight: 700;
+        background: var(--grid);
+        color: var(--val);
+        position: sticky;
+        top: 0;
+    }
+
 .marc-table {
     border-collapse: collapse;
     table-layout: fixed;
