@@ -77,15 +77,15 @@ body {
   padding: 0.25rem 0.75rem;
   border-radius: 0.25rem;
   color: #084298;
-  background-color: #e7f1ff;
-  border: 1px solid #c5d9ff;
+  background-color: #f5f9ff;
+  border: 1px solid #d4e4ff;
   text-decoration: none;
   transition: background-color 0.15s ease-in-out, color 0.15s ease-in-out;
 }
 
 .pager .btn:hover,
 .pager .btn:focus {
-  background-color: #d0e3ff;
+  background-color: #e6f0ff;
   color: #06357a;
   text-decoration: none;
 }
@@ -151,13 +151,13 @@ body {
 
   .pager .btn {
     color: #1e3a8a;
-    background-color: #60a5fa;
-    border: 1px solid #3b82f6;
+    background-color: #93c5fd;
+    border: 1px solid #60a5fa;
   }
 
   .pager .btn:hover,
   .pager .btn:focus {
-    background-color: #93c5fd;
+    background-color: #bfdbfe;
     color: #172554;
   }
 
