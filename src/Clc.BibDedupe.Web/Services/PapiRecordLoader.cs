@@ -21,7 +21,7 @@ public class PapiRecordLoader(IPapiClient papi) : IRecordLoader
             var rows = resp.Data?.BibHoldingsGetRows ?? Enumerable.Empty<BibHoldingsGetRow>();
             return rows.Select(r => new Dictionary<string, string>
             {
-                ["Location"] = r.LocationName ?? string.Empty,
+                ["AssignedBranch"] = r.LocationName ?? string.Empty,
                 ["Collection"] = r.CollectionName ?? string.Empty,
                 ["ShelfLocation"] = r.ShelfLocation ?? string.Empty,
                 ["CallNumber"] = r.CallNumber ?? string.Empty,

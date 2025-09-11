@@ -27,7 +27,7 @@ public class TestFileRecordLoader : IRecordLoader
             {
                 items.Add(new Dictionary<string, string>
                 {
-                    ["Location"] = $"Loc {rng.Next(1, 5)}",
+                    ["AssignedBranch"] = $"Branch {rng.Next(1, 5)}",
                     ["Collection"] = $"Coll {rng.Next(1, 3)}",
                     ["ShelfLocation"] = $"Shelf {rng.Next(1, 20)}",
                     ["CallNumber"] = $"CN{rng.Next(100, 999)}",

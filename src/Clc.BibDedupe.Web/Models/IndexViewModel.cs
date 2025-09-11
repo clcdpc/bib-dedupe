@@ -12,9 +12,9 @@ namespace Clc.BibDedupe.Web.Models
         public List<Dictionary<string, string>> RightItems { get; set; } = new();
         public List<ItemField> ItemFields { get; set; } = new()
         {
-            new("Location", "Location"),
+            new("AssignedBranch", "Assigned Branch"),
             new("Collection", "Collection"),
-            new("ShelfLocation", "Shelf"),
+            new("ShelfLocation", "Shelf Location"),
             new("CallNumber", "Call #"),
             new("CircStatus", "Status"),
             new("Barcode", "Barcode")

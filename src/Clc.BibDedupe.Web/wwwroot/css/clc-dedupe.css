@@ -110,6 +110,7 @@ html, body {
     --grid: #e5e7eb; /* borders */
     --bg: #ffffff; /* table bg */
     --frame-border: #d1d5db; /* frame border */
+    --stripe: #f3f4f6; /* row stripe bg */
 }
 
 @media (prefers-color-scheme: dark) {
@@ -121,6 +122,7 @@ html, body {
         --grid: #323639;
         --bg: #1b1e22;
         --frame-border: #4b5563;
+        --stripe: #262a2e;
     }
 
     .controls button {
@@ -147,6 +149,10 @@ html, body {
     background: var(--bg);
     font-size: 13px;
 }
+
+    .items-table tbody tr:nth-child(even) {
+        background: var(--stripe);
+    }
 
     .items-table th,
     .items-table td {
