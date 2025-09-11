@@ -16,11 +16,25 @@
     @await Html.PartialAsync("_Menu")
     <form id="token-form" method="post" asp-antiforgery="true" style="display:none"></form>
     <div class="frames">
-        <div class="frame" id="leftDiv">
-            @Html.Raw(Model.LeftBibXml)
+        <div class="frame">
+            <div class="tab-buttons">
+                <button class="tab-button active" type="button" data-tab="left-marc">MARC</button>
+                <button class="tab-button" type="button" data-tab="left-items">Items</button>
+            </div>
+            <div class="tab-pane active" id="leftDiv" data-tab="left-marc">
+                @Html.Raw(Model.LeftBibXml)
+            </div>
+            <div class="tab-pane" id="leftItems" data-tab="left-items"></div>
         </div>
-        <div class="frame" id="rightDiv">
-            @Html.Raw(Model.RightBibXml)
+        <div class="frame">
+            <div class="tab-buttons">
+                <button class="tab-button active" type="button" data-tab="right-marc">MARC</button>
+                <button class="tab-button" type="button" data-tab="right-items">Items</button>
+            </div>
+            <div class="tab-pane active" id="rightDiv" data-tab="right-marc">
+                @Html.Raw(Model.RightBibXml)
+            </div>
+            <div class="tab-pane" id="rightItems" data-tab="right-items"></div>
         </div>
     </div>
     <div class="controls">
