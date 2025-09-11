@@ -33,36 +33,36 @@ body {
 .menu a {
   padding: 0.25rem 0.75rem;
   border-radius: 0.25rem;
-  color: #084298;
+  color: #1e3a8a;
   text-decoration: none;
-  background-color: #87ceeb;
-  border: 1px solid #6cb8e6;
+  background-color: #dbeafe;
+  border: 1px solid #bfdbfe;
   transition: background-color 0.15s ease-in-out, color 0.15s ease-in-out;
 }
 
 .menu a:hover,
 .menu a:focus {
-  background-color: #6cb8e6;
-  color: #06357a;
+  background-color: #bfdbfe;
+  color: #1e40af;
   text-decoration: none;
 }
 
 .menu a.signout {
   margin-left: auto;
-  background-color: #f8d7da;
-  color: #dc3545;
-  border-color: #f1aeb5;
+  background-color: #fde2e4;
+  color: #b02a37;
+  border-color: #fbb1bd;
 }
 
 .menu a.signout:hover,
 .menu a.signout:focus {
-  background-color: #f1aeb5;
-  color: #b02a37;
+  background-color: #fbb1bd;
+  color: #842029;
 }
 
 .menu .badge {
-  background-color: #3d8bfd;
-  color: #fff;
+  background-color: #9ec5fe;
+  color: #1e3a8a;
   border-radius: 0.5rem;
   padding: 0 0.4rem;
 }
@@ -97,28 +97,28 @@ body {
   }
 
   .menu a {
-    color: #ffffff;
-    background-color: #0ea5e9;
-    border: 1px solid #0284c7;
+    color: #1e3a8a;
+    background-color: #93c5fd;
+    border: 1px solid #60a5fa;
   }
 
   .menu a:hover,
   .menu a:focus {
-    background-color: #0284c7;
-    color: #ffffff;
+    background-color: #60a5fa;
+    color: #1e3a8a;
   }
 
   .menu a.signout {
     margin-left: auto;
-    background-color: #dc3545;
-    color: #ffffff;
-    border-color: #bb2d3b;
+    background-color: #fca5a5;
+    color: #58151c;
+    border-color: #f87171;
   }
 
   .menu a.signout:hover,
   .menu a.signout:focus {
-    background-color: #bb2d3b;
-    color: #ffffff;
+    background-color: #f87171;
+    color: #58151c;
   }
 
   .navbar-toggler {
