@@ -19,7 +19,14 @@ namespace Clc.BibDedupe.Web.Controllers
             BibDupePair? pair;
             if (leftBibId is null || rightBibId is null)
             {
-                pair = (await repository.GetAsync()).FirstOrDefault();
+                var userEmail = User.FindFirst(ClaimTypes.Email)?.Value ??
+                                User.FindFirst("preferred_username")?.Value ?? string.Empty;
+                var decidedPairs = (await decisionStore.GetAllAsync(userEmail))
+                    .Select(d => (d.LeftBibId, d.RightBibId))
+                    .ToHashSet();
+
+                pair = (await repository.GetAsync())
+                    .FirstOrDefault(p => !decidedPairs.Contains((p.LeftBibId, p.RightBibId)));
                 if (pair is null) return View(new IndexViewModel());
                 leftBibId = pair.LeftBibId;
                 rightBibId = pair.RightBibId;
