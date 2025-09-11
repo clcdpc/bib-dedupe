@@ -27,14 +27,14 @@ namespace Clc.BibDedupe.Web
 
             if (papiConfig is null)
             {
-                builder.Services.AddSingleton<IRecordXmlLoader, TestFileRecordXmlLoader>();
+                builder.Services.AddSingleton<IRecordLoader, TestFileRecordLoader>();
             }
             else
             {
                 builder.Services
                     .AddSingleton(papiConfig)
                     .AddSingleton<IPapiClient, PapiClient>()
-                    .AddSingleton<IRecordXmlLoader, PapiRecordXmlLoader>();
+                    .AddSingleton<IRecordLoader, PapiRecordLoader>();
             }
 
             var bibDedupeConn = builder.Configuration.GetConnectionString("BibDedupeDb");

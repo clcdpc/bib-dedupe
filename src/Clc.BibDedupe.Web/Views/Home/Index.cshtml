@@ -24,7 +24,9 @@
             <div class="tab-pane active" id="leftDiv" data-tab="left-marc">
                 @Html.Raw(Model.LeftBibXml)
             </div>
-            <div class="tab-pane" id="leftItems" data-tab="left-items"></div>
+            <div class="tab-pane" id="leftItems" data-tab="left-items">
+                @await Html.PartialAsync("_ItemsTable", new ItemsTableViewModel { Items = Model.LeftItems, Fields = Model.ItemFields })
+            </div>
         </div>
         <div class="frame">
             <div class="tab-buttons">
@@ -34,7 +36,9 @@
             <div class="tab-pane active" id="rightDiv" data-tab="right-marc">
                 @Html.Raw(Model.RightBibXml)
             </div>
-            <div class="tab-pane" id="rightItems" data-tab="right-items"></div>
+            <div class="tab-pane" id="rightItems" data-tab="right-items">
+                @await Html.PartialAsync("_ItemsTable", new ItemsTableViewModel { Items = Model.RightItems, Fields = Model.ItemFields })
+            </div>
         </div>
     </div>
     <div class="controls">

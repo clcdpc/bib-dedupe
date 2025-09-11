@@ -1,0 +1,22 @@
+@model ItemsTableViewModel
+<table class="table table-sm table-striped">
+    <thead>
+        <tr>
+        @foreach (var field in Model.Fields)
+        {
+            <th>@field.Label</th>
+        }
+        </tr>
+    </thead>
+    <tbody>
+    @foreach (var item in Model.Items)
+    {
+        <tr>
+        @foreach (var field in Model.Fields)
+        {
+            <td>@(item.TryGetValue(field.Key, out var v) ? v : "")</td>
+        }
+        </tr>
+    }
+    </tbody>
+</table>

@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 namespace Clc.BibDedupe.Web.Controllers
 {
     [Authorize]
-    public class HomeController(ILogger<HomeController> logger, IRecordXmlLoader loader, IBibDupePairRepository repository, IDecisionStore decisionStore) : Controller
+    public class HomeController(ILogger<HomeController> logger, IRecordLoader loader, IBibDupePairRepository repository, IDecisionStore decisionStore) : Controller
     {
         public async Task<IActionResult> Index(int? leftBibId, int? rightBibId, string? returnUrl)
         {
@@ -36,14 +36,16 @@ namespace Clc.BibDedupe.Web.Controllers
                 pair = (await repository.GetAsync()).FirstOrDefault(p => p.LeftBibId == leftBibId && p.RightBibId == rightBibId);
             }
 
-            var (leftBibXml, rightBibXml) = await loader.LoadAsync(leftBibId.Value, rightBibId.Value);
+            var (left, right) = await loader.LoadAsync(leftBibId.Value, rightBibId.Value);
 
             var model = new IndexViewModel
             {
                 LeftBibId = leftBibId.Value,
                 RightBibId = rightBibId.Value,
-                LeftBibXml = MarcXmlRenderer.TransformFile(leftBibXml, "marc-to-html.xslt"),
-                RightBibXml = MarcXmlRenderer.TransformFile(rightBibXml, "marc-to-html.xslt"),
+                LeftBibXml = MarcXmlRenderer.TransformFile(left.BibXml, "marc-to-html.xslt"),
+                RightBibXml = MarcXmlRenderer.TransformFile(right.BibXml, "marc-to-html.xslt"),
+                LeftItems = left.Items,
+                RightItems = right.Items,
                 LeftTitle = pair?.LeftTitle ?? string.Empty,
                 LeftAuthor = pair?.LeftAuthor ?? string.Empty,
                 RightTitle = pair?.RightTitle ?? string.Empty,
