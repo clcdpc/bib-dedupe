@@ -68,6 +68,28 @@ body {
   padding: 0 0.4rem;
 }
 
+.pager {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.pager .btn {
+  padding: 0.25rem 0.75rem;
+  border-radius: 0.25rem;
+  color: #084298;
+  background-color: #cfe2ff;
+  border: 1px solid #9ec5fe;
+  text-decoration: none;
+  transition: background-color 0.15s ease-in-out, color 0.15s ease-in-out;
+}
+
+.pager .btn:hover,
+.pager .btn:focus {
+  background-color: #9ec5fe;
+  color: #052c65;
+  text-decoration: none;
+}
+
 .navbar {
   background-color: #fff;
 }
@@ -125,6 +147,18 @@ body {
   .menu .badge {
     background-color: #3b82f6;
     color: #f8f9fa;
+  }
+
+  .pager .btn {
+    color: #f8f9fa;
+    background-color: #3b82f6;
+    border: 1px solid #2563eb;
+  }
+
+  .pager .btn:hover,
+  .pager .btn:focus {
+    background-color: #60a5fa;
+    color: #ffffff;
   }
 
   .navbar-toggler {
