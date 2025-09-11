@@ -62,8 +62,9 @@ body {
 }
 
 .menu .badge {
-  background-color: #9ec5fe;
-  color: #084298;
+  background-color: #ffe69c;
+  color: #664d03;
+  border: 1px solid #ffda6a;
   border-radius: 0.5rem;
   padding: 0 0.4rem;
 }
@@ -145,8 +146,9 @@ body {
   }
 
   .menu .badge {
-    background-color: #3b82f6;
-    color: #f8f9fa;
+    background-color: #facc15;
+    color: #1f2937;
+    border: 1px solid #eab308;
   }
 
   .pager .btn {
