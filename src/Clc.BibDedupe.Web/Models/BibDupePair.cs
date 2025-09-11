@@ -2,6 +2,7 @@ namespace Clc.BibDedupe.Web.Models
 {
     public class BibDupePair
     {
+        public int PairId { get; set; }
         public string MatchType { get; set; } = string.Empty;
         public string MatchValue { get; set; } = string.Empty;
         public int PrimaryMarcTomId { get; set; }

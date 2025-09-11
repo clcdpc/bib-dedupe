@@ -8,7 +8,8 @@ namespace Clc.BibDedupe.Web.Data;
 
 public class TestFileBibDupePairRepository : IBibDupePairRepository
 {
-    private int _nextId;
+    private int _nextPairId;
+    private int _nextBibId;
     private readonly int _pairCount;
 
     public TestFileBibDupePairRepository(int pairCount = 10)
@@ -18,10 +19,12 @@ public class TestFileBibDupePairRepository : IBibDupePairRepository
 
     private BibDupePair CreatePair()
     {
-        var left = Interlocked.Increment(ref _nextId);
-        var right = Interlocked.Increment(ref _nextId);
+        var pairId = Interlocked.Increment(ref _nextPairId);
+        var left = Interlocked.Increment(ref _nextBibId);
+        var right = Interlocked.Increment(ref _nextBibId);
         return new BibDupePair
         {
+            PairId = pairId,
             MatchType = "Test",
             MatchValue = "Test",
             LeftBibId = left,
