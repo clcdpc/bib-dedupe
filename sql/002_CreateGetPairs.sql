@@ -6,7 +6,7 @@ CREATE FUNCTION BibDedupe.GetPairs (@Top INT = 1000)
 RETURNS TABLE
 AS
 RETURN (
-    SELECT TOP (@Top) MatchType, MatchValue, LeftBibId, RightBibId, PrimaryMARCTOMID
+    SELECT TOP (@Top) MatchType, MatchValue, PrimaryMARCTOMID, LeftBibId, RightBibId
     FROM BibDedupe.Pairs
 );
 GO
