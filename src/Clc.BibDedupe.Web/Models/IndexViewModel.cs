@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace Clc.BibDedupe.Web.Models
 {
     public class IndexViewModel
@@ -6,6 +8,17 @@ namespace Clc.BibDedupe.Web.Models
         public int RightBibId { get; set; }
         public string LeftBibXml { get; set; } = string.Empty;
         public string RightBibXml { get; set; } = string.Empty;
+        public List<Dictionary<string, string>> LeftItems { get; set; } = new();
+        public List<Dictionary<string, string>> RightItems { get; set; } = new();
+        public List<ItemField> ItemFields { get; set; } = new()
+        {
+            new("AssignedBranch", "Assigned Branch"),
+            new("Collection", "Collection"),
+            new("ShelfLocation", "Shelf Location"),
+            new("CallNumber", "Call #"),
+            new("CircStatus", "Status"),
+            new("Barcode", "Barcode")
+        };
         public string LeftTitle { get; set; } = string.Empty;
         public string LeftAuthor { get; set; } = string.Empty;
         public string RightTitle { get; set; } = string.Empty;
