@@ -29,7 +29,11 @@ public class TestFileBibDupePairRepository : IBibDupePairRepository
             MatchValue = "Test",
             LeftBibId = left,
             RightBibId = right,
-            PrimaryMarcTomId = left
+            PrimaryMarcTomId = left,
+            LeftTitle = $"Left Title {left}",
+            LeftAuthor = $"Left Author {left}",
+            RightTitle = $"Right Title {right}",
+            RightAuthor = $"Right Author {right}"
         };
     }
 

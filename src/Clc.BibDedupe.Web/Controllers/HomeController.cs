@@ -16,12 +16,17 @@ namespace Clc.BibDedupe.Web.Controllers
     {
         public async Task<IActionResult> Index(int? leftBibId, int? rightBibId, string? returnUrl)
         {
+            BibDupePair? pair;
             if (leftBibId is null || rightBibId is null)
             {
-                var first = (await repository.GetAsync()).FirstOrDefault();
-                if (first is null) return View(new IndexViewModel());
-                leftBibId = first.LeftBibId;
-                rightBibId = first.RightBibId;
+                pair = (await repository.GetAsync()).FirstOrDefault();
+                if (pair is null) return View(new IndexViewModel());
+                leftBibId = pair.LeftBibId;
+                rightBibId = pair.RightBibId;
+            }
+            else
+            {
+                pair = (await repository.GetAsync()).FirstOrDefault(p => p.LeftBibId == leftBibId && p.RightBibId == rightBibId);
             }
 
             var (leftBibXml, rightBibXml) = await loader.LoadAsync(leftBibId.Value, rightBibId.Value);
@@ -32,6 +37,10 @@ namespace Clc.BibDedupe.Web.Controllers
                 RightBibId = rightBibId.Value,
                 LeftBibXml = MarcXmlRenderer.TransformFile(leftBibXml, "marc-to-html.xslt"),
                 RightBibXml = MarcXmlRenderer.TransformFile(rightBibXml, "marc-to-html.xslt"),
+                LeftTitle = pair?.LeftTitle ?? string.Empty,
+                LeftAuthor = pair?.LeftAuthor ?? string.Empty,
+                RightTitle = pair?.RightTitle ?? string.Empty,
+                RightAuthor = pair?.RightAuthor ?? string.Empty,
                 ReturnUrl = returnUrl
             };
 
@@ -66,6 +75,10 @@ namespace Clc.BibDedupe.Web.Controllers
                 MatchType = pair?.MatchType ?? string.Empty,
                 MatchValue = pair?.MatchValue ?? string.Empty,
                 PrimaryMarcTomId = pair?.PrimaryMarcTomId ?? 0,
+                LeftTitle = pair?.LeftTitle ?? string.Empty,
+                LeftAuthor = pair?.LeftAuthor ?? string.Empty,
+                RightTitle = pair?.RightTitle ?? string.Empty,
+                RightAuthor = pair?.RightAuthor ?? string.Empty,
                 Action = parsed
             };
             await decisionStore.AddAsync(userEmail, decision);

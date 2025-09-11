@@ -30,6 +30,10 @@ public class SessionDecisionStore(IHttpContextAccessor accessor) : IDecisionStor
             existing.MatchType = decision.MatchType;
             existing.MatchValue = decision.MatchValue;
             existing.PrimaryMarcTomId = decision.PrimaryMarcTomId;
+            existing.LeftTitle = decision.LeftTitle;
+            existing.LeftAuthor = decision.LeftAuthor;
+            existing.RightTitle = decision.RightTitle;
+            existing.RightAuthor = decision.RightAuthor;
         }
         else
         {
