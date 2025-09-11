@@ -22,13 +22,28 @@ body {
 }
 
 .menu {
-  background-color: #e9ecef;
-  padding: 0.5rem;
+  background-color: #f8f9fa;
+  padding: 0.5rem 1rem;
   margin-bottom: 1rem;
+  display: flex;
+  gap: 0.5rem;
+  border-bottom: 1px solid #dee2e6;
 }
 
 .menu a {
-  margin-right: 1rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 0.25rem;
+  color: #0d6efd;
+  text-decoration: none;
+  background-color: #e9ecef;
+  border: 1px solid #dee2e6;
+  transition: background-color 0.15s ease-in-out, color 0.15s ease-in-out;
+}
+
+.menu a:hover,
+.menu a:focus {
+  background-color: #d3d9df;
+  color: #0a58ca;
   text-decoration: none;
 }
 
@@ -60,6 +75,23 @@ body {
 
   .navbar .nav-link:hover,
   .navbar .nav-link:focus {
+    color: #ffffff;
+  }
+
+  .menu {
+    background-color: #272b30;
+    border-bottom: 1px solid #373b3e;
+  }
+
+  .menu a {
+    color: #f8f9fa;
+    background-color: #343a40;
+    border: 1px solid #495057;
+  }
+
+  .menu a:hover,
+  .menu a:focus {
+    background-color: #495057;
     color: #ffffff;
   }
 
