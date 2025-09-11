@@ -17,6 +17,10 @@ namespace Clc.BibDedupe.Web.Controllers
         [AllowAnonymous]
         public IActionResult Index()
         {
+            if (User.Identity?.IsAuthenticated == true)
+            {
+                return RedirectToAction("Index", "Pairs");
+            }
             return View();
         }
 

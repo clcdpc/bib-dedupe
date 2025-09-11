@@ -1,7 +1,17 @@
 @{
-    ViewData["Title"] = "Home";
+    Layout = null;
 }
-
-<div class="text-center">
-    <a asp-controller="Pairs" asp-action="Index" class="btn btn-primary">Log in</a>
-</div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>Log in</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body>
+    <div class="text-center mt-5">
+        <a asp-controller="Pairs" asp-action="Index" class="btn btn-primary">Log in</a>
+    </div>
+</body>
+</html>
