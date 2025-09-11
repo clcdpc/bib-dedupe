@@ -33,18 +33,31 @@ body {
 .menu a {
   padding: 0.25rem 0.75rem;
   border-radius: 0.25rem;
-  color: #0d6efd;
+  color: #084298;
   text-decoration: none;
-  background-color: #e9ecef;
-  border: 1px solid #dee2e6;
+  background-color: #cfe2ff;
+  border: 1px solid #b6d4fe;
   transition: background-color 0.15s ease-in-out, color 0.15s ease-in-out;
 }
 
 .menu a:hover,
 .menu a:focus {
-  background-color: #d3d9df;
-  color: #0a58ca;
+  background-color: #b6d4fe;
+  color: #06357a;
   text-decoration: none;
+}
+
+.menu a.signout {
+  margin-left: auto;
+  background-color: #f8d7da;
+  color: #dc3545;
+  border-color: #f1aeb5;
+}
+
+.menu a.signout:hover,
+.menu a.signout:focus {
+  background-color: #f1aeb5;
+  color: #b02a37;
 }
 
 .menu .badge {
@@ -84,14 +97,27 @@ body {
   }
 
   .menu a {
-    color: #f8f9fa;
-    background-color: #343a40;
-    border: 1px solid #495057;
+    color: #ffffff;
+    background-color: #0d6efd;
+    border: 1px solid #0a58ca;
   }
 
   .menu a:hover,
   .menu a:focus {
-    background-color: #495057;
+    background-color: #0b5ed7;
+    color: #ffffff;
+  }
+
+  .menu a.signout {
+    margin-left: auto;
+    background-color: #dc3545;
+    color: #ffffff;
+    border-color: #bb2d3b;
+  }
+
+  .menu a.signout:hover,
+  .menu a.signout:focus {
+    background-color: #bb2d3b;
     color: #ffffff;
   }
 
