@@ -245,3 +245,18 @@
     bindScrollSync(rightDiv, leftDiv);
     window.addEventListener('resize', syncRowHeights);
 })();
+
+(function () {
+    document.querySelectorAll('.frame .tabs button').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const frame = btn.closest('.frame');
+            frame.querySelectorAll('.tabs button').forEach(b => b.classList.remove('active'));
+            frame.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+            btn.classList.add('active');
+            const target = frame.querySelector('#' + btn.dataset.target);
+            if (target) {
+                target.classList.add('active');
+            }
+        });
+    });
+})();
