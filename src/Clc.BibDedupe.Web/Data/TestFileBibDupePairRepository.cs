@@ -8,7 +8,8 @@ namespace Clc.BibDedupe.Web.Data;
 
 public class TestFileBibDupePairRepository : IBibDupePairRepository
 {
-    private int _nextId;
+    private int _nextPairId;
+    private int _nextBibId;
     private readonly int _pairCount;
 
     public TestFileBibDupePairRepository(int pairCount = 10)
@@ -16,13 +17,25 @@ public class TestFileBibDupePairRepository : IBibDupePairRepository
         _pairCount = pairCount;
     }
 
-    private BibDupePair CreatePair() => new()
+    private BibDupePair CreatePair()
     {
-        MatchType = "Test",
-        MatchValue = "Test",
-        LeftBibId = Interlocked.Increment(ref _nextId),
-        RightBibId = Interlocked.Increment(ref _nextId)
-    };
+        var pairId = Interlocked.Increment(ref _nextPairId);
+        var left = Interlocked.Increment(ref _nextBibId);
+        var right = Interlocked.Increment(ref _nextBibId);
+        return new BibDupePair
+        {
+            PairId = pairId,
+            MatchType = "Test",
+            MatchValue = "Test",
+            LeftBibId = left,
+            RightBibId = right,
+            PrimaryMarcTomId = left,
+            LeftTitle = $"Left Title {left}",
+            LeftAuthor = $"Left Author {left}",
+            RightTitle = $"Right Title {right}",
+            RightAuthor = $"Right Author {right}"
+        };
+    }
 
     private IEnumerable<BibDupePair> GeneratePairs(int count)
         => Enumerable.Range(0, count).Select(_ => CreatePair());
@@ -44,7 +57,7 @@ public class TestFileBibDupePairRepository : IBibDupePairRepository
         return Task.FromResult((items, total));
     }
 
-    public Task MergeAsync(int keepBibId, int deleteBibId, string userEmail) => Task.CompletedTask;
+    public Task MergeAsync(int keepBibId, int deleteBibId, string userEmail, BibDupePairAction action) => Task.CompletedTask;
 
     public Task KeepBothAsync(int leftBibId, int rightBibId, string userEmail) => Task.CompletedTask;
 

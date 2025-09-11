@@ -7,7 +7,7 @@ namespace Clc.BibDedupe.Web.Services;
 public class SqlDecisionStore(IDbConnection db) : IDecisionStore
 {
     private readonly IDbConnection _db = db;
-    private const string Table = "DecisionQueue";
+    private const string Table = "BibDedupe.DecisionQueue";
 
     public async Task AddAsync(string userId, DecisionItem decision)
     {
@@ -16,24 +16,25 @@ public class SqlDecisionStore(IDbConnection db) : IDecisionStore
             UserEmail = userId,
             decision.LeftBibId,
             decision.RightBibId,
-            Action = (int)decision.Action
+            ActionId = (int)decision.Action
         };
 
-        var updated = await _db.ExecuteAsync($"UPDATE {Table} SET Action = @Action WHERE UserEmail = @UserEmail AND LeftBibId = @LeftBibId AND RightBibId = @RightBibId", parameters);
+        var updated = await _db.ExecuteAsync($"UPDATE {Table} SET ActionId = @ActionId WHERE UserEmail = @UserEmail AND LeftBibId = @LeftBibId AND RightBibId = @RightBibId", parameters);
 
         if (updated == 0)
         {
-            await _db.ExecuteAsync($"INSERT INTO {Table}(UserEmail, LeftBibId, RightBibId, Action) VALUES (@UserEmail, @LeftBibId, @RightBibId, @Action)", parameters);
+            await _db.ExecuteAsync($"INSERT INTO {Table}(UserEmail, LeftBibId, RightBibId, ActionId) VALUES (@UserEmail, @LeftBibId, @RightBibId, @ActionId)", parameters);
         }
     }
 
     public async Task<IEnumerable<DecisionItem>> GetAllAsync(string userId) =>
-        await _db.QueryAsync<DecisionItem>(
-            $@"SELECT d.LeftBibId, d.RightBibId, d.Action, p.MatchType, p.MatchValue
+            await _db.QueryAsync<DecisionItem>(
+                $@"SELECT d.LeftBibId, d.RightBibId, d.ActionId AS Action, p.MatchType, p.MatchValue, p.PrimaryMARCTOMID AS PrimaryMarcTomId,
+                      NULL AS LeftTitle, NULL AS LeftAuthor, NULL AS RightTitle, NULL AS RightAuthor
                FROM {Table} d
-               JOIN vwBibDupePairs p ON d.LeftBibId = p.LeftBibId AND d.RightBibId = p.RightBibId
+               JOIN BibDedupe.GetPairs(DEFAULT) p ON d.LeftBibId = p.LeftBibId AND d.RightBibId = p.RightBibId
                WHERE d.UserEmail = @UserEmail",
-            new { UserEmail = userId });
+                new { UserEmail = userId });
 
     public Task RemoveAsync(string userId, int leftBibId, int rightBibId) =>
         _db.ExecuteAsync($"DELETE FROM {Table} WHERE UserEmail = @UserEmail AND LeftBibId = @LeftBibId AND RightBibId = @RightBibId",

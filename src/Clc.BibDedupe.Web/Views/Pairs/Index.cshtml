@@ -1,10 +1,10 @@
 @using Clc.BibDedupe.Web.Models
 @model PairsListViewModel
 @{
-    ViewData["Title"] = "Dupe Pairs";
+    ViewData["Title"] = "Pairs";
 }
 
-<h1>Dupe Pairs</h1>
+<h1>Pairs</h1>
 <form class="row g-2 mb-3" method="get">
     <div class="col-auto">
         <label for="pageSize" class="col-form-label">Page Size:</label>
@@ -20,7 +20,11 @@
     <thead class="table-dark">
         <tr>
             <th>Left Bib</th>
+            <th>Left Title</th>
+            <th>Left Author</th>
             <th>Right Bib</th>
+            <th>Right Title</th>
+            <th>Right Author</th>
             <th>Match Type</th>
             <th>Match Value</th>
             <th>Review</th>
@@ -31,7 +35,11 @@
 {
         <tr>
             <td>@p.LeftBibId</td>
+            <td>@p.LeftTitle</td>
+            <td>@p.LeftAuthor</td>
             <td>@p.RightBibId</td>
+            <td>@p.RightTitle</td>
+            <td>@p.RightAuthor</td>
             <td>@p.MatchType</td>
             <td>@p.MatchValue</td>
             <td>
