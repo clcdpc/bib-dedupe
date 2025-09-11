@@ -50,15 +50,15 @@ body {
 
 .menu a.signout {
   margin-left: auto;
-  background-color: #ffe5e5;
-  color: #b02a37;
-  border-color: #ffb3c1;
+  background-color: #dc3545;
+  color: #ffffff;
+  border-color: #b02a37;
 }
 
 .menu a.signout:hover,
 .menu a.signout:focus {
-  background-color: #ffb3c1;
-  color: #842029;
+  background-color: #bb2d3b;
+  color: #ffffff;
 }
 
 .menu .badge {
@@ -111,14 +111,14 @@ body {
 
   .menu a.signout {
     margin-left: auto;
-    background-color: #f87171;
-    color: #f8f9fa;
-    border-color: #dc2626;
+    background-color: #dc2626;
+    color: #ffffff;
+    border-color: #b91c1c;
   }
 
   .menu a.signout:hover,
   .menu a.signout:focus {
-    background-color: #ef4444;
+    background-color: #b91c1c;
     color: #ffffff;
   }
 
