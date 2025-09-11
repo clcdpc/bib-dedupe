@@ -10,11 +10,11 @@ public class TestFileBibDupePairRepository : IBibDupePairRepository
 {
     private int _nextPairId;
     private int _nextBibId;
-    private readonly int _pairCount;
+    private readonly List<BibDupePair> _pairs;
 
     public TestFileBibDupePairRepository(int pairCount = 10)
     {
-        _pairCount = pairCount;
+        _pairs = GeneratePairs(pairCount).ToList();
     }
 
     private BibDupePair CreatePair()
@@ -41,11 +41,11 @@ public class TestFileBibDupePairRepository : IBibDupePairRepository
         => Enumerable.Range(0, count).Select(_ => CreatePair());
 
     public Task<IEnumerable<BibDupePair>> GetAsync()
-        => Task.FromResult(GeneratePairs(_pairCount));
+        => Task.FromResult<IEnumerable<BibDupePair>>(_pairs);
 
     public Task<(IEnumerable<BibDupePair> Items, int TotalCount)> GetPagedAsync(int page, int pageSize)
     {
-        var total = _pairCount;
+        var total = _pairs.Count;
         var skip = (page - 1) * pageSize;
         if (skip >= total)
         {
@@ -53,7 +53,7 @@ public class TestFileBibDupePairRepository : IBibDupePairRepository
         }
 
         var take = Math.Min(pageSize, total - skip);
-        var items = GeneratePairs(take);
+        var items = _pairs.Skip(skip).Take(take);
         return Task.FromResult((items, total));
     }
 

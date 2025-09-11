@@ -23,4 +23,20 @@ public class DecisionsController(IDecisionStore store) : Controller
         var returnUrl = Url.Action(nameof(Index));
         return RedirectToAction("Index", "Home", new { leftBibId, rightBibId, returnUrl });
     }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Remove(int leftBibId, int rightBibId)
+    {
+        var email = User.FindFirst(ClaimTypes.Email)?.Value ??
+                    User.FindFirst("preferred_username")?.Value ?? string.Empty;
+        await _store.RemoveAsync(email, leftBibId, rightBibId);
+
+        if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+        {
+            return Ok();
+        }
+
+        return RedirectToAction(nameof(Index));
+    }
 }
