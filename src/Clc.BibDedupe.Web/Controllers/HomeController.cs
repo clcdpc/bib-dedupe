@@ -18,14 +18,15 @@ namespace Clc.BibDedupe.Web.Controllers
         [AllowAnonymous]
         public IActionResult Index()
         {
-            if (User.Identity?.IsAuthenticated == true)
+            var message = HttpContext.Session.TakeAuthMessage();
+            if (User.Identity?.IsAuthenticated == true && string.IsNullOrEmpty(message))
             {
                 return RedirectToAction("Index", "Pairs");
             }
 
             var model = new HomeIndexViewModel
             {
-                Message = HttpContext.Session.TakeAuthMessage()
+                Message = message
             };
             return View(model);
         }
