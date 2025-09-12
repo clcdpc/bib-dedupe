@@ -62,7 +62,7 @@ namespace Clc.BibDedupe.Web
             }
             else
             {
-                builder.Services.AddScoped<IUserAuthorizationService, SqlUserAuthorizationService>();
+                builder.Services.AddSingleton<IUserAuthorizationService, SqlUserAuthorizationService>();
             }
 
             builder.Services
