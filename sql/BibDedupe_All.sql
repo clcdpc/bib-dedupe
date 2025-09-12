@@ -12,6 +12,9 @@ GO
 IF OBJECT_ID('BibDedupe.Skip','P') IS NOT NULL
     DROP PROCEDURE BibDedupe.Skip;
 GO
+IF OBJECT_ID('BibDedupe.IsAuthorizedUser','P') IS NOT NULL
+    DROP PROCEDURE BibDedupe.IsAuthorizedUser;
+GO
 IF OBJECT_ID('BibDedupe.GetPairs','IF') IS NOT NULL
     DROP FUNCTION BibDedupe.GetPairs;
 GO
@@ -80,6 +83,7 @@ CREATE TABLE BibDedupe.DecisionQueue (
 );
 GO
 
+
 CREATE OR ALTER FUNCTION BibDedupe.GetPairs (@Top INT = 1000)
 RETURNS TABLE
 AS
@@ -125,6 +129,18 @@ BEGIN
     SET NOCOUNT ON;
     -- TODO: implement logic to skip processing this pair
     INSERT INTO BibDedupe.PairDecisions (DecisionTimestamp, UserEmail, KeptBibId, DeletedBibId, ActionId)
-    VALUES (SYSDATETIME(), @UserEmail, @LeftBibId, @RightBibId, 3);
+        VALUES (SYSDATETIME(), @UserEmail, @LeftBibId, @RightBibId, 3);
+END
+GO
+
+CREATE OR ALTER PROCEDURE BibDedupe.IsAuthorizedUser
+    @Email NVARCHAR(256)
+AS
+BEGIN
+    SET NOCOUNT ON;
+    -- Replace 'YourUserTable' with the actual table that stores user emails
+    SELECT COUNT(1)
+    FROM YourUserTable
+    WHERE Email = @Email;
 END
 GO

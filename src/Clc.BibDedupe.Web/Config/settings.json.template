@@ -5,5 +5,9 @@
     "TenantId": "YOUR_TENANT_ID",
     "ClientId": "YOUR_CLIENT_ID",
     "CallbackPath": "/signin-oidc"
-  }
+  },
+  "ConnectionStrings": {
+    "AuthorizedUsersDb": "YOUR_AUTH_DB_CONNECTION"
+  },
+  "AuthorizedUsers": []
 }

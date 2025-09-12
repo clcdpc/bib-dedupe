@@ -1,3 +1,4 @@
+@model Clc.BibDedupe.Web.Models.HomeIndexViewModel
 @{
     Layout = null;
 }
@@ -11,6 +12,10 @@
 </head>
 <body>
     <div class="text-center mt-5">
+        @if (Model.Message != null)
+        {
+            <div class="alert alert-danger">@Model.Message</div>
+        }
         <a asp-controller="Pairs" asp-action="Index" class="btn btn-primary">Log in</a>
     </div>
 </body>

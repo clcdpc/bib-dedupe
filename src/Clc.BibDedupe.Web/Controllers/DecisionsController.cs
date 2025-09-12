@@ -6,15 +6,13 @@ using System.Security.Claims;
 
 namespace Clc.BibDedupe.Web.Controllers;
 
-[Authorize]
+[Authorize(Policy = "AuthorizedUser")]
 public class DecisionsController(IDecisionStore store) : Controller
 {
-    private readonly IDecisionStore _store = store;
-
     public async Task<IActionResult> Index()
     {
         var email = User.FindFirst(ClaimTypes.Email)?.Value ?? User.FindFirst("preferred_username")?.Value ?? string.Empty;
-        var items = await _store.GetAllAsync(email);
+        var items = await store.GetAllAsync(email);
         return View(items);
     }
 
@@ -30,7 +28,7 @@ public class DecisionsController(IDecisionStore store) : Controller
     {
         var email = User.FindFirst(ClaimTypes.Email)?.Value ??
                     User.FindFirst("preferred_username")?.Value ?? string.Empty;
-        await _store.RemoveAsync(email, leftBibId, rightBibId);
+        await store.RemoveAsync(email, leftBibId, rightBibId);
 
         if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
         {
