@@ -12,6 +12,15 @@ namespace Clc.BibDedupe.Web.Controllers;
 public class AccountController : Controller
 {
     [HttpGet]
+    public async Task<IActionResult> SignOut()
+    {
+        await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+        HttpContext.Session.TakeAuthMessage();
+
+        return RedirectToAction("Index", "Home");
+    }
+
+    [HttpGet]
     public async Task<IActionResult> SwitchUser()
     {
         await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
