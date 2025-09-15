@@ -26,7 +26,7 @@
             <a asp-controller="Pairs" asp-action="Index" class="btn btn-primary">Log in</a>
             @if (!string.IsNullOrEmpty(Model.CurrentUserName))
             {
-                <a asp-area="MicrosoftIdentity" asp-controller="Account" asp-action="SignOut" asp-route-postLogoutRedirectUri="/" class="btn btn-outline-secondary">Sign in as a different user</a>
+                <a asp-controller="Account" asp-action="SwitchUser" class="btn btn-outline-secondary">Sign in as a different user</a>
             }
         </div>
     </div>

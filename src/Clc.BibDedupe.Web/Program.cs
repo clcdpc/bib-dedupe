@@ -73,6 +73,24 @@ namespace Clc.BibDedupe.Web
             builder.Services.AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
                 .AddMicrosoftIdentityWebApp(builder.Configuration.GetSection("AzureAd"));
 
+            builder.Services.PostConfigure<OpenIdConnectOptions>(OpenIdConnectDefaults.AuthenticationScheme, options =>
+            {
+                var previous = options.Events.OnRedirectToIdentityProvider;
+
+                options.Events.OnRedirectToIdentityProvider = async context =>
+                {
+                    if (previous is not null)
+                    {
+                        await previous(context);
+                    }
+
+                    if (context.Properties?.Items.TryGetValue("prompt", out var prompt) == true)
+                    {
+                        context.ProtocolMessage.Prompt = prompt;
+                    }
+                };
+            });
+
             builder.Services.Configure<CookieAuthenticationOptions>(CookieAuthenticationDefaults.AuthenticationScheme, options =>
             {
                 options.Events.OnRedirectToAccessDenied = context =>
