@@ -17,13 +17,13 @@ namespace Clc.BibDedupe.Web.Data
 
         public async Task<IEnumerable<BibDupePair>> GetAsync()
         {
-            const string sql = "SELECT PairId, MatchType, MatchValue, PrimaryMARCTOMID AS PrimaryMarcTomId, LeftBibId, RightBibId, NULL AS LeftTitle, NULL AS LeftAuthor, NULL AS RightTitle, NULL AS RightAuthor FROM BibDedupe.GetPairs(DEFAULT)";
+            const string sql = "SELECT PairId, MatchType, MatchValue, PrimaryMARCTOMID AS PrimaryMarcTomId, LeftBibId, RightBibId, LeftTitle, LeftAuthor, RightTitle, RightAuthor FROM BibDedupe.GetPairs(DEFAULT)";
             return await _db.QueryAsync<BibDupePair>(sql);
         }
 
         public async Task<(IEnumerable<BibDupePair> Items, int TotalCount)> GetPagedAsync(int page, int pageSize)
         {
-            const string sql = @"SELECT PairId, MatchType, MatchValue, PrimaryMARCTOMID AS PrimaryMarcTomId, LeftBibId, RightBibId, NULL AS LeftTitle, NULL AS LeftAuthor, NULL AS RightTitle, NULL AS RightAuthor
+            const string sql = @"SELECT PairId, MatchType, MatchValue, PrimaryMARCTOMID AS PrimaryMarcTomId, LeftBibId, RightBibId, LeftTitle, LeftAuthor, RightTitle, RightAuthor
 FROM BibDedupe.GetPairs(DEFAULT)
 ORDER BY PairId
 OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY;
