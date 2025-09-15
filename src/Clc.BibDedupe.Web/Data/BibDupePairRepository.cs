@@ -35,6 +35,14 @@ SELECT COUNT(*) FROM BibDedupe.GetPairs(DEFAULT);";
             return (items, total);
         }
 
+        public Task<BibDupePair?> GetByBibIdsAsync(int leftBibId, int rightBibId)
+        {
+            const string sql = @"SELECT PairId, MatchType, MatchValue, PrimaryMARCTOMID AS PrimaryMarcTomId, LeftBibId, RightBibId, LeftTitle, LeftAuthor, RightTitle, RightAuthor
+FROM BibDedupe.GetPairs(DEFAULT)
+WHERE LeftBibId = @LeftBibId AND RightBibId = @RightBibId;";
+            return _db.QuerySingleOrDefaultAsync<BibDupePair>(sql, new { LeftBibId = leftBibId, RightBibId = rightBibId });
+        }
+
         public Task MergeAsync(int keepBibId, int deleteBibId, string userEmail, BibDupePairAction action) =>
             _db.ExecuteAsync(
                 "BibDedupe.MergePair",

@@ -54,7 +54,7 @@ namespace Clc.BibDedupe.Web.Controllers
             }
             else
             {
-                pair = (await repository.GetAsync()).FirstOrDefault(p => p.LeftBibId == leftBibId && p.RightBibId == rightBibId);
+                pair = await repository.GetByBibIdsAsync(leftBibId.Value, rightBibId.Value);
             }
 
             var (left, right) = await loader.LoadAsync(leftBibId.Value, rightBibId.Value);
@@ -97,7 +97,7 @@ namespace Clc.BibDedupe.Web.Controllers
                 return BadRequest();
             }
             var userEmail = User.FindFirst(ClaimTypes.Email)?.Value ?? User.FindFirst("preferred_username")?.Value ?? string.Empty;
-            var pair = (await repository.GetAsync()).FirstOrDefault(p => p.LeftBibId == leftBibId && p.RightBibId == rightBibId);
+            var pair = await repository.GetByBibIdsAsync(leftBibId, rightBibId);
             var decision = new DecisionItem
             {
                 LeftBibId = leftBibId,
