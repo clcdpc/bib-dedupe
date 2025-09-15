@@ -27,29 +27,39 @@ body {
   padding: 0.5rem 1rem;
   margin-bottom: 1rem;
   display: flex;
+  align-items: center;
   gap: 0.5rem;
   border-bottom: 1px solid #dee2e6;
 }
 
 .menu a {
-  padding: 0.25rem 0.75rem;
+  display: inline-flex;
+  align-items: center;
+  height: 2rem;
+  padding: 0 0.75rem;
   border-radius: 0.25rem;
   color: #084298;
   text-decoration: none;
+  white-space: nowrap;
   background-color: #cfe2ff;
   border: 1px solid #9ec5fe;
   transition: background-color 0.15s ease-in-out, color 0.15s ease-in-out;
+  box-sizing: border-box;
 }
 
 .menu .disabled {
-  padding: 0.25rem 0.75rem;
+  display: inline-flex;
+  align-items: center;
+  height: 2rem;
+  padding: 0 0.75rem;
   border-radius: 0.25rem;
   color: #6c757d;
   background-color: #e9ecef;
   border: 1px solid #ced4da;
   cursor: not-allowed;
   pointer-events: none;
-  display: inline-block;
+  box-sizing: border-box;
+  white-space: nowrap;
 }
 
 .menu a:hover,
@@ -73,11 +83,17 @@ body {
 }
 
 .menu .badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 1.25rem;
+  padding: 0 0.4rem;
+  margin-left: 0.25rem;
   background-color: #084298;
   color: #ffffff;
   border: 1px solid #052c65;
   border-radius: 0.5rem;
-  padding: 0 0.4rem;
+  box-sizing: border-box;
 }
 
 .pager {
