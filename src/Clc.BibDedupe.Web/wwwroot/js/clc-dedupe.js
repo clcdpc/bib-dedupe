@@ -150,6 +150,15 @@
                 if (badge) {
                     badge.textContent = (parseInt(badge.textContent || '0', 10) + 1).toString();
                 }
+                const currentPairControl = document.querySelector('.menu [data-current-pair]');
+                if (currentPairControl && currentPairControl.tagName === 'A') {
+                    const disabled = document.createElement('span');
+                    disabled.className = 'disabled';
+                    disabled.dataset.currentPair = 'true';
+                    disabled.setAttribute('aria-disabled', 'true');
+                    disabled.textContent = currentPairControl.textContent;
+                    currentPairControl.replaceWith(disabled);
+                }
                 if (returnUrl) {
                     window.location.href = returnUrl;
                 }

@@ -68,7 +68,8 @@ namespace Clc.BibDedupe.Web
 
             builder.Services
                 .AddSingleton<IHttpContextAccessor, HttpContextAccessor>()
-                .AddSingleton<IDecisionStore, SessionDecisionStore>();
+                .AddSingleton<IDecisionStore, SessionDecisionStore>()
+                .AddSingleton<ICurrentPairStore, SessionCurrentPairStore>();
 
             builder.Services.AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
                 .AddMicrosoftIdentityWebApp(builder.Configuration.GetSection("AzureAd"));

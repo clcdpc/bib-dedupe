@@ -1,15 +1,25 @@
+@using Clc.BibDedupe.Web.Models
 @using Clc.BibDedupe.Web.Services
 @using System.Security.Claims
 @inject IDecisionStore DecisionStore
+@inject ICurrentPairStore CurrentPairStore
 @{
     var email = Context.User?.FindFirst(ClaimTypes.Email)?.Value
         ?? Context.User?.FindFirst("preferred_username")?.Value
         ?? string.Empty;
     var decisionCount = await DecisionStore.CountAsync(email);
+    var currentPair = await CurrentPairStore.GetAsync(email);
 }
 <nav class="menu">
     <a asp-controller="Pairs" asp-action="Index">Pair List</a>
     <a asp-controller="Decisions" asp-action="Index">Decisions <span class="badge">@decisionCount</span></a>
-    <a asp-controller="Home" asp-action="Review">Current Pair</a>
+    @if (currentPair is null)
+    {
+        <span class="disabled" data-current-pair="true" aria-disabled="true">Current Pair</span>
+    }
+    else
+    {
+        <a asp-controller="Home" asp-action="Review" asp-route-leftBibId="@currentPair.LeftBibId" asp-route-rightBibId="@currentPair.RightBibId" data-current-pair="true">Current Pair</a>
+    }
     <a class="signout" asp-controller="Account" asp-action="SignOut">Sign out</a>
   </nav>

@@ -13,7 +13,12 @@ using System.Threading.Tasks;
 namespace Clc.BibDedupe.Web.Controllers
 {
     [Authorize(Policy = "AuthorizedUser")]
-    public class HomeController(ILogger<HomeController> logger, IRecordLoader loader, IBibDupePairRepository repository, IDecisionStore decisionStore) : Controller
+    public class HomeController(
+        ILogger<HomeController> logger,
+        IRecordLoader loader,
+        IBibDupePairRepository repository,
+        IDecisionStore decisionStore,
+        ICurrentPairStore currentPairStore) : Controller
     {
         [AllowAnonymous]
         public IActionResult Index()
@@ -37,18 +42,22 @@ namespace Clc.BibDedupe.Web.Controllers
 
         public async Task<IActionResult> Review(int? leftBibId, int? rightBibId, string? returnUrl)
         {
+            var userEmail = User.FindFirst(ClaimTypes.Email)?.Value ??
+                            User.FindFirst("preferred_username")?.Value ?? string.Empty;
             BibDupePair? pair;
             if (leftBibId is null || rightBibId is null)
             {
-                var userEmail = User.FindFirst(ClaimTypes.Email)?.Value ??
-                                User.FindFirst("preferred_username")?.Value ?? string.Empty;
                 var decidedPairs = (await decisionStore.GetAllAsync(userEmail))
                     .Select(d => (d.LeftBibId, d.RightBibId))
                     .ToHashSet();
 
                 pair = (await repository.GetAsync())
                     .FirstOrDefault(p => !decidedPairs.Contains((p.LeftBibId, p.RightBibId)));
-                if (pair is null) return View(new IndexViewModel());
+                if (pair is null)
+                {
+                    await currentPairStore.ClearAsync(userEmail);
+                    return View(new IndexViewModel());
+                }
                 leftBibId = pair.LeftBibId;
                 rightBibId = pair.RightBibId;
             }
@@ -73,6 +82,12 @@ namespace Clc.BibDedupe.Web.Controllers
                 RightAuthor = pair?.RightAuthor ?? string.Empty,
                 ReturnUrl = returnUrl
             };
+
+            await currentPairStore.SetAsync(userEmail, new CurrentPair
+            {
+                LeftBibId = model.LeftBibId,
+                RightBibId = model.RightBibId
+            });
 
             return View(model);
         }
@@ -112,6 +127,7 @@ namespace Clc.BibDedupe.Web.Controllers
                 Action = parsed
             };
             await decisionStore.AddAsync(userEmail, decision);
+            await currentPairStore.ClearAsync(userEmail);
             return Ok();
         }
     }
