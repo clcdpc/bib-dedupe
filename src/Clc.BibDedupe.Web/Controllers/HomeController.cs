@@ -2,12 +2,12 @@ using Clc.BibDedupe.Web;
 using Clc.BibDedupe.Web.Data;
 using Clc.BibDedupe.Web.Models;
 using Clc.BibDedupe.Web.Services;
+using Clc.BibDedupe.Web.Extensions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Diagnostics;
 using System.Linq;
-using System.Security.Claims;
 using System.Threading.Tasks;
 
 namespace Clc.BibDedupe.Web.Controllers
@@ -42,8 +42,7 @@ namespace Clc.BibDedupe.Web.Controllers
 
         public async Task<IActionResult> Review(int? leftBibId, int? rightBibId, string? returnUrl)
         {
-            var userEmail = User.FindFirst(ClaimTypes.Email)?.Value ??
-                            User.FindFirst("preferred_username")?.Value ?? string.Empty;
+            var userEmail = User.GetEmail();
             BibDupePair? pair;
             if (leftBibId is null || rightBibId is null)
             {
@@ -111,7 +110,7 @@ namespace Clc.BibDedupe.Web.Controllers
             {
                 return BadRequest();
             }
-            var userEmail = User.FindFirst(ClaimTypes.Email)?.Value ?? User.FindFirst("preferred_username")?.Value ?? string.Empty;
+            var userEmail = User.GetEmail();
             var pair = await repository.GetByBibIdsAsync(leftBibId, rightBibId);
             var decision = new DecisionItem
             {

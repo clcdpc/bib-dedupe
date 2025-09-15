@@ -13,6 +13,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.Identity.Web;
 using Microsoft.Identity.Web.UI;
 using System.Threading.Tasks;
+using Clc.BibDedupe.Web.Extensions;
 
 namespace Clc.BibDedupe.Web
 {
@@ -101,11 +102,14 @@ namespace Clc.BibDedupe.Web
 
                     if (principal?.Identity?.IsAuthenticated == true)
                     {
-                        userName = principal.FindFirst(ClaimTypes.Email)?.Value ??
-                                   principal.FindFirst("preferred_username")?.Value ??
-                                   principal.FindFirst(ClaimTypes.Upn)?.Value ??
-                                   principal.FindFirst(ClaimTypes.Name)?.Value ??
-                                   principal.Identity?.Name;
+                        userName = principal.GetEmail();
+
+                        if (string.IsNullOrEmpty(userName))
+                        {
+                            userName = principal.FindFirst(ClaimTypes.Upn)?.Value ??
+                                       principal.FindFirst(ClaimTypes.Name)?.Value ??
+                                       principal.Identity?.Name;
+                        }
                     }
 
                     context.HttpContext.Session.SetAuthMessage(
