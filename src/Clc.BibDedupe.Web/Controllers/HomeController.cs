@@ -1,27 +1,38 @@
+using Clc.BibDedupe.Web;
 using Clc.BibDedupe.Web.Data;
 using Clc.BibDedupe.Web.Models;
 using Clc.BibDedupe.Web.Services;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
-using System.Security.Claims;
+using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Diagnostics;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 
 namespace Clc.BibDedupe.Web.Controllers
 {
-    [Authorize]
+    [Authorize(Policy = "AuthorizedUser")]
     public class HomeController(ILogger<HomeController> logger, IRecordLoader loader, IBibDupePairRepository repository, IDecisionStore decisionStore) : Controller
     {
         [AllowAnonymous]
         public IActionResult Index()
         {
-            if (User.Identity?.IsAuthenticated == true)
+            var authMessage = HttpContext.Session.TakeAuthMessage();
+            var message = authMessage?.Message;
+            var userName = authMessage?.UserName;
+
+            if (User.Identity?.IsAuthenticated == true && string.IsNullOrEmpty(message))
             {
                 return RedirectToAction("Index", "Pairs");
             }
-            return View();
+
+            var model = new HomeIndexViewModel
+            {
+                Message = message,
+                CurrentUserName = userName
+            };
+            return View(model);
         }
 
         public async Task<IActionResult> Review(int? leftBibId, int? rightBibId, string? returnUrl)

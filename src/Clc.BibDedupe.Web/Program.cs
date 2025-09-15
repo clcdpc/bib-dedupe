@@ -1,13 +1,18 @@
 using Clc.Polaris.Api;
 using Clc.Polaris.Api.Configuration;
 using System.Data;
+using System.Security.Claims;
 using Microsoft.Data.SqlClient;
 using Clc.BibDedupe.Web.Data;
 using Clc.BibDedupe.Web.Services;
+using Clc.BibDedupe.Web.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.Identity.Web;
 using Microsoft.Identity.Web.UI;
+using System.Threading.Tasks;
 
 namespace Clc.BibDedupe.Web
 {
@@ -50,6 +55,17 @@ namespace Clc.BibDedupe.Web
                     .AddScoped<IBibDupePairRepository, BibDupePairRepository>();
             }
 
+            var authorizedUsers = builder.Configuration.GetSection("AuthorizedUsers").Get<string[]>();
+
+            if (authorizedUsers is not null && authorizedUsers.Length > 0)
+            {
+                builder.Services.AddSingleton<IUserAuthorizationService>(new ListUserAuthorizationService(authorizedUsers));
+            }
+            else
+            {
+                builder.Services.AddSingleton<IUserAuthorizationService, SqlUserAuthorizationService>();
+            }
+
             builder.Services
                 .AddSingleton<IHttpContextAccessor, HttpContextAccessor>()
                 .AddSingleton<IDecisionStore, SessionDecisionStore>();
@@ -57,8 +73,57 @@ namespace Clc.BibDedupe.Web
             builder.Services.AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
                 .AddMicrosoftIdentityWebApp(builder.Configuration.GetSection("AzureAd"));
 
+            builder.Services.PostConfigure<OpenIdConnectOptions>(OpenIdConnectDefaults.AuthenticationScheme, options =>
+            {
+                var previous = options.Events.OnRedirectToIdentityProvider;
+
+                options.Events.OnRedirectToIdentityProvider = async context =>
+                {
+                    if (previous is not null)
+                    {
+                        await previous(context);
+                    }
+
+                    if (context.Properties?.Items.TryGetValue("prompt", out var prompt) == true)
+                    {
+                        context.ProtocolMessage.Prompt = prompt;
+                    }
+                };
+            });
+
+            builder.Services.Configure<CookieAuthenticationOptions>(CookieAuthenticationDefaults.AuthenticationScheme, options =>
+            {
+                options.Events.OnRedirectToAccessDenied = context =>
+                {
+                    string? userName = null;
+                    var principal = context.HttpContext.User;
+
+                    if (principal?.Identity?.IsAuthenticated == true)
+                    {
+                        userName = principal.FindFirst(ClaimTypes.Email)?.Value ??
+                                   principal.FindFirst("preferred_username")?.Value ??
+                                   principal.FindFirst(ClaimTypes.Upn)?.Value ??
+                                   principal.FindFirst(ClaimTypes.Name)?.Value ??
+                                   principal.Identity?.Name;
+                    }
+
+                    context.HttpContext.Session.SetAuthMessage(
+                        "You are not authorized to access this application.",
+                        userName);
+                    context.Response.Redirect("/");
+                    return Task.CompletedTask;
+                };
+            });
+
             builder.Services.AddDistributedMemoryCache();
             builder.Services.AddSession();
+
+            builder.Services.AddSingleton<IAuthorizationHandler, AuthorizedUserHandler>();
+            builder.Services.AddAuthorization(options =>
+            {
+                options.AddPolicy("AuthorizedUser", policy =>
+                    policy.RequireAuthenticatedUser().AddRequirements(new AuthorizedUserRequirement()));
+            });
 
 
             // Add services to the container.
