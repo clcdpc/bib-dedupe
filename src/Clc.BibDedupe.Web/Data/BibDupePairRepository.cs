@@ -9,6 +9,7 @@ namespace Clc.BibDedupe.Web.Data
     public class BibDupePairRepository : IBibDupePairRepository
     {
         private readonly IDbConnection _db;
+        private const int UnlimitedPairsLimit = int.MaxValue;
 
         public BibDupePairRepository(IDbConnection db)
         {
@@ -17,13 +18,13 @@ namespace Clc.BibDedupe.Web.Data
 
         public async Task<IEnumerable<BibDupePair>> GetAsync()
         {
-            const string sql = "SELECT PairId, MatchType, MatchValue, PrimaryMARCTOMID AS PrimaryMarcTomId, LeftBibId, RightBibId, NULL AS LeftTitle, NULL AS LeftAuthor, NULL AS RightTitle, NULL AS RightAuthor FROM BibDedupe.GetPairs(DEFAULT)";
+            const string sql = "SELECT PairId, MatchType, MatchValue, PrimaryMARCTOMID AS PrimaryMarcTomId, LeftBibId, RightBibId, LeftTitle, LeftAuthor, RightTitle, RightAuthor FROM BibDedupe.GetPairs(DEFAULT)";
             return await _db.QueryAsync<BibDupePair>(sql);
         }
 
         public async Task<(IEnumerable<BibDupePair> Items, int TotalCount)> GetPagedAsync(int page, int pageSize)
         {
-            const string sql = @"SELECT PairId, MatchType, MatchValue, PrimaryMARCTOMID AS PrimaryMarcTomId, LeftBibId, RightBibId, NULL AS LeftTitle, NULL AS LeftAuthor, NULL AS RightTitle, NULL AS RightAuthor
+            const string sql = @"SELECT PairId, MatchType, MatchValue, PrimaryMARCTOMID AS PrimaryMarcTomId, LeftBibId, RightBibId, LeftTitle, LeftAuthor, RightTitle, RightAuthor
 FROM BibDedupe.GetPairs(DEFAULT)
 ORDER BY PairId
 OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY;
@@ -33,6 +34,15 @@ SELECT COUNT(*) FROM BibDedupe.GetPairs(DEFAULT);";
             var items = await multi.ReadAsync<BibDupePair>();
             var total = await multi.ReadFirstAsync<int>();
             return (items, total);
+        }
+
+        public async Task<BibDupePair?> GetByBibIdsAsync(int leftBibId, int rightBibId)
+        {
+            const string sql = @"SELECT PairId, MatchType, MatchValue, PrimaryMARCTOMID AS PrimaryMarcTomId, LeftBibId, RightBibId, LeftTitle, LeftAuthor, RightTitle, RightAuthor
+FROM BibDedupe.GetPairs(@Top)
+WHERE LeftBibId = @LeftBibId AND RightBibId = @RightBibId;";
+            // TODO: revert to QuerySingleOrDefaultAsync once duplicate rows are eliminated from GetPairs.
+            return await _db.QueryFirstOrDefaultAsync<BibDupePair>(sql, new { LeftBibId = leftBibId, RightBibId = rightBibId, Top = UnlimitedPairsLimit });
         }
 
         public Task MergeAsync(int keepBibId, int deleteBibId, string userEmail, BibDupePairAction action) =>

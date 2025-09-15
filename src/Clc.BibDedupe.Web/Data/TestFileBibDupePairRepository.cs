@@ -57,6 +57,9 @@ public class TestFileBibDupePairRepository : IBibDupePairRepository
         return Task.FromResult((items, total));
     }
 
+    public Task<BibDupePair?> GetByBibIdsAsync(int leftBibId, int rightBibId)
+        => Task.FromResult(_pairs.FirstOrDefault(p => p.LeftBibId == leftBibId && p.RightBibId == rightBibId));
+
     public Task MergeAsync(int keepBibId, int deleteBibId, string userEmail, BibDupePairAction action) => Task.CompletedTask;
 
     public Task KeepBothAsync(int leftBibId, int rightBibId, string userEmail) => Task.CompletedTask;
