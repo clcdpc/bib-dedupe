@@ -1,6 +1,7 @@
 using Clc.Polaris.Api;
 using Clc.Polaris.Api.Configuration;
 using System.Data;
+using System.Security.Claims;
 using Microsoft.Data.SqlClient;
 using Clc.BibDedupe.Web.Data;
 using Clc.BibDedupe.Web.Services;
@@ -76,7 +77,21 @@ namespace Clc.BibDedupe.Web
             {
                 options.Events.OnRedirectToAccessDenied = context =>
                 {
-                    context.HttpContext.Session.SetAuthMessage("You are not authorized to access this application.");
+                    string? userName = null;
+                    var principal = context.HttpContext.User;
+
+                    if (principal?.Identity?.IsAuthenticated == true)
+                    {
+                        userName = principal.FindFirst(ClaimTypes.Email)?.Value ??
+                                   principal.FindFirst("preferred_username")?.Value ??
+                                   principal.FindFirst(ClaimTypes.Upn)?.Value ??
+                                   principal.FindFirst(ClaimTypes.Name)?.Value ??
+                                   principal.Identity?.Name;
+                    }
+
+                    context.HttpContext.Session.SetAuthMessage(
+                        "You are not authorized to access this application.",
+                        userName);
                     context.Response.Redirect("/");
                     return Task.CompletedTask;
                 };

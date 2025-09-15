@@ -18,7 +18,10 @@ namespace Clc.BibDedupe.Web.Controllers
         [AllowAnonymous]
         public IActionResult Index()
         {
-            var message = HttpContext.Session.TakeAuthMessage();
+            var authMessage = HttpContext.Session.TakeAuthMessage();
+            var message = authMessage?.Message;
+            var userName = authMessage?.UserName;
+
             if (User.Identity?.IsAuthenticated == true && string.IsNullOrEmpty(message))
             {
                 return RedirectToAction("Index", "Pairs");
@@ -26,7 +29,8 @@ namespace Clc.BibDedupe.Web.Controllers
 
             var model = new HomeIndexViewModel
             {
-                Message = message
+                Message = message,
+                CurrentUserName = userName
             };
             return View(model);
         }
