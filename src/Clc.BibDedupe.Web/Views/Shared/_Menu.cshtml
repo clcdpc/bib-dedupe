@@ -1,12 +1,9 @@
 @using Clc.BibDedupe.Web.Models
 @using Clc.BibDedupe.Web.Services
-@using System.Security.Claims
 @inject IDecisionStore DecisionStore
 @inject ICurrentPairStore CurrentPairStore
 @{
-    var email = Context.User?.FindFirst(ClaimTypes.Email)?.Value
-        ?? Context.User?.FindFirst("preferred_username")?.Value
-        ?? string.Empty;
+    var email = Context.User.GetEmail();
     var decisionCount = await DecisionStore.CountAsync(email);
     var currentPair = await CurrentPairStore.GetAsync(email);
 }

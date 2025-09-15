@@ -1,6 +1,6 @@
-using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Clc.BibDedupe.Web.Services;
+using Clc.BibDedupe.Web.Extensions;
 
 namespace Clc.BibDedupe.Web.Authorization;
 
@@ -11,8 +11,7 @@ public class AuthorizedUserHandler(IUserAuthorizationService service)
         AuthorizationHandlerContext context,
         AuthorizedUserRequirement requirement)
     {
-        var email = context.User.FindFirst(ClaimTypes.Email)?.Value
-                    ?? context.User.FindFirst("preferred_username")?.Value;
+        var email = context.User.GetEmail();
 
         if (!string.IsNullOrEmpty(email) && await service.IsAuthorizedAsync(email))
         {

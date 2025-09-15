@@ -1,9 +1,9 @@
 using Clc.BibDedupe.Web.Data;
 using Clc.BibDedupe.Web.Models;
 using Clc.BibDedupe.Web.Services;
+using Clc.BibDedupe.Web.Extensions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
-using System.Security.Claims;
 using System.Linq;
 
 namespace Clc.BibDedupe.Web.Controllers;
@@ -14,8 +14,7 @@ public class PairsController(IBibDupePairRepository repository, IDecisionStore d
     public async Task<IActionResult> Index(int page = 1, int pageSize = 20)
     {
         var (items, total) = await repository.GetPagedAsync(page, pageSize);
-        var email = User.FindFirst(ClaimTypes.Email)?.Value ??
-                    User.FindFirst("preferred_username")?.Value ?? string.Empty;
+        var email = User.GetEmail();
         var decidedPairs = (await decisionStore.GetAllAsync(email))
             .Select(d => (d.LeftBibId, d.RightBibId))
             .ToHashSet();

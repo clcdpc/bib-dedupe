@@ -1,8 +1,8 @@
 using Clc.BibDedupe.Web.Models;
 using Clc.BibDedupe.Web.Services;
+using Clc.BibDedupe.Web.Extensions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
-using System.Security.Claims;
 
 namespace Clc.BibDedupe.Web.Controllers;
 
@@ -11,7 +11,7 @@ public class DecisionsController(IDecisionStore store) : Controller
 {
     public async Task<IActionResult> Index()
     {
-        var email = User.FindFirst(ClaimTypes.Email)?.Value ?? User.FindFirst("preferred_username")?.Value ?? string.Empty;
+        var email = User.GetEmail();
         var items = await store.GetAllAsync(email);
         return View(items);
     }
@@ -26,8 +26,7 @@ public class DecisionsController(IDecisionStore store) : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Remove(int leftBibId, int rightBibId)
     {
-        var email = User.FindFirst(ClaimTypes.Email)?.Value ??
-                    User.FindFirst("preferred_username")?.Value ?? string.Empty;
+        var email = User.GetEmail();
         await store.RemoveAsync(email, leftBibId, rightBibId);
 
         if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
