@@ -26,7 +26,7 @@ namespace Clc.BibDedupe.Web.Data
         {
             const string sql = @"SELECT PairId, MatchType, MatchValue, PrimaryMARCTOMID AS PrimaryMarcTomId, LeftBibId, RightBibId, LeftTitle, LeftAuthor, RightTitle, RightAuthor
 FROM BibDedupe.GetPairs(DEFAULT)
-ORDER BY PairId
+ORDER BY (select null)
 OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY;
 SELECT COUNT(*) FROM BibDedupe.GetPairs(DEFAULT);";
             var offset = (page - 1) * pageSize;
