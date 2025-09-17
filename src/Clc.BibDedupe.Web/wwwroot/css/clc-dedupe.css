@@ -116,6 +116,8 @@ html, body {
     --bg: #ffffff; /* table bg */
     --frame-border: #d1d5db; /* frame border */
     --stripe: #f3f4f6; /* row stripe bg */
+    --placeholder-bg: #f3f4f6; /* placeholder row background */
+    --placeholder-text: #9ca3af; /* placeholder row text */
 }
 
 @media (prefers-color-scheme: dark) {
@@ -128,6 +130,8 @@ html, body {
         --bg: #1b1e22;
         --frame-border: #4b5563;
         --stripe: #262a2e;
+        --placeholder-bg: #262a2e;
+        --placeholder-text: #9ca3af;
     }
 
     .controls button {
@@ -257,3 +261,17 @@ html, body {
         .marc-table .val a {
             word-break: break-all;
         }
+
+    .marc-table tr.placeholder-row {
+        pointer-events: none;
+    }
+
+    .marc-table tr.placeholder-row td {
+        border-color: transparent;
+        background: var(--placeholder-bg);
+        color: var(--placeholder-text);
+    }
+
+    .marc-table tr.placeholder-row .wrap {
+        min-height: 1.2em;
+    }

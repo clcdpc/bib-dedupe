@@ -187,6 +187,9 @@
 
     function createPlaceholder(tag) {
         const tr = document.createElement('tr');
+        tr.classList.add('placeholder-row');
+        tr.dataset.placeholder = 'true';
+        tr.setAttribute('aria-hidden', 'true');
         tr.innerHTML =
             `<td class="tag"><span class="t" data-marc-tag="${tag}">${tag}</span></td>` +
             `<td class="ind"><span class="i" data-marc-tag="${tag}" data-ind-pos="1" data-ind-val=" ">&nbsp;</span></td>` +
