@@ -167,6 +167,9 @@ body {
 .pairs-table .bib-column {
   font-family: var(--bs-font-monospace);
   font-size: 0.95rem;
+  white-space: nowrap;
+  word-break: normal;
+  overflow-wrap: normal;
 }
 
 .pairs-table .work-column {
