@@ -18,5 +18,11 @@
     {
         <a asp-controller="Home" asp-action="Review" asp-route-leftBibId="@currentPair.LeftBibId" asp-route-rightBibId="@currentPair.RightBibId" data-current-pair="true">Current Pair</a>
     }
+    <button type="button"
+            class="theme-toggle"
+            data-theme-toggle
+            aria-label="Toggle color theme"
+            title="Toggle color theme"
+            aria-pressed="false"></button>
     <a class="signout" asp-controller="Account" asp-action="SignOut">Sign out</a>
   </nav>
