@@ -2,6 +2,8 @@
 @model PairsListViewModel
 @{
     ViewData["Title"] = "Pairs";
+    ViewData["LayoutContainerClass"] = "container-fluid px-4";
+    ViewData["MainClass"] = "pb-4 pair-list-main";
 }
 
 <h1>Pairs</h1>
@@ -16,39 +18,41 @@
         <button type="submit" class="btn btn-primary">Apply</button>
     </div>
 </form>
-<table class="table table-striped">
-    <thead class="table-dark">
-        <tr>
-            <th>Left Bib</th>
-            <th>Left Title</th>
-            <th>Left Author</th>
-            <th>Right Bib</th>
-            <th>Right Title</th>
-            <th>Right Author</th>
-            <th>Match Type</th>
-            <th>Match Value</th>
-            <th>Review</th>
-        </tr>
-    </thead>
-    <tbody>
-@foreach (var p in Model.Items)
-{
-        <tr>
-            <td>@p.LeftBibId</td>
-            <td>@p.LeftTitle</td>
-            <td>@p.LeftAuthor</td>
-            <td>@p.RightBibId</td>
-            <td>@p.RightTitle</td>
-            <td>@p.RightAuthor</td>
-            <td>@p.MatchType</td>
-            <td>@p.MatchValue</td>
-            <td>
-                <a asp-controller="Home" asp-action="Review" asp-route-leftBibId="@p.LeftBibId" asp-route-rightBibId="@p.RightBibId" asp-route-returnUrl="@Url.Action("Index", new { page = Model.Page, pageSize = Model.PageSize })" class="btn btn-sm btn-primary">Review</a>
-            </td>
-        </tr>
-}
-    </tbody>
-</table>
+<div class="table-responsive pair-list-table shadow-sm">
+    <table class="table table-striped table-hover align-middle mb-0 pairs-table">
+        <thead class="table-dark">
+            <tr>
+                <th scope="col" class="text-nowrap">Left Bib</th>
+                <th scope="col">Left Title</th>
+                <th scope="col" class="text-nowrap">Left Author</th>
+                <th scope="col" class="text-nowrap">Right Bib</th>
+                <th scope="col">Right Title</th>
+                <th scope="col" class="text-nowrap">Right Author</th>
+                <th scope="col" class="text-nowrap">Match Type</th>
+                <th scope="col" class="text-end text-nowrap">Match Value</th>
+                <th scope="col" class="text-center text-nowrap">Review</th>
+            </tr>
+        </thead>
+        <tbody>
+        @foreach (var p in Model.Items)
+        {
+            <tr>
+                <td class="text-nowrap fw-semibold">@p.LeftBibId</td>
+                <td class="text-break">@p.LeftTitle</td>
+                <td class="text-nowrap">@p.LeftAuthor</td>
+                <td class="text-nowrap fw-semibold">@p.RightBibId</td>
+                <td class="text-break">@p.RightTitle</td>
+                <td class="text-nowrap">@p.RightAuthor</td>
+                <td class="text-nowrap"><span class="badge rounded-pill bg-secondary text-uppercase">@p.MatchType</span></td>
+                <td class="text-end text-nowrap">@p.MatchValue</td>
+                <td class="text-center">
+                    <a asp-controller="Home" asp-action="Review" asp-route-leftBibId="@p.LeftBibId" asp-route-rightBibId="@p.RightBibId" asp-route-returnUrl="@Url.Action("Index", new { page = Model.Page, pageSize = Model.PageSize })" class="btn btn-sm btn-primary">Review</a>
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+</div>
 <div class="d-flex justify-content-between">
     <div>Page @Model.Page of @Model.TotalPages</div>
     <div class="pager">

@@ -9,9 +9,13 @@
     <link rel="stylesheet" href="~/Clc.BibDedupe.Web.styles.css" asp-append-version="true" />
 </head>
 <body>
+@{
+    var layoutContainerClass = ViewData["LayoutContainerClass"] as string ?? "container";
+    var mainClass = ViewData["MainClass"] as string ?? "pb-3";
+}
 @await Html.PartialAsync("_Menu")
-<div class="container">
-    <main role="main" class="pb-3">
+<div class="@layoutContainerClass">
+    <main role="main" class="@mainClass">
         @RenderBody()
     </main>
 </div>

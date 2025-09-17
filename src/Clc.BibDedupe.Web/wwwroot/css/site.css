@@ -118,6 +118,47 @@ body {
   text-decoration: none;
 }
 
+.pair-list-main {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.pair-list-main h1 {
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.pair-list-table {
+  border: 1px solid rgba(8, 66, 152, 0.1);
+  border-radius: 0.75rem;
+  background-color: #ffffff;
+  overflow: hidden;
+}
+
+.pairs-table {
+  --bs-table-striped-bg: rgba(8, 66, 152, 0.05);
+  --bs-table-hover-bg: rgba(8, 66, 152, 0.08);
+  --bs-table-hover-color: inherit;
+  color: #1b1e22;
+  font-size: 0.95rem;
+}
+
+.pairs-table th,
+.pairs-table td {
+  vertical-align: middle;
+}
+
+.pairs-table td.text-break {
+  word-break: break-word;
+}
+
+.pairs-table .badge {
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+  padding: 0.4rem 0.6rem;
+}
+
 .navbar {
   background-color: #fff;
 }
@@ -211,6 +252,23 @@ body {
   .pager .btn:focus {
     background-color: #bfdbfe;
     color: #172554;
+  }
+
+  .pair-list-table {
+    border-color: rgba(148, 163, 184, 0.35);
+    background-color: #1f2429;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.02);
+  }
+
+  .pairs-table {
+    --bs-table-striped-bg: rgba(96, 165, 250, 0.2);
+    --bs-table-hover-bg: rgba(96, 165, 250, 0.25);
+    color: #f8f9fa;
+  }
+
+  .pairs-table .badge {
+    background-color: rgba(96, 165, 250, 0.3);
+    color: #e2e8f0;
   }
 
   .navbar-toggler {
