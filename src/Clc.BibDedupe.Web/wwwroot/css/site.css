@@ -122,6 +122,86 @@ body {
   background-color: #fff;
 }
 
+.pairs-container {
+  padding-left: 1.25rem;
+  padding-right: 1.25rem;
+}
+
+@media (min-width: 992px) {
+  .pairs-container {
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+}
+
+@media (min-width: 1400px) {
+  .pairs-container {
+    padding-left: 3rem;
+    padding-right: 3rem;
+  }
+}
+
+.pairs-controls label {
+  letter-spacing: 0.08em;
+}
+
+.pairs-table-wrapper {
+  border: 1px solid #dee2e6;
+  border-radius: 0.75rem;
+  background-color: #ffffff;
+  box-shadow: 0 0.75rem 1.5rem rgba(15, 23, 42, 0.08);
+  overflow: auto;
+}
+
+.pairs-table {
+  margin-bottom: 0;
+  min-width: 62rem;
+}
+
+.pairs-table thead th {
+  background-color: #eff4ff;
+  color: #495057;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  border-bottom: 1px solid #d0d7e6;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.pairs-table tbody td {
+  vertical-align: top;
+  font-size: 0.95rem;
+}
+
+.pairs-col-id {
+  font-weight: 600;
+  color: #0d6efd;
+}
+
+.pairs-col-title,
+.pairs-col-author {
+  min-width: 14rem;
+}
+
+.pairs-col-match-type {
+  font-weight: 600;
+}
+
+.pairs-col-match-value {
+  font-variant-numeric: tabular-nums;
+}
+
+.pairs-col-review .btn {
+  min-width: 4.5rem;
+}
+
+.pairs-pagination {
+  border-top: 1px solid #dee2e6;
+  padding-top: 0.75rem;
+}
+
 @media (prefers-color-scheme: dark) {
   body {
     background-color: #1b1e22;
@@ -211,6 +291,39 @@ body {
   .pager .btn:focus {
     background-color: #bfdbfe;
     color: #172554;
+  }
+
+  .pairs-container {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+
+  .pairs-table-wrapper {
+    background-color: #1f2429;
+    border: 1px solid #2f3439;
+    box-shadow: 0 0.75rem 1.5rem rgba(0, 0, 0, 0.45);
+  }
+
+  .pairs-table thead th {
+    background-color: #2a3036;
+    color: #e2e8f0;
+    border-color: #373f46;
+  }
+
+  .pairs-table tbody td {
+    color: #e2e8f0;
+  }
+
+  .pairs-col-id {
+    color: #93c5fd;
+  }
+
+  .pairs-pagination {
+    border-top: 1px solid #2f3439;
+  }
+
+  .pairs-controls label {
+    color: #cbd5f5;
   }
 
   .navbar-toggler {

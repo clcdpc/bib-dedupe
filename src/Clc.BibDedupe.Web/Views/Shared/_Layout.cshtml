@@ -10,7 +10,10 @@
 </head>
 <body>
 @await Html.PartialAsync("_Menu")
-<div class="container">
+@{
+    var mainContainerClass = ViewBag.MainContainerClass as string ?? "container";
+}
+<div class="@mainContainerClass">
     <main role="main" class="pb-3">
         @RenderBody()
     </main>
