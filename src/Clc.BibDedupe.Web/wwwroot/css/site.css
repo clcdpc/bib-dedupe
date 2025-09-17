@@ -133,6 +133,11 @@ body {
   box-shadow: 0 0.5rem 1.5rem rgba(33, 37, 41, 0.08);
 }
 
+.pairs-table {
+  table-layout: auto;
+  width: 100%;
+}
+
 .pairs-table thead th {
   font-size: 0.75rem;
   letter-spacing: 0.08em;
@@ -143,29 +148,46 @@ body {
 }
 
 .pairs-table tbody tr:hover {
-  background-color: rgba(13, 110, 253, 0.05);
+  background-color: rgba(13, 110, 253, 0.08);
+  color: #0b223b;
 }
 
+.pairs-table tbody tr:hover .text-muted {
+  color: #495057 !important;
+}
+
+.pairs-table th,
 .pairs-table td {
   vertical-align: middle;
+  white-space: normal;
+  word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
 .pairs-table .bib-column {
   font-family: var(--bs-font-monospace);
   font-size: 0.95rem;
-  white-space: nowrap;
 }
 
-.pairs-table .title-column {
-  min-width: 18rem;
+.pairs-table .work-column {
+  min-width: 0;
 }
 
-.pairs-table .author-column {
-  min-width: 12rem;
+.pairs-table .work-title {
+  font-weight: 600;
+}
+
+.pairs-table .work-meta {
+  font-size: 0.8125rem;
 }
 
 .pairs-table .match-value {
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.pairs-table .text-nowrap {
+  white-space: nowrap;
 }
 
 .navbar {
@@ -269,7 +291,12 @@ body {
   }
 
   .pairs-table tbody tr:hover {
-    background-color: rgba(59, 130, 246, 0.18);
+    background-color: rgba(96, 165, 250, 0.22);
+    color: #f4f6fb;
+  }
+
+  .pairs-table tbody tr:hover .text-muted {
+    color: #e2e8f0 !important;
   }
 
   .pager .btn {

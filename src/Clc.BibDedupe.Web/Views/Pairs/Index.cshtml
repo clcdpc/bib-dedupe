@@ -39,11 +39,9 @@
         <thead>
             <tr>
                 <th scope="col">Left Bib</th>
-                <th scope="col">Left Title</th>
-                <th scope="col">Left Author</th>
+                <th scope="col">Left Details</th>
                 <th scope="col">Right Bib</th>
-                <th scope="col">Right Title</th>
-                <th scope="col">Right Author</th>
+                <th scope="col">Right Details</th>
                 <th scope="col">Match Type</th>
                 <th scope="col" class="text-end">Match Value</th>
                 <th scope="col" class="text-center">Review</th>
@@ -56,11 +54,15 @@
                 {
                     <tr>
                         <td class="bib-column">@p.LeftBibId</td>
-                        <td class="title-column">@p.LeftTitle</td>
-                        <td class="author-column text-muted">@p.LeftAuthor</td>
+                        <td class="work-column">
+                            <div class="work-title">@p.LeftTitle</div>
+                            <div class="work-meta text-muted">@p.LeftAuthor</div>
+                        </td>
                         <td class="bib-column">@p.RightBibId</td>
-                        <td class="title-column">@p.RightTitle</td>
-                        <td class="author-column text-muted">@p.RightAuthor</td>
+                        <td class="work-column">
+                            <div class="work-title">@p.RightTitle</div>
+                            <div class="work-meta text-muted">@p.RightAuthor</div>
+                        </td>
                         <td class="text-nowrap">
                             <span class="badge bg-info text-dark">@p.MatchType</span>
                         </td>
@@ -74,7 +76,7 @@
             else
             {
                 <tr>
-                    <td colspan="9" class="text-center py-5 text-muted">No pairs are available for review right now.</td>
+                    <td colspan="7" class="text-center py-5 text-muted">No pairs are available for review right now.</td>
                 </tr>
             }
         </tbody>
