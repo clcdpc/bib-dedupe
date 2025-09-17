@@ -9,8 +9,11 @@
     <link rel="stylesheet" href="~/Clc.BibDedupe.Web.styles.css" asp-append-version="true" />
 </head>
 <body>
+@{
+    var containerClass = ViewBag.ContainerClass as string ?? "container";
+}
 @await Html.PartialAsync("_Menu")
-<div class="container">
+<div class="@containerClass">
     <main role="main" class="pb-3">
         @RenderBody()
     </main>
