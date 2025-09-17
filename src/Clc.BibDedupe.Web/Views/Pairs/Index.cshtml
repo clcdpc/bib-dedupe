@@ -2,53 +2,62 @@
 @model PairsListViewModel
 @{
     ViewData["Title"] = "Pairs";
+    ViewData["LayoutContainerClass"] = "container-fluid px-3 px-md-4 pairs-container";
+    ViewData["BodyClass"] = "pairs-page";
 }
 
-<h1>Pairs</h1>
-<form class="row g-2 mb-3" method="get">
-    <div class="col-auto">
-        <label for="pageSize" class="col-form-label">Page Size:</label>
-    </div>
-    <div class="col-auto">
-        <input type="number" class="form-control" id="pageSize" name="pageSize" value="@Model.PageSize" min="1" />
-    </div>
-    <div class="col-auto">
-        <button type="submit" class="btn btn-primary">Apply</button>
-    </div>
-</form>
-<table class="table table-striped">
-    <thead class="table-dark">
-        <tr>
-            <th>Left Bib</th>
-            <th>Left Title</th>
-            <th>Left Author</th>
-            <th>Right Bib</th>
-            <th>Right Title</th>
-            <th>Right Author</th>
-            <th>Match Type</th>
-            <th>Match Value</th>
-            <th>Review</th>
-        </tr>
-    </thead>
-    <tbody>
-@foreach (var p in Model.Items)
-{
-        <tr>
-            <td>@p.LeftBibId</td>
-            <td>@p.LeftTitle</td>
-            <td>@p.LeftAuthor</td>
-            <td>@p.RightBibId</td>
-            <td>@p.RightTitle</td>
-            <td>@p.RightAuthor</td>
-            <td>@p.MatchType</td>
-            <td>@p.MatchValue</td>
-            <td>
-                <a asp-controller="Home" asp-action="Review" asp-route-leftBibId="@p.LeftBibId" asp-route-rightBibId="@p.RightBibId" asp-route-returnUrl="@Url.Action("Index", new { page = Model.Page, pageSize = Model.PageSize })" class="btn btn-sm btn-primary">Review</a>
-            </td>
-        </tr>
-}
-    </tbody>
-</table>
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+    <h1 class="mb-0">Pairs</h1>
+    <form class="row g-2 align-items-center" method="get">
+        <div class="col-auto">
+            <label for="pageSize" class="col-form-label text-muted small text-uppercase">Page Size</label>
+        </div>
+        <div class="col-auto">
+            <input type="number" class="form-control form-control-sm" id="pageSize" name="pageSize" value="@Model.PageSize" min="1" />
+        </div>
+        <div class="col-auto">
+            <button type="submit" class="btn btn-sm btn-outline-primary">Apply</button>
+        </div>
+    </form>
+</div>
+
+<div class="table-responsive pair-table-container shadow-sm">
+    <table class="table table-striped table-hover table-bordered align-middle mb-0 pair-table">
+        <thead>
+            <tr>
+                <th scope="col" class="text-nowrap">Left Bib</th>
+                <th scope="col">Left Title</th>
+                <th scope="col">Left Author</th>
+                <th scope="col" class="text-nowrap">Right Bib</th>
+                <th scope="col">Right Title</th>
+                <th scope="col">Right Author</th>
+                <th scope="col" class="text-nowrap">Match Type</th>
+                <th scope="col" class="text-nowrap text-end">Match Value</th>
+                <th scope="col" class="text-nowrap text-center">Review</th>
+            </tr>
+        </thead>
+        <tbody>
+        @foreach (var p in Model.Items)
+        {
+            <tr>
+                <td class="font-monospace text-nowrap">@p.LeftBibId</td>
+                <td class="title-cell text-truncate" title="@p.LeftTitle">@p.LeftTitle</td>
+                <td class="text-truncate" title="@p.LeftAuthor">@p.LeftAuthor</td>
+                <td class="font-monospace text-nowrap">@p.RightBibId</td>
+                <td class="title-cell text-truncate" title="@p.RightTitle">@p.RightTitle</td>
+                <td class="text-truncate" title="@p.RightAuthor">@p.RightAuthor</td>
+                <td>
+                    <span class="badge bg-info text-dark fw-semibold">@p.MatchType</span>
+                </td>
+                <td class="text-end fw-semibold">@p.MatchValue</td>
+                <td class="text-center text-nowrap">
+                    <a asp-controller="Home" asp-action="Review" asp-route-leftBibId="@p.LeftBibId" asp-route-rightBibId="@p.RightBibId" asp-route-returnUrl="@Url.Action("Index", new { page = Model.Page, pageSize = Model.PageSize })" class="btn btn-sm btn-primary">Review</a>
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+</div>
 <div class="d-flex justify-content-between">
     <div>Page @Model.Page of @Model.TotalPages</div>
     <div class="pager">

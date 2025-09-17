@@ -8,9 +8,13 @@
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/Clc.BibDedupe.Web.styles.css" asp-append-version="true" />
 </head>
-<body>
+@{
+    var layoutContainerClass = ViewData["LayoutContainerClass"] as string ?? "container";
+    var bodyClass = ViewData["BodyClass"] as string ?? string.Empty;
+}
+<body class="@bodyClass">
 @await Html.PartialAsync("_Menu")
-<div class="container">
+<div class="@layoutContainerClass">
     <main role="main" class="pb-3">
         @RenderBody()
     </main>
