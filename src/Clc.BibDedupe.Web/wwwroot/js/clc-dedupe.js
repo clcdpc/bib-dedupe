@@ -124,6 +124,9 @@
 })();
 (function () {
     const page = document.querySelector('.page');
+    if (page) {
+        page.classList.add('initializing');
+    }
     const token = document.querySelector('#token-form input[name="__RequestVerificationToken"]').value;
     const url = page.dataset.resolveUrl;
     const leftBibId = parseInt(page.dataset.leftBibId, 10);
@@ -271,4 +274,7 @@
     bindScrollSync(rightDiv, leftDiv);
     window.addEventListener('resize', syncRowHeights);
     initTabs();
+    if (page) {
+        requestAnimationFrame(() => page.classList.remove('initializing'));
+    }
 })();
