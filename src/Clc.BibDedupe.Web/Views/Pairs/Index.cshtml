@@ -74,7 +74,7 @@
                         </td>
                         <td class="text-end text-nowrap fw-semibold match-value">@p.MatchValue</td>
                         <td class="text-center">
-                            <a asp-controller="Home" asp-action="Review" asp-route-leftBibId="@p.LeftBibId" asp-route-rightBibId="@p.RightBibId" asp-route-returnUrl="@Url.Action("Index", new { page = currentPage, pageSize = Model.PageSize })" class="btn btn-outline-primary btn-sm px-3">Review</a>
+                            <a asp-controller="Home" asp-action="Review" asp-route-leftBibId="@p.LeftBibId" asp-route-rightBibId="@p.RightBibId" asp-route-returnUrl="@Url.Action("Index", new { page = currentPage, pageSize = Model.PageSize })" class="btn btn-sm review-btn">Review</a>
                         </td>
                     </tr>
                 }
