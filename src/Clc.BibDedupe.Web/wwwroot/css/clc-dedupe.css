@@ -10,6 +10,11 @@ html, body {
     flex-direction: column;
 }
 
+.page.initializing .frames,
+.page.initializing .controls {
+    visibility: hidden;
+}
+
 .frames {
     flex: 1 1 auto;
     display: grid;
