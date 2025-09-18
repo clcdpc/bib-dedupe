@@ -198,40 +198,39 @@ body {
   align-items: center;
   justify-content: center;
   gap: 0.35rem;
-  padding: 0.4rem 0.85rem;
+  padding: 0.45rem 0.95rem;
   font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  border-radius: 999px;
-  border: 1px solid rgba(13, 110, 253, 0.35);
-  background: linear-gradient(135deg, #0d6efd, #4c8dff);
+  border-radius: 0.375rem;
+  border: 1px solid #0a58ca;
+  background-color: #0d6efd;
   color: #ffffff;
   white-space: nowrap;
   text-decoration: none;
   line-height: 1.1;
-  box-shadow: 0 0.35rem 0.9rem rgba(13, 110, 253, 0.25);
-  transition: transform 0.15s ease-in-out, box-shadow 0.15s ease-in-out, background 0.15s ease-in-out,
-    border-color 0.15s ease-in-out, color 0.15s ease-in-out;
+  box-shadow: 0 0.25rem 0.75rem rgba(13, 110, 253, 0.2);
+  transition: box-shadow 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out,
+    color 0.15s ease-in-out;
 }
 
 .pairs-table .review-btn:hover,
 .pairs-table .review-btn:focus {
-  background: linear-gradient(135deg, #0b5ed7, #3b7bf7);
-  border-color: rgba(13, 110, 253, 0.55);
-  box-shadow: 0 0.45rem 1.2rem rgba(13, 110, 253, 0.35);
+  background-color: #0b5ed7;
+  border-color: #0a53be;
+  box-shadow: 0 0.35rem 1rem rgba(13, 110, 253, 0.3);
   color: #ffffff;
-  transform: translateY(-1px);
+  text-decoration: none;
 }
 
 .pairs-table .review-btn:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.3), 0 0.45rem 1.2rem rgba(13, 110, 253, 0.4);
+  box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.35), 0 0.35rem 1rem rgba(13, 110, 253, 0.35);
 }
 
 .pairs-table .review-btn:active {
-  transform: translateY(0);
-  box-shadow: 0 0.2rem 0.7rem rgba(13, 110, 253, 0.25);
+  box-shadow: 0 0.15rem 0.5rem rgba(13, 110, 253, 0.2);
 }
 
 .navbar {
@@ -344,26 +343,26 @@ body {
   }
 
   .pairs-table .review-btn {
-    background: linear-gradient(135deg, #2563eb, #38bdf8);
-    border-color: rgba(59, 130, 246, 0.6);
+    background-color: #2563eb;
+    border-color: #1d4ed8;
     color: #f8fafc;
-    box-shadow: 0 0.45rem 1.35rem rgba(14, 165, 233, 0.4);
+    box-shadow: 0 0.35rem 1rem rgba(37, 99, 235, 0.35);
   }
 
   .pairs-table .review-btn:hover,
   .pairs-table .review-btn:focus {
-    background: linear-gradient(135deg, #1d4ed8, #0ea5e9);
-    border-color: rgba(37, 99, 235, 0.85);
+    background-color: #1d4ed8;
+    border-color: #1e40af;
     color: #f8fafc;
-    box-shadow: 0 0.55rem 1.45rem rgba(14, 165, 233, 0.55);
+    box-shadow: 0 0.45rem 1.2rem rgba(37, 99, 235, 0.45);
   }
 
   .pairs-table .review-btn:focus-visible {
-    box-shadow: 0 0 0 0.2rem rgba(14, 165, 233, 0.4), 0 0.55rem 1.45rem rgba(14, 165, 233, 0.55);
+    box-shadow: 0 0 0 0.2rem rgba(37, 99, 235, 0.45), 0 0.45rem 1.2rem rgba(37, 99, 235, 0.45);
   }
 
   .pairs-table .review-btn:active {
-    box-shadow: 0 0.25rem 1rem rgba(14, 165, 233, 0.4);
+    box-shadow: 0 0.2rem 0.75rem rgba(37, 99, 235, 0.35);
   }
 
   .pager .btn {
