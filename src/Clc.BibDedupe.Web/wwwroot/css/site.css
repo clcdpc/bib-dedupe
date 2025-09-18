@@ -142,6 +142,11 @@ body {
 .pairs-table {
   table-layout: auto;
   width: 100%;
+  --pairs-hover-bg: rgba(13, 110, 253, 0.16);
+  --pairs-hover-color: #0b223b;
+  --pairs-hover-muted-color: #495057;
+  --bs-table-hover-bg: var(--pairs-hover-bg);
+  --bs-table-hover-color: var(--pairs-hover-color);
 }
 
 .pairs-table thead th {
@@ -154,12 +159,12 @@ body {
 }
 
 .pairs-table tbody tr:hover {
-  background-color: rgba(13, 110, 253, 0.16);
-  color: #0b223b;
+  background-color: var(--pairs-hover-bg);
+  color: var(--pairs-hover-color);
 }
 
 .pairs-table tbody tr:hover .text-muted {
-  color: #495057 !important;
+  color: var(--pairs-hover-muted-color) !important;
 }
 
 .pairs-table th,
@@ -334,18 +339,26 @@ body {
     box-shadow: 0 0.75rem 2rem rgba(0, 0, 0, 0.6);
   }
 
+  .pairs-table {
+    --pairs-hover-bg: rgba(59, 130, 246, 0.78);
+    --pairs-hover-color: #f4f6fb;
+    --pairs-hover-muted-color: #e2e8f0;
+    --bs-table-hover-bg: var(--pairs-hover-bg);
+    --bs-table-hover-color: var(--pairs-hover-color);
+  }
+
   .pairs-table thead th {
     color: #ced4da;
     background-color: #212730;
   }
 
   .pairs-table tbody tr:hover {
-    background-color: rgba(59, 130, 246, 0.78);
-    color: #f4f6fb;
+    background-color: var(--pairs-hover-bg);
+    color: var(--pairs-hover-color);
   }
 
   .pairs-table tbody tr:hover .text-muted {
-    color: #e2e8f0 !important;
+    color: var(--pairs-hover-muted-color) !important;
   }
 
   .pairs-table .review-btn {
