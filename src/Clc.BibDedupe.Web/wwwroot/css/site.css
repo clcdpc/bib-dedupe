@@ -186,7 +186,7 @@ body {
 
 .pairs-table .match-value {
   font-variant-numeric: tabular-nums;
-  white-space: nowrap;
+  white-space: normal;
 }
 
 .pairs-table .text-nowrap {
