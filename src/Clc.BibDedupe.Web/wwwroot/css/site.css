@@ -153,24 +153,6 @@ body {
   transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
 }
 
-.pairs-table tbody tr.pairs-hover-preview-legacy {
-  --pairs-hover-bg: rgba(13, 110, 253, 0.16);
-  --pairs-hover-color: #0b223b;
-  --pairs-hover-muted-color: #495057;
-}
-
-.pairs-table tbody tr.pairs-hover-preview-bold {
-  --pairs-hover-bg: rgba(25, 99, 210, 0.3);
-  --pairs-hover-color: #081f3a;
-  --pairs-hover-muted-color: #31445d;
-}
-
-.pairs-table tbody tr.pairs-hover-preview-soft {
-  --pairs-hover-bg: rgba(125, 179, 255, 0.2);
-  --pairs-hover-color: #0b223b;
-  --pairs-hover-muted-color: #3d4c64;
-}
-
 .pairs-table thead th {
   font-size: 0.75rem;
   letter-spacing: 0.08em;
@@ -367,24 +349,6 @@ body {
     --pairs-hover-muted-color: #e2e8f0;
     --bs-table-hover-bg: var(--pairs-hover-bg);
     --bs-table-hover-color: var(--pairs-hover-color);
-  }
-
-  .pairs-table tbody tr.pairs-hover-preview-legacy {
-    --pairs-hover-bg: rgba(59, 130, 246, 0.78);
-    --pairs-hover-color: #f4f6fb;
-    --pairs-hover-muted-color: #e2e8f0;
-  }
-
-  .pairs-table tbody tr.pairs-hover-preview-bold {
-    --pairs-hover-bg: rgba(37, 99, 235, 0.88);
-    --pairs-hover-color: #f8fafc;
-    --pairs-hover-muted-color: #e2e8f0;
-  }
-
-  .pairs-table tbody tr.pairs-hover-preview-soft {
-    --pairs-hover-bg: rgba(56, 189, 248, 0.72);
-    --pairs-hover-color: #f8fafc;
-    --pairs-hover-muted-color: #e2e8f0;
   }
 
   .pairs-table thead th {

@@ -52,21 +52,9 @@
         <tbody>
             @if (visiblePairs.Any())
             {
-                var hoverPreviewVariants = new[] { null, "pairs-hover-preview-legacy", "pairs-hover-preview-bold", "pairs-hover-preview-soft" };
-                var rowIndex = 0;
-
                 foreach (var p in visiblePairs)
                 {
-                    var previewVariant = rowIndex < hoverPreviewVariants.Length ? hoverPreviewVariants[rowIndex] : null;
-                    var rowCssClass = "pairs-row";
-                    if (!string.IsNullOrEmpty(previewVariant))
-                    {
-                        rowCssClass += $" {previewVariant}";
-                    }
-
-                    rowIndex++;
-
-                    <tr class="@rowCssClass">
+                    <tr class="pairs-row">
                         <td class="bib-column">@p.LeftBibId</td>
                         <td class="work-column">
                             <div class="work-title">@p.LeftTitle</div>
