@@ -142,9 +142,9 @@ body {
 .pairs-table {
   table-layout: auto;
   width: 100%;
-  --pairs-hover-bg: rgba(74, 118, 189, 0.26);
-  --pairs-hover-color: #0b223b;
-  --pairs-hover-muted-color: #3f4d63;
+  --pairs-hover-bg: rgba(66, 98, 147, 0.24);
+  --pairs-hover-color: #0a2037;
+  --pairs-hover-muted-color: #3a475c;
   --bs-table-hover-bg: var(--pairs-hover-bg);
   --bs-table-hover-color: var(--pairs-hover-color);
 }
@@ -344,9 +344,9 @@ body {
   }
 
   .pairs-table {
-    --pairs-hover-bg: rgba(72, 114, 180, 0.84);
-    --pairs-hover-color: #f6f9ff;
-    --pairs-hover-muted-color: #e2e8f0;
+    --pairs-hover-bg: rgba(64, 97, 148, 0.78);
+    --pairs-hover-color: #f3f6ff;
+    --pairs-hover-muted-color: #dee6f4;
     --bs-table-hover-bg: var(--pairs-hover-bg);
     --bs-table-hover-color: var(--pairs-hover-color);
   }
