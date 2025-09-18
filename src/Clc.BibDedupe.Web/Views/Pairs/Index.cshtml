@@ -1,64 +1,116 @@
+@using System.Linq
 @using Clc.BibDedupe.Web.Models
 @model PairsListViewModel
 @{
     ViewData["Title"] = "Pairs";
+    ViewBag.ContainerClass = "container-fluid px-4 px-lg-5";
+    var visiblePairs = Model.Items.ToList();
+    var totalPages = System.Math.Max(Model.TotalPages, 1);
+    var currentPage = System.Math.Min(System.Math.Max(Model.Page, 1), totalPages);
+    var totalPairs = System.Math.Max(Model.TotalCount, 0);
 }
 
-<h1>Pairs</h1>
-<form class="row g-2 mb-3" method="get">
-    <div class="col-auto">
-        <label for="pageSize" class="col-form-label">Page Size:</label>
+<div class="d-flex flex-column flex-lg-row align-items-lg-end justify-content-between gap-3 mb-4">
+    <div>
+        <h1 class="display-6 mb-0">Pairs</h1>
+        <p class="text-muted mb-0">Review potential duplicates across the collection.</p>
     </div>
-    <div class="col-auto">
-        <input type="number" class="form-control" id="pageSize" name="pageSize" value="@Model.PageSize" min="1" />
+    <div class="text-lg-end text-muted small">
+        Showing <strong>@visiblePairs.Count</strong> of <strong>@totalPairs</strong> pairs
     </div>
-    <div class="col-auto">
-        <button type="submit" class="btn btn-primary">Apply</button>
-    </div>
-</form>
-<table class="table table-striped">
-    <thead class="table-dark">
-        <tr>
-            <th>Left Bib</th>
-            <th>Left Title</th>
-            <th>Left Author</th>
-            <th>Right Bib</th>
-            <th>Right Title</th>
-            <th>Right Author</th>
-            <th>Match Type</th>
-            <th>Match Value</th>
-            <th>Review</th>
-        </tr>
-    </thead>
-    <tbody>
-@foreach (var p in Model.Items)
-{
-        <tr>
-            <td>@p.LeftBibId</td>
-            <td>@p.LeftTitle</td>
-            <td>@p.LeftAuthor</td>
-            <td>@p.RightBibId</td>
-            <td>@p.RightTitle</td>
-            <td>@p.RightAuthor</td>
-            <td>@p.MatchType</td>
-            <td>@p.MatchValue</td>
-            <td>
-                <a asp-controller="Home" asp-action="Review" asp-route-leftBibId="@p.LeftBibId" asp-route-rightBibId="@p.RightBibId" asp-route-returnUrl="@Url.Action("Index", new { page = Model.Page, pageSize = Model.PageSize })" class="btn btn-sm btn-primary">Review</a>
-            </td>
-        </tr>
-}
-    </tbody>
-</table>
-<div class="d-flex justify-content-between">
-    <div>Page @Model.Page of @Model.TotalPages</div>
+</div>
+
+<div class="pairs-toolbar mb-4">
+    <form class="row row-cols-lg-auto g-3 align-items-center" method="get">
+        <div class="col-auto">
+            <label for="pageSize" class="form-label fw-semibold text-uppercase small text-muted mb-0">Page Size</label>
+        </div>
+        <div class="col-auto">
+            <input type="number" class="form-control form-control-sm" id="pageSize" name="pageSize" value="@Model.PageSize" min="1" />
+        </div>
+        <div class="col-auto">
+            <button type="submit" class="btn btn-primary btn-sm px-3">Apply</button>
+        </div>
+    </form>
+</div>
+
+<div class="table-responsive pairs-table-wrapper">
+    <table class="table table-striped table-hover align-middle pairs-table mb-0">
+        <thead>
+            <tr>
+                <th scope="col">Left Bib</th>
+                <th scope="col">Left Title</th>
+                <th scope="col">Left Author</th>
+                <th scope="col">Right Bib</th>
+                <th scope="col">Right Title</th>
+                <th scope="col">Right Author</th>
+                <th scope="col">Match Type</th>
+                <th scope="col" class="text-end">Match Value</th>
+                <th scope="col" class="text-center">Review</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (visiblePairs.Any())
+            {
+                var hoverPreviewVariants = new[] { null, "pairs-hover-preview-legacy", "pairs-hover-preview-bold", "pairs-hover-preview-soft" };
+                var rowIndex = 0;
+
+                foreach (var p in visiblePairs)
+                {
+                    var previewVariant = rowIndex < hoverPreviewVariants.Length ? hoverPreviewVariants[rowIndex] : null;
+                    var rowCssClass = "pairs-row";
+                    if (!string.IsNullOrEmpty(previewVariant))
+                    {
+                        rowCssClass += $" {previewVariant}";
+                    }
+
+                    rowIndex++;
+
+                    <tr class="@rowCssClass">
+                        <td class="bib-column">@p.LeftBibId</td>
+                        <td class="work-column">
+                            <div class="work-title">@p.LeftTitle</div>
+                        </td>
+                        <td class="work-column">
+                            <div class="work-author text-muted">@p.LeftAuthor</div>
+                        </td>
+                        <td class="bib-column">@p.RightBibId</td>
+                        <td class="work-column">
+                            <div class="work-title">@p.RightTitle</div>
+                        </td>
+                        <td class="work-column">
+                            <div class="work-author text-muted">@p.RightAuthor</div>
+                        </td>
+                        <td class="text-nowrap">
+                            <span class="badge bg-info text-dark">@p.MatchType</span>
+                        </td>
+                        <td class="text-end fw-semibold match-value">@p.MatchValue</td>
+                        <td class="text-center">
+                            <a asp-controller="Home" asp-action="Review" asp-route-leftBibId="@p.LeftBibId" asp-route-rightBibId="@p.RightBibId" asp-route-returnUrl="@Url.Action("Index", new { page = currentPage, pageSize = Model.PageSize })" class="btn btn-sm review-btn">Review</a>
+                        </td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr>
+                    <td colspan="9" class="text-center py-5 text-muted">No pairs are available for review right now.</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mt-4">
+    <div class="text-muted">Page @currentPage of @totalPages</div>
     <div class="pager">
-        @if (Model.Page > 1)
+        @if (currentPage > 1)
         {
-            <a class="btn btn-sm" asp-action="Index" asp-route-page="@(Model.Page - 1)" asp-route-pageSize="@Model.PageSize">Prev</a>
+            <a class="btn btn-sm" asp-action="Index" asp-route-page="@(currentPage - 1)" asp-route-pageSize="@Model.PageSize">Prev</a>
         }
-        @if (Model.Page < Model.TotalPages)
+        @if (currentPage < totalPages)
         {
-            <a class="btn btn-sm" asp-action="Index" asp-route-page="@(Model.Page + 1)" asp-route-pageSize="@Model.PageSize">Next</a>
+            <a class="btn btn-sm" asp-action="Index" asp-route-page="@(currentPage + 1)" asp-route-pageSize="@Model.PageSize">Next</a>
         }
     </div>
 </div>
