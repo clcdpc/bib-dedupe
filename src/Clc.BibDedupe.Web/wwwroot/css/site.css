@@ -148,7 +148,7 @@ body {
 }
 
 .pairs-table tbody tr:hover {
-  background-color: rgba(13, 110, 253, 0.08);
+  background-color: rgba(13, 110, 253, 0.16);
   color: #0b223b;
 }
 
@@ -334,7 +334,7 @@ body {
   }
 
   .pairs-table tbody tr:hover {
-    background-color: rgba(96, 165, 250, 0.22);
+    background-color: rgba(59, 130, 246, 0.32);
     color: #f4f6fb;
   }
 
