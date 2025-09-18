@@ -10,16 +10,6 @@
     var totalPairs = System.Math.Max(Model.TotalCount, 0);
 }
 
-<div class="d-flex flex-column flex-lg-row align-items-lg-end justify-content-between gap-3 mb-4">
-    <div>
-        <h1 class="display-6 mb-0">Pairs</h1>
-        <p class="text-muted mb-0">Review potential duplicates across the collection.</p>
-    </div>
-    <div class="text-lg-end text-muted small">
-        Showing <strong>@visiblePairs.Count</strong> of <strong>@totalPairs</strong> pairs
-    </div>
-</div>
-
 <div class="pairs-toolbar mb-4">
     <form class="row row-cols-lg-auto g-3 align-items-center" method="get">
         <div class="col-auto">
@@ -30,6 +20,11 @@
         </div>
         <div class="col-auto">
             <button type="submit" class="btn btn-primary btn-sm px-3">Apply</button>
+        </div>
+        <div class="col-12 col-lg-auto ms-lg-auto">
+            <div class="text-muted small text-lg-end">
+                Showing <strong>@visiblePairs.Count</strong> of <strong>@totalPairs</strong> pairs
+            </div>
         </div>
     </form>
 </div>
