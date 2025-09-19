@@ -108,6 +108,10 @@ RETURN (
         p.PrimaryMARCTOMID,
         p.LeftBibId,
         p.RightBibId,
+        LeftTitle = CAST(NULL AS NVARCHAR(512)),
+        LeftAuthor = CAST(NULL AS NVARCHAR(256)),
+        RightTitle = CAST(NULL AS NVARCHAR(512)),
+        RightAuthor = CAST(NULL AS NVARCHAR(256)),
         MatchesJson = ISNULL(pm.MatchesJson, '[]')
     FROM BibDedupe.Pairs p
     OUTER APPLY (

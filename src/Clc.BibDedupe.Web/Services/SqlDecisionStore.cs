@@ -31,6 +31,7 @@ public class SqlDecisionStore(IDbConnection db) : IDecisionStore
     {
         var rows = await db.QueryAsync<DecisionRow>(
             $@"SELECT d.LeftBibId, d.RightBibId, d.ActionId, p.PrimaryMARCTOMID AS PrimaryMarcTomId,
+                      p.LeftTitle, p.LeftAuthor, p.RightTitle, p.RightAuthor,
                       p.MatchesJson
                FROM {Table} d
                JOIN BibDedupe.GetPairs(@Top) p ON d.LeftBibId = p.LeftBibId AND d.RightBibId = p.RightBibId
