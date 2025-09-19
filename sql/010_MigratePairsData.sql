@@ -19,9 +19,22 @@ BEGIN TRY
     DECLARE @hasLeftMetadata BIT = CASE WHEN COL_LENGTH('BibDedupe.Pairs', 'LeftTitle') IS NULL THEN 0 ELSE 1 END;
     DECLARE @hasRightMetadata BIT = CASE WHEN COL_LENGTH('BibDedupe.Pairs', 'RightTitle') IS NULL THEN 0 ELSE 1 END;
 
-    IF @hasLeftMetadata = 1 AND @hasRightMetadata = 1
-    BEGIN
-        SELECT
+    CREATE TABLE #PairsOld
+    (
+        PairId INT NOT NULL,
+        MatchType NVARCHAR(50) NULL,
+        MatchValue NVARCHAR(256) NULL,
+        PrimaryMARCTOMID INT NULL,
+        LeftBibId INT NOT NULL,
+        RightBibId INT NOT NULL,
+        LeftTitle NVARCHAR(512) NULL,
+        LeftAuthor NVARCHAR(256) NULL,
+        RightTitle NVARCHAR(512) NULL,
+        RightAuthor NVARCHAR(256) NULL
+    );
+
+    DECLARE @loadSql NVARCHAR(MAX) = N'
+        INSERT INTO #PairsOld (
             PairId,
             MatchType,
             MatchValue,
@@ -32,11 +45,7 @@ BEGIN TRY
             LeftAuthor,
             RightTitle,
             RightAuthor
-        INTO #PairsOld
-        FROM BibDedupe.Pairs;
-    END
-    ELSE IF @hasLeftMetadata = 1 AND @hasRightMetadata = 0
-    BEGIN
+        )
         SELECT
             PairId,
             MatchType,
@@ -44,45 +53,25 @@ BEGIN TRY
             PrimaryMARCTOMID,
             LeftBibId,
             RightBibId,
-            LeftTitle,
+' + CASE WHEN @hasLeftMetadata = 1
+        THEN N'            LeftTitle,
             LeftAuthor,
-            NULL AS RightTitle,
-            NULL AS RightAuthor
-        INTO #PairsOld
-        FROM BibDedupe.Pairs;
-    END
-    ELSE IF @hasLeftMetadata = 0 AND @hasRightMetadata = 1
-    BEGIN
-        SELECT
-            PairId,
-            MatchType,
-            MatchValue,
-            PrimaryMARCTOMID,
-            LeftBibId,
-            RightBibId,
-            NULL AS LeftTitle,
-            NULL AS LeftAuthor,
-            RightTitle,
+'
+        ELSE N'            CAST(NULL AS NVARCHAR(512)) AS LeftTitle,
+            CAST(NULL AS NVARCHAR(256)) AS LeftAuthor,
+'
+        END
+      + CASE WHEN @hasRightMetadata = 1
+        THEN N'            RightTitle,
             RightAuthor
-        INTO #PairsOld
-        FROM BibDedupe.Pairs;
-    END
-    ELSE
-    BEGIN
-        SELECT
-            PairId,
-            MatchType,
-            MatchValue,
-            PrimaryMARCTOMID,
-            LeftBibId,
-            RightBibId,
-            NULL AS LeftTitle,
-            NULL AS LeftAuthor,
-            NULL AS RightTitle,
-            NULL AS RightAuthor
-        INTO #PairsOld
-        FROM BibDedupe.Pairs;
-    END
+'
+        ELSE N'            CAST(NULL AS NVARCHAR(512)) AS RightTitle,
+            CAST(NULL AS NVARCHAR(256)) AS RightAuthor
+'
+        END
+      + N'        FROM BibDedupe.Pairs;';
+
+    EXEC sys.sp_executesql @loadSql;
 
     DROP TABLE BibDedupe.Pairs;
 
