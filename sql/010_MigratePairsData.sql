@@ -19,6 +19,9 @@ BEGIN TRY
     DECLARE @hasLeftMetadata BIT = CASE WHEN COL_LENGTH('BibDedupe.Pairs', 'LeftTitle') IS NULL THEN 0 ELSE 1 END;
     DECLARE @hasRightMetadata BIT = CASE WHEN COL_LENGTH('BibDedupe.Pairs', 'RightTitle') IS NULL THEN 0 ELSE 1 END;
 
+    IF OBJECT_ID('BibDedupe.GetPairs', 'IF') IS NOT NULL
+        DROP FUNCTION BibDedupe.GetPairs;
+
     CREATE TABLE #PairsOld
     (
         PairId INT NOT NULL,
@@ -152,6 +155,33 @@ BEGIN TRY
     DROP TABLE #PairsOld;
 
     COMMIT TRANSACTION;
+
+    DECLARE @createGetPairsSql NVARCHAR(MAX) = N'
+CREATE FUNCTION BibDedupe.GetPairs (@Top INT = 1000)
+RETURNS TABLE
+AS
+RETURN (
+    SELECT TOP (@Top)
+        p.PairId,
+        p.PrimaryMARCTOMID,
+        p.LeftBibId,
+        p.RightBibId,
+        p.LeftTitle,
+        p.LeftAuthor,
+        p.RightTitle,
+        p.RightAuthor,
+        MatchesJson = ISNULL(pm.MatchesJson, ''[]'')
+    FROM BibDedupe.Pairs p
+    OUTER APPLY (
+        SELECT MatchType, MatchValue
+        FROM BibDedupe.PairMatches m
+        WHERE m.PairId = p.PairId
+        ORDER BY m.MatchType, m.MatchValue
+        FOR JSON PATH
+    ) pm(MatchesJson)
+);';
+
+    EXEC sys.sp_executesql @createGetPairsSql;
 END TRY
 BEGIN CATCH
     IF XACT_STATE() <> 0 ROLLBACK TRANSACTION;
