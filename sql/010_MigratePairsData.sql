@@ -16,8 +16,7 @@ END;
 BEGIN TRY
     BEGIN TRANSACTION;
 
-    DECLARE @hasLeftMetadata BIT = CASE WHEN COL_LENGTH('BibDedupe.Pairs', 'LeftTitle') IS NULL THEN 0 ELSE 1 END;
-    DECLARE @hasRightMetadata BIT = CASE WHEN COL_LENGTH('BibDedupe.Pairs', 'RightTitle') IS NULL THEN 0 ELSE 1 END;
+    DECLARE @hasPrimaryMetadata BIT = CASE WHEN COL_LENGTH('BibDedupe.Pairs', 'PrimaryMARCTOMID') IS NULL THEN 0 ELSE 1 END;
 
     IF OBJECT_ID('BibDedupe.GetPairs', 'IF') IS NOT NULL
         DROP FUNCTION BibDedupe.GetPairs;
@@ -29,52 +28,25 @@ BEGIN TRY
         MatchValue NVARCHAR(256) NULL,
         PrimaryMARCTOMID INT NULL,
         LeftBibId INT NOT NULL,
-        RightBibId INT NOT NULL,
-        LeftTitle NVARCHAR(512) NULL,
-        LeftAuthor NVARCHAR(256) NULL,
-        RightTitle NVARCHAR(512) NULL,
-        RightAuthor NVARCHAR(256) NULL
+        RightBibId INT NOT NULL
     );
 
-    DECLARE @loadSql NVARCHAR(MAX) = N'
-        INSERT INTO #PairsOld (
-            PairId,
-            MatchType,
-            MatchValue,
-            PrimaryMARCTOMID,
-            LeftBibId,
-            RightBibId,
-            LeftTitle,
-            LeftAuthor,
-            RightTitle,
-            RightAuthor
-        )
-        SELECT
-            PairId,
-            MatchType,
-            MatchValue,
-            PrimaryMARCTOMID,
-            LeftBibId,
-            RightBibId,
-' + CASE WHEN @hasLeftMetadata = 1
-        THEN N'            LeftTitle,
-            LeftAuthor,
-'
-        ELSE N'            CAST(NULL AS NVARCHAR(512)) AS LeftTitle,
-            CAST(NULL AS NVARCHAR(256)) AS LeftAuthor,
-'
-        END
-      + CASE WHEN @hasRightMetadata = 1
-        THEN N'            RightTitle,
-            RightAuthor
-'
-        ELSE N'            CAST(NULL AS NVARCHAR(512)) AS RightTitle,
-            CAST(NULL AS NVARCHAR(256)) AS RightAuthor
-'
-        END
-      + N'        FROM BibDedupe.Pairs;';
-
-    EXEC sys.sp_executesql @loadSql;
+    INSERT INTO #PairsOld (
+        PairId,
+        MatchType,
+        MatchValue,
+        PrimaryMARCTOMID,
+        LeftBibId,
+        RightBibId
+    )
+    SELECT
+        PairId,
+        MatchType,
+        MatchValue,
+        CASE WHEN @hasPrimaryMetadata = 1 THEN PrimaryMARCTOMID ELSE NULL END,
+        LeftBibId,
+        RightBibId
+    FROM BibDedupe.Pairs;
 
     DROP TABLE BibDedupe.Pairs;
 
@@ -87,10 +59,6 @@ BEGIN TRY
         PrimaryMARCTOMID INT NOT NULL,
         LeftBibId INT NOT NULL,
         RightBibId INT NOT NULL,
-        LeftTitle NVARCHAR(512) NOT NULL,
-        LeftAuthor NVARCHAR(256) NULL,
-        RightTitle NVARCHAR(512) NOT NULL,
-        RightAuthor NVARCHAR(256) NULL,
         CONSTRAINT PK_Pairs PRIMARY KEY (PairId),
         CONSTRAINT UQ_Pairs_LeftRight UNIQUE (LeftBibId, RightBibId)
     );
@@ -121,24 +89,16 @@ BEGIN TRY
             PrimaryMarcTomId = COALESCE(
                 MAX(CASE WHEN PrimaryMARCTOMID IS NOT NULL AND PrimaryMARCTOMID <> 0 THEN PrimaryMARCTOMID END),
                 MAX(LeftBibId)
-            ),
-            LeftTitle = MAX(CASE WHEN LeftTitle IS NOT NULL AND LTRIM(RTRIM(LeftTitle)) <> '' THEN LeftTitle END),
-            LeftAuthor = MAX(CASE WHEN LeftAuthor IS NOT NULL AND LTRIM(RTRIM(LeftAuthor)) <> '' THEN LeftAuthor END),
-            RightTitle = MAX(CASE WHEN RightTitle IS NOT NULL AND LTRIM(RTRIM(RightTitle)) <> '' THEN RightTitle END),
-            RightAuthor = MAX(CASE WHEN RightAuthor IS NOT NULL AND LTRIM(RTRIM(RightAuthor)) <> '' THEN RightAuthor END)
+            )
         FROM #PairsOld
         GROUP BY LeftBibId, RightBibId
     )
-    INSERT INTO BibDedupe.Pairs (PrimaryMARCTOMID, LeftBibId, RightBibId, LeftTitle, LeftAuthor, RightTitle, RightAuthor)
+    INSERT INTO BibDedupe.Pairs (PrimaryMARCTOMID, LeftBibId, RightBibId)
     OUTPUT inserted.PairId, inserted.LeftBibId, inserted.RightBibId INTO @PairMap(PairId, LeftBibId, RightBibId)
     SELECT
         PrimaryMarcTomId,
         LeftBibId,
-        RightBibId,
-        COALESCE(LeftTitle, ''),
-        LeftAuthor,
-        COALESCE(RightTitle, ''),
-        RightAuthor
+        RightBibId
     FROM PairAggregates
     ORDER BY LeftBibId, RightBibId;
 
@@ -166,10 +126,6 @@ RETURN (
         p.PrimaryMARCTOMID,
         p.LeftBibId,
         p.RightBibId,
-        p.LeftTitle,
-        p.LeftAuthor,
-        p.RightTitle,
-        p.RightAuthor,
         MatchesJson = ISNULL(pm.MatchesJson, ''[]'')
     FROM BibDedupe.Pairs p
     OUTER APPLY (

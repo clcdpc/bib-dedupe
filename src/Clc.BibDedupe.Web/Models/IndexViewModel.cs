@@ -19,10 +19,6 @@ namespace Clc.BibDedupe.Web.Models
             new("CircStatus", "Status"),
             new("Barcode", "Barcode")
         };
-        public string LeftTitle { get; set; } = string.Empty;
-        public string LeftAuthor { get; set; } = string.Empty;
-        public string RightTitle { get; set; } = string.Empty;
-        public string RightAuthor { get; set; } = string.Empty;
         public string? ReturnUrl { get; set; }
     }
 }

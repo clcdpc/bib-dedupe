@@ -75,10 +75,6 @@ namespace Clc.BibDedupe.Web.Controllers
                 RightBibXml = MarcXmlRenderer.TransformFile(right.BibXml, "marc-to-html.xslt"),
                 LeftItems = left.Items,
                 RightItems = right.Items,
-                LeftTitle = pair?.LeftTitle ?? string.Empty,
-                LeftAuthor = pair?.LeftAuthor ?? string.Empty,
-                RightTitle = pair?.RightTitle ?? string.Empty,
-                RightAuthor = pair?.RightAuthor ?? string.Empty,
                 ReturnUrl = returnUrl
             };
 
@@ -123,10 +119,6 @@ namespace Clc.BibDedupe.Web.Controllers
                 LeftBibId = leftBibId,
                 RightBibId = rightBibId,
                 PrimaryMarcTomId = pair.PrimaryMarcTomId,
-                LeftTitle = pair.LeftTitle,
-                LeftAuthor = pair.LeftAuthor,
-                RightTitle = pair.RightTitle,
-                RightAuthor = pair.RightAuthor,
                 Matches = pair.Matches.Select(m => new PairMatch
                 {
                     MatchType = m.MatchType,

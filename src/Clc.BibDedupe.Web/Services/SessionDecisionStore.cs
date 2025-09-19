@@ -30,10 +30,6 @@ public class SessionDecisionStore(IHttpContextAccessor accessor) : IDecisionStor
         {
             existing.Action = decision.Action;
             existing.PrimaryMarcTomId = decision.PrimaryMarcTomId;
-            existing.LeftTitle = decision.LeftTitle;
-            existing.LeftAuthor = decision.LeftAuthor;
-            existing.RightTitle = decision.RightTitle;
-            existing.RightAuthor = decision.RightAuthor;
             existing.Matches = CloneMatches(decision.Matches);
         }
         else
@@ -65,10 +61,6 @@ public class SessionDecisionStore(IHttpContextAccessor accessor) : IDecisionStor
         RightBibId = decision.RightBibId,
         Matches = CloneMatches(decision.Matches),
         PrimaryMarcTomId = decision.PrimaryMarcTomId,
-        LeftTitle = decision.LeftTitle,
-        LeftAuthor = decision.LeftAuthor,
-        RightTitle = decision.RightTitle,
-        RightAuthor = decision.RightAuthor,
         Action = decision.Action
     };
 

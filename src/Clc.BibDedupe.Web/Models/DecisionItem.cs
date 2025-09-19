@@ -9,10 +9,6 @@ public record DecisionItem
     public int RightBibId { get; init; }
     public List<PairMatch> Matches { get; set; } = new();
     public int PrimaryMarcTomId { get; set; }
-    public string LeftTitle { get; set; } = string.Empty;
-    public string LeftAuthor { get; set; } = string.Empty;
-    public string RightTitle { get; set; } = string.Empty;
-    public string RightAuthor { get; set; } = string.Empty;
     public BibDupePairAction Action { get; set; }
 
     public string MatchSummary => Matches.Count == 0

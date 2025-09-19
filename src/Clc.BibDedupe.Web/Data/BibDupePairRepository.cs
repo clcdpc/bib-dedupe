@@ -19,7 +19,7 @@ namespace Clc.BibDedupe.Web.Data
 
         public async Task<IEnumerable<BibDupePair>> GetAsync()
         {
-            const string sql = @"SELECT PairId, PrimaryMARCTOMID AS PrimaryMarcTomId, LeftBibId, RightBibId, LeftTitle, LeftAuthor, RightTitle, RightAuthor, MatchesJson
+            const string sql = @"SELECT PairId, PrimaryMARCTOMID AS PrimaryMarcTomId, LeftBibId, RightBibId, MatchesJson
 FROM BibDedupe.GetPairs(DEFAULT)";
             var rows = await _db.QueryAsync<PairRow>(sql);
             return rows.Select(MapRow).ToList();
@@ -27,7 +27,7 @@ FROM BibDedupe.GetPairs(DEFAULT)";
 
         public async Task<(IEnumerable<BibDupePair> Items, int TotalCount)> GetPagedAsync(int page, int pageSize)
         {
-            const string sql = @"SELECT PairId, PrimaryMARCTOMID AS PrimaryMarcTomId, LeftBibId, RightBibId, LeftTitle, LeftAuthor, RightTitle, RightAuthor, MatchesJson
+            const string sql = @"SELECT PairId, PrimaryMARCTOMID AS PrimaryMarcTomId, LeftBibId, RightBibId, MatchesJson
 FROM BibDedupe.GetPairs(DEFAULT)
 ORDER BY (select null)
 OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY;
@@ -42,7 +42,7 @@ SELECT COUNT(*) FROM BibDedupe.GetPairs(DEFAULT);";
 
         public async Task<BibDupePair?> GetByBibIdsAsync(int leftBibId, int rightBibId)
         {
-            const string sql = @"SELECT PairId, PrimaryMARCTOMID AS PrimaryMarcTomId, LeftBibId, RightBibId, LeftTitle, LeftAuthor, RightTitle, RightAuthor, MatchesJson
+            const string sql = @"SELECT PairId, PrimaryMARCTOMID AS PrimaryMarcTomId, LeftBibId, RightBibId, MatchesJson
 FROM BibDedupe.GetPairs(@Top)
 WHERE LeftBibId = @LeftBibId AND RightBibId = @RightBibId;";
             var row = await _db.QueryFirstOrDefaultAsync<PairRow>(sql, new { LeftBibId = leftBibId, RightBibId = rightBibId, Top = UnlimitedPairsLimit });
@@ -72,10 +72,6 @@ WHERE LeftBibId = @LeftBibId AND RightBibId = @RightBibId;";
             PrimaryMarcTomId = row.PrimaryMarcTomId,
             LeftBibId = row.LeftBibId,
             RightBibId = row.RightBibId,
-            LeftTitle = row.LeftTitle ?? string.Empty,
-            LeftAuthor = row.LeftAuthor ?? string.Empty,
-            RightTitle = row.RightTitle ?? string.Empty,
-            RightAuthor = row.RightAuthor ?? string.Empty,
             Matches = PairMatch.FromJson(row.MatchesJson)
         };
 
@@ -85,10 +81,6 @@ WHERE LeftBibId = @LeftBibId AND RightBibId = @RightBibId;";
             public int PrimaryMarcTomId { get; set; }
             public int LeftBibId { get; set; }
             public int RightBibId { get; set; }
-            public string LeftTitle { get; set; } = string.Empty;
-            public string LeftAuthor { get; set; } = string.Empty;
-            public string RightTitle { get; set; } = string.Empty;
-            public string RightAuthor { get; set; } = string.Empty;
             public string MatchesJson { get; set; } = string.Empty;
         }
     }

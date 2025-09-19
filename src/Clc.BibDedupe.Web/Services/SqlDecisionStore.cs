@@ -31,7 +31,7 @@ public class SqlDecisionStore(IDbConnection db) : IDecisionStore
     {
         var rows = await db.QueryAsync<DecisionRow>(
             $@"SELECT d.LeftBibId, d.RightBibId, d.ActionId, p.PrimaryMARCTOMID AS PrimaryMarcTomId,
-                      p.LeftTitle, p.LeftAuthor, p.RightTitle, p.RightAuthor, p.MatchesJson
+                      p.MatchesJson
                FROM {Table} d
                JOIN BibDedupe.GetPairs(@Top) p ON d.LeftBibId = p.LeftBibId AND d.RightBibId = p.RightBibId
                WHERE d.UserEmail = @UserEmail",
@@ -54,10 +54,6 @@ public class SqlDecisionStore(IDbConnection db) : IDecisionStore
         LeftBibId = row.LeftBibId,
         RightBibId = row.RightBibId,
         PrimaryMarcTomId = row.PrimaryMarcTomId,
-        LeftTitle = row.LeftTitle ?? string.Empty,
-        LeftAuthor = row.LeftAuthor ?? string.Empty,
-        RightTitle = row.RightTitle ?? string.Empty,
-        RightAuthor = row.RightAuthor ?? string.Empty,
         Action = (BibDupePairAction)row.ActionId,
         Matches = PairMatch.FromJson(row.MatchesJson)
     };
@@ -68,10 +64,6 @@ public class SqlDecisionStore(IDbConnection db) : IDecisionStore
         public int RightBibId { get; init; }
         public int ActionId { get; init; }
         public int PrimaryMarcTomId { get; init; }
-        public string LeftTitle { get; init; } = string.Empty;
-        public string LeftAuthor { get; init; } = string.Empty;
-        public string RightTitle { get; init; } = string.Empty;
-        public string RightAuthor { get; init; } = string.Empty;
         public string MatchesJson { get; init; } = string.Empty;
     }
 }

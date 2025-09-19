@@ -28,10 +28,6 @@ public class TestFileBibDupePairRepository : IBibDupePairRepository
             LeftBibId = left,
             RightBibId = right,
             PrimaryMarcTomId = left,
-            LeftTitle = $"Left Title {left}",
-            LeftAuthor = $"Left Author {left}",
-            RightTitle = $"Right Title {right}",
-            RightAuthor = $"Right Author {right}",
             Matches = new List<PairMatch>
             {
                 new()

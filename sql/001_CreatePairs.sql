@@ -10,10 +10,6 @@ CREATE TABLE BibDedupe.Pairs (
     PrimaryMARCTOMID INT NOT NULL,
     LeftBibId INT NOT NULL,
     RightBibId INT NOT NULL,
-    LeftTitle NVARCHAR(512) NOT NULL,
-    LeftAuthor NVARCHAR(256) NULL,
-    RightTitle NVARCHAR(512) NOT NULL,
-    RightAuthor NVARCHAR(256) NULL,
     CONSTRAINT PK_Pairs PRIMARY KEY (PairId),
     CONSTRAINT UQ_Pairs_LeftRight UNIQUE (LeftBibId, RightBibId)
 );

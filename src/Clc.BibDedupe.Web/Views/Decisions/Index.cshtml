@@ -9,11 +9,8 @@
     <thead class="table-dark">
         <tr>
             <th>Left Bib</th>
-            <th>Left Title</th>
-            <th>Left Author</th>
             <th>Right Bib</th>
-            <th>Right Title</th>
-            <th>Right Author</th>
+            <th>Primary Bib</th>
             <th>Matches</th>
             <th>Action</th>
             <th>Review</th>
@@ -25,11 +22,8 @@
 {
         <tr>
             <td>@d.LeftBibId</td>
-            <td>@d.LeftTitle</td>
-            <td>@d.LeftAuthor</td>
             <td>@d.RightBibId</td>
-            <td>@d.RightTitle</td>
-            <td>@d.RightAuthor</td>
+            <td>@d.PrimaryMarcTomId</td>
             <td>
                 @await Html.PartialAsync("_MatchPoints", d.Matches)
             </td>

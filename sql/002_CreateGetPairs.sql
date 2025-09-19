@@ -11,10 +11,6 @@ RETURN (
         p.PrimaryMARCTOMID,
         p.LeftBibId,
         p.RightBibId,
-        p.LeftTitle,
-        p.LeftAuthor,
-        p.RightTitle,
-        p.RightAuthor,
         MatchesJson = ISNULL(pm.MatchesJson, '[]')
     FROM BibDedupe.Pairs p
     OUTER APPLY (
