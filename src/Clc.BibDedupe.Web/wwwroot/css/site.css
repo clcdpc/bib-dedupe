@@ -189,6 +189,12 @@ body {
 
 .pairs-table .work-column {
   min-width: 0;
+  max-width: 18rem;
+}
+
+.pairs-table .work-column > .work-title,
+.pairs-table .work-column > .work-author {
+  max-width: 100%;
 }
 
 .pairs-table .work-title {
