@@ -187,6 +187,18 @@ body {
   overflow-wrap: normal;
 }
 
+.pairs-table .work-column {
+  min-width: 0;
+}
+
+.pairs-table .work-title {
+  font-weight: 600;
+}
+
+.pairs-table .work-author {
+  font-size: 0.8125rem;
+}
+
 
 .match-points {
   display: flex;

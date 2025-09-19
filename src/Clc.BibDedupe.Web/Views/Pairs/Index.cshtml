@@ -34,8 +34,11 @@
         <thead>
             <tr>
                 <th scope="col">Left Bib</th>
+                <th scope="col">Left Title</th>
+                <th scope="col">Left Author</th>
                 <th scope="col">Right Bib</th>
-                <th scope="col">Primary Bib</th>
+                <th scope="col">Right Title</th>
+                <th scope="col">Right Author</th>
                 <th scope="col">Matches</th>
                 <th scope="col" class="text-center">Review</th>
             </tr>
@@ -47,8 +50,19 @@
                 {
                     <tr class="pairs-row">
                         <td class="bib-column">@p.LeftBibId</td>
+                        <td class="work-column">
+                            <div class="work-title">@p.LeftTitle</div>
+                        </td>
+                        <td class="work-column">
+                            <div class="work-author text-muted">@p.LeftAuthor</div>
+                        </td>
                         <td class="bib-column">@p.RightBibId</td>
-                        <td class="bib-column">@p.PrimaryMarcTomId</td>
+                        <td class="work-column">
+                            <div class="work-title">@p.RightTitle</div>
+                        </td>
+                        <td class="work-column">
+                            <div class="work-author text-muted">@p.RightAuthor</div>
+                        </td>
                         <td>
                             @await Html.PartialAsync("_MatchPoints", p.Matches)
                         </td>
@@ -61,7 +75,7 @@
             else
             {
                 <tr>
-                    <td colspan="5" class="text-center py-5 text-muted">No pairs are available for review right now.</td>
+                    <td colspan="8" class="text-center py-5 text-muted">No pairs are available for review right now.</td>
                 </tr>
             }
         </tbody>
