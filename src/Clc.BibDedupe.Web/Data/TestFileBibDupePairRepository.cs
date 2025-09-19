@@ -25,15 +25,21 @@ public class TestFileBibDupePairRepository : IBibDupePairRepository
         return new BibDupePair
         {
             PairId = pairId,
-            MatchType = "Test",
-            MatchValue = "Test",
             LeftBibId = left,
             RightBibId = right,
             PrimaryMarcTomId = left,
             LeftTitle = $"Left Title {left}",
             LeftAuthor = $"Left Author {left}",
             RightTitle = $"Right Title {right}",
-            RightAuthor = $"Right Author {right}"
+            RightAuthor = $"Right Author {right}",
+            Matches = new List<PairMatch>
+            {
+                new()
+                {
+                    MatchType = "Test",
+                    MatchValue = "Test"
+                }
+            }
         };
     }
 

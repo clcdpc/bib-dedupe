@@ -14,8 +14,7 @@
             <th>Right Bib</th>
             <th>Right Title</th>
             <th>Right Author</th>
-            <th>Match Type</th>
-            <th>Match Value</th>
+            <th>Matches</th>
             <th>Action</th>
             <th>Review</th>
             <th>Remove</th>
@@ -31,8 +30,9 @@
             <td>@d.RightBibId</td>
             <td>@d.RightTitle</td>
             <td>@d.RightAuthor</td>
-            <td>@d.MatchType</td>
-            <td>@d.MatchValue</td>
+            <td>
+                @await Html.PartialAsync("_MatchPoints", d.Matches)
+            </td>
             <td>@d.Action</td>
             <td>
                 <a asp-action="Review" asp-route-leftBibId="@d.LeftBibId" asp-route-rightBibId="@d.RightBibId" class="btn btn-sm btn-primary">Review</a>

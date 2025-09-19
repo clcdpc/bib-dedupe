@@ -199,7 +199,22 @@ body {
   font-size: 0.8125rem;
 }
 
-.pairs-table .match-value {
+
+.match-points {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.match-point {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.match-point-value {
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
   white-space: normal;
 }

@@ -111,18 +111,27 @@ namespace Clc.BibDedupe.Web.Controllers
                 return BadRequest();
             }
             var userEmail = User.GetEmail();
-            var pair = await repository.GetByBibIdsAsync(leftBibId, rightBibId);
+            var pair = await repository.GetByBibIdsAsync(leftBibId, rightBibId)
+                ?? new BibDupePair
+                {
+                    LeftBibId = leftBibId,
+                    RightBibId = rightBibId
+                };
+
             var decision = new DecisionItem
             {
                 LeftBibId = leftBibId,
                 RightBibId = rightBibId,
-                MatchType = pair?.MatchType ?? string.Empty,
-                MatchValue = pair?.MatchValue ?? string.Empty,
-                PrimaryMarcTomId = pair?.PrimaryMarcTomId ?? 0,
-                LeftTitle = pair?.LeftTitle ?? string.Empty,
-                LeftAuthor = pair?.LeftAuthor ?? string.Empty,
-                RightTitle = pair?.RightTitle ?? string.Empty,
-                RightAuthor = pair?.RightAuthor ?? string.Empty,
+                PrimaryMarcTomId = pair.PrimaryMarcTomId,
+                LeftTitle = pair.LeftTitle,
+                LeftAuthor = pair.LeftAuthor,
+                RightTitle = pair.RightTitle,
+                RightAuthor = pair.RightAuthor,
+                Matches = pair.Matches.Select(m => new PairMatch
+                {
+                    MatchType = m.MatchType,
+                    MatchValue = m.MatchValue
+                }).ToList(),
                 Action = parsed
             };
             await decisionStore.AddAsync(userEmail, decision);
