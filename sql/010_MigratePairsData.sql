@@ -19,13 +19,70 @@ BEGIN TRY
     DECLARE @hasLeftMetadata BIT = CASE WHEN COL_LENGTH('BibDedupe.Pairs', 'LeftTitle') IS NULL THEN 0 ELSE 1 END;
     DECLARE @hasRightMetadata BIT = CASE WHEN COL_LENGTH('BibDedupe.Pairs', 'RightTitle') IS NULL THEN 0 ELSE 1 END;
 
-    DECLARE @sql NVARCHAR(MAX) =
-        N'SELECT PairId, MatchType, MatchValue, PrimaryMARCTOMID, LeftBibId, RightBibId' +
-        CASE WHEN @hasLeftMetadata = 1 THEN N', LeftTitle, LeftAuthor' ELSE N', NULL AS LeftTitle, NULL AS LeftAuthor' END +
-        CASE WHEN @hasRightMetadata = 1 THEN N', RightTitle, RightAuthor' ELSE N', NULL AS RightTitle, NULL AS RightAuthor' END +
-        N' INTO #PairsOld FROM BibDedupe.Pairs;';
-
-    EXEC sp_executesql @sql;
+    IF @hasLeftMetadata = 1 AND @hasRightMetadata = 1
+    BEGIN
+        SELECT
+            PairId,
+            MatchType,
+            MatchValue,
+            PrimaryMARCTOMID,
+            LeftBibId,
+            RightBibId,
+            LeftTitle,
+            LeftAuthor,
+            RightTitle,
+            RightAuthor
+        INTO #PairsOld
+        FROM BibDedupe.Pairs;
+    END
+    ELSE IF @hasLeftMetadata = 1 AND @hasRightMetadata = 0
+    BEGIN
+        SELECT
+            PairId,
+            MatchType,
+            MatchValue,
+            PrimaryMARCTOMID,
+            LeftBibId,
+            RightBibId,
+            LeftTitle,
+            LeftAuthor,
+            NULL AS RightTitle,
+            NULL AS RightAuthor
+        INTO #PairsOld
+        FROM BibDedupe.Pairs;
+    END
+    ELSE IF @hasLeftMetadata = 0 AND @hasRightMetadata = 1
+    BEGIN
+        SELECT
+            PairId,
+            MatchType,
+            MatchValue,
+            PrimaryMARCTOMID,
+            LeftBibId,
+            RightBibId,
+            NULL AS LeftTitle,
+            NULL AS LeftAuthor,
+            RightTitle,
+            RightAuthor
+        INTO #PairsOld
+        FROM BibDedupe.Pairs;
+    END
+    ELSE
+    BEGIN
+        SELECT
+            PairId,
+            MatchType,
+            MatchValue,
+            PrimaryMARCTOMID,
+            LeftBibId,
+            RightBibId,
+            NULL AS LeftTitle,
+            NULL AS LeftAuthor,
+            NULL AS RightTitle,
+            NULL AS RightAuthor
+        INTO #PairsOld
+        FROM BibDedupe.Pairs;
+    END
 
     DROP TABLE BibDedupe.Pairs;
 
