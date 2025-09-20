@@ -56,8 +56,8 @@ GroupPages AS (
            (RunningTotal - PairCount) / @NormalizedPageSize + 1 AS PageNumber
     FROM OrderedGroups
 )
-SELECT PairId, PrimaryMarcTomId, LeftBibId, RightBibId,
-       LeftTitle, LeftAuthor, RightTitle, RightAuthor, MatchesJson
+SELECT ps.PairId, ps.PrimaryMarcTomId, ps.LeftBibId, ps.RightBibId,
+       ps.LeftTitle, ps.LeftAuthor, ps.RightTitle, ps.RightAuthor, ps.MatchesJson
 FROM PairSource ps
 JOIN GroupPages gp ON gp.PrimaryMarcTomId = ps.PrimaryMarcTomId
 WHERE gp.PageNumber = @NormalizedPage
