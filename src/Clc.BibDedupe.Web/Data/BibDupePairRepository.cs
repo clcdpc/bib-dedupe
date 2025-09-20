@@ -26,20 +26,54 @@ FROM BibDedupe.GetPairs(DEFAULT)";
             return rows.Select(MapRow).ToList();
         }
 
-        public async Task<(IEnumerable<BibDupePair> Items, int TotalCount)> GetPagedAsync(int page, int pageSize)
+        public async Task<(IEnumerable<BibDupePair> Items, int TotalCount, int TotalPages)> GetPagedAsync(int page, int pageSize)
         {
-            const string sql = @"SELECT PairId, PrimaryMARCTOMID AS PrimaryMarcTomId, LeftBibId, RightBibId,
+            const string sql = @"DECLARE @NormalizedPageSize INT = CASE WHEN @PageSize <= 0 THEN 1 ELSE @PageSize END;
+DECLARE @NormalizedPage INT = CASE WHEN @Page <= 0 THEN 1 ELSE @Page END;
+
+WITH PairSource AS (
+    SELECT PairId, PrimaryMARCTOMID AS PrimaryMarcTomId, LeftBibId, RightBibId,
+           LeftTitle, LeftAuthor, RightTitle, RightAuthor, MatchesJson
+    FROM BibDedupe.GetPairs(DEFAULT)
+),
+GroupCounts AS (
+    SELECT PrimaryMarcTomId,
+           COUNT(*) AS PairCount
+    FROM PairSource
+    GROUP BY PrimaryMarcTomId
+),
+OrderedGroups AS (
+    SELECT PrimaryMarcTomId,
+           PairCount,
+           SUM(PairCount) OVER (ORDER BY PrimaryMarcTomId ROWS UNBOUNDED PRECEDING) AS RunningTotal
+    FROM GroupCounts
+),
+GroupPages AS (
+    SELECT PrimaryMarcTomId,
+           PairCount,
+           RunningTotal,
+           RunningTotal - PairCount AS RunningTotalBefore,
+           (RunningTotal - PairCount) / @NormalizedPageSize + 1 AS PageNumber
+    FROM OrderedGroups
+)
+SELECT PairId, PrimaryMarcTomId, LeftBibId, RightBibId,
        LeftTitle, LeftAuthor, RightTitle, RightAuthor, MatchesJson
-FROM BibDedupe.GetPairs(DEFAULT)
-ORDER BY (select null)
-OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY;
-SELECT COUNT(*) FROM BibDedupe.GetPairs(DEFAULT);";
-            var offset = (page - 1) * pageSize;
-            using var multi = await _db.QueryMultipleAsync(sql, new { Offset = offset, PageSize = pageSize });
+FROM PairSource ps
+JOIN GroupPages gp ON gp.PrimaryMarcTomId = ps.PrimaryMarcTomId
+WHERE gp.PageNumber = @NormalizedPage
+ORDER BY ps.PrimaryMarcTomId, ps.PairId;
+
+SELECT COALESCE(SUM(PairCount), 0) FROM GroupCounts;
+
+SELECT COALESCE(MAX(PageNumber), 0) FROM GroupPages;";
+
+            var parameters = new { Page = page, PageSize = pageSize };
+            using var multi = await _db.QueryMultipleAsync(sql, parameters);
             var rows = await multi.ReadAsync<PairRow>();
             var total = await multi.ReadFirstAsync<int>();
+            var totalPages = await multi.ReadFirstAsync<int>();
             var items = rows.Select(MapRow).ToList();
-            return (items, total);
+            return (items, total, totalPages);
         }
 
         public async Task<BibDupePair?> GetByBibIdsAsync(int leftBibId, int rightBibId)

@@ -13,7 +13,7 @@ public class PairsController(IBibDupePairRepository repository, IDecisionStore d
 {
     public async Task<IActionResult> Index(int page = 1, int pageSize = 20)
     {
-        var (items, total) = await repository.GetPagedAsync(page, pageSize);
+        var (items, total, totalPages) = await repository.GetPagedAsync(page, pageSize);
         var email = User.GetEmail();
         var decidedPairs = (await decisionStore.GetAllAsync(email))
             .Select(d => (d.LeftBibId, d.RightBibId))
@@ -26,7 +26,8 @@ public class PairsController(IBibDupePairRepository repository, IDecisionStore d
             Items = filteredItems,
             Page = page,
             PageSize = pageSize,
-            TotalCount = total - decidedPairs.Count
+            TotalCount = total - decidedPairs.Count,
+            TotalPages = totalPages
         };
         return View(model);
     }

@@ -52,18 +52,41 @@ public class TestFileBibDupePairRepository : IBibDupePairRepository
     public Task<IEnumerable<BibDupePair>> GetAsync()
         => Task.FromResult<IEnumerable<BibDupePair>>(_pairs);
 
-    public Task<(IEnumerable<BibDupePair> Items, int TotalCount)> GetPagedAsync(int page, int pageSize)
+    public Task<(IEnumerable<BibDupePair> Items, int TotalCount, int TotalPages)> GetPagedAsync(int page, int pageSize)
     {
         var total = _pairs.Count;
-        var skip = (page - 1) * pageSize;
-        if (skip >= total)
+        if (total == 0)
         {
-            return Task.FromResult(((IEnumerable<BibDupePair>)Enumerable.Empty<BibDupePair>(), total));
+            return Task.FromResult(((IEnumerable<BibDupePair>)Enumerable.Empty<BibDupePair>(), 0, 0));
         }
 
-        var take = Math.Min(pageSize, total - skip);
-        var items = _pairs.Skip(skip).Take(take);
-        return Task.FromResult((items, total));
+        var normalizedPageSize = Math.Max(pageSize, 1);
+        var normalizedPage = Math.Max(page, 1);
+
+        var grouped = _pairs
+            .GroupBy(p => p.PrimaryMarcTomId)
+            .OrderBy(g => g.Key)
+            .ToList();
+
+        var groupPages = new Dictionary<int, int>();
+        var runningTotal = 0;
+        foreach (var group in grouped)
+        {
+            var pageNumber = runningTotal / normalizedPageSize + 1;
+            groupPages[group.Key] = pageNumber;
+            runningTotal += group.Count();
+        }
+
+        var totalPages = groupPages.Count == 0
+            ? 0
+            : groupPages.Values.DefaultIfEmpty(0).Max();
+
+        var items = grouped
+            .Where(g => groupPages[g.Key] == normalizedPage)
+            .SelectMany(g => g.OrderBy(p => p.PairId))
+            .ToList();
+
+        return Task.FromResult(((IEnumerable<BibDupePair>)items, total, totalPages));
     }
 
     public Task<BibDupePair?> GetByBibIdsAsync(int leftBibId, int rightBibId)
