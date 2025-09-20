@@ -75,6 +75,13 @@ namespace Clc.BibDedupe.Web.Controllers
                 RightBibXml = MarcXmlRenderer.TransformFile(right.BibXml, "marc-to-html.xslt"),
                 LeftItems = left.Items,
                 RightItems = right.Items,
+                Matches = pair?.Matches
+                    .Select(m => new PairMatch
+                    {
+                        MatchType = m.MatchType,
+                        MatchValue = m.MatchValue
+                    })
+                    .ToList() ?? new(),
                 ReturnUrl = returnUrl
             };
 
