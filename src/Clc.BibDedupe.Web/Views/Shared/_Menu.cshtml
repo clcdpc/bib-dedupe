@@ -1,3 +1,4 @@
+@using System.Linq
 @using Clc.BibDedupe.Web.Models
 @using Clc.BibDedupe.Web.Services
 @inject IDecisionStore DecisionStore
@@ -6,17 +7,28 @@
     var email = Context.User.GetEmail();
     var decisionCount = await DecisionStore.CountAsync(email);
     var currentPair = await CurrentPairStore.GetAsync(email);
+    var matchPoints = (ViewData["MatchPoints"] as IEnumerable<PairMatch>)?.ToList();
+    var matchSummaryTitle = ViewData["MatchSummaryTitle"] as string ?? "Match Types";
+    var showMatchSummary = matchPoints?.Any() == true;
 }
-<nav class="menu">
-    <a asp-controller="Pairs" asp-action="Index">Pair List</a>
-    <a asp-controller="Decisions" asp-action="Index">Decisions <span class="badge">@decisionCount</span></a>
-    @if (currentPair is null)
+<nav class="menu@(showMatchSummary ? " menu--with-summary" : string.Empty)">
+    <div class="menu-links">
+        <a asp-controller="Pairs" asp-action="Index">Pair List</a>
+        <a asp-controller="Decisions" asp-action="Index">Decisions <span class="badge">@decisionCount</span></a>
+        @if (currentPair is null)
+        {
+            <span class="disabled" data-current-pair="true" aria-disabled="true">Current Pair</span>
+        }
+        else
+        {
+            <a asp-controller="Home" asp-action="Review" asp-route-leftBibId="@currentPair.LeftBibId" asp-route-rightBibId="@currentPair.RightBibId" data-current-pair="true">Current Pair</a>
+        }
+    </div>
+    @if (showMatchSummary)
     {
-        <span class="disabled" data-current-pair="true" aria-disabled="true">Current Pair</span>
-    }
-    else
-    {
-        <a asp-controller="Home" asp-action="Review" asp-route-leftBibId="@currentPair.LeftBibId" asp-route-rightBibId="@currentPair.RightBibId" data-current-pair="true">Current Pair</a>
+        <div class="menu-match-summary" role="group" aria-label="@matchSummaryTitle">
+            @await Html.PartialAsync("_MatchPoints", matchPoints)
+        </div>
     }
     <a class="signout" asp-controller="Account" asp-action="SignOut">Sign out</a>
   </nav>
