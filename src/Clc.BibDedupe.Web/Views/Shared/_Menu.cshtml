@@ -39,21 +39,12 @@
             @if (showHoldSummary && holdSummary is not null)
             {
                 <div class="menu-hold-summary" role="group" aria-label="Hold requests">
-                    <span class="menu-hold-summary__title">Hold Requests</span>
-                    <div class="menu-hold-summary__counts">
-                        <span class="menu-hold-summary__count menu-hold-summary__count--left" aria-label="Left hold requests">
-                            <span class="menu-hold-summary__value">@holdSummary.LeftHoldCount</span>
-                            <span class="menu-hold-summary__caption">Left</span>
-                        </span>
-                        <span class="menu-hold-summary__count menu-hold-summary__count--total" aria-label="Total hold requests">
-                            <span class="menu-hold-summary__value">@holdSummary.TotalHoldCount</span>
-                            <span class="menu-hold-summary__caption">Total</span>
-                        </span>
-                        <span class="menu-hold-summary__count menu-hold-summary__count--right" aria-label="Right hold requests">
-                            <span class="menu-hold-summary__value">@holdSummary.RightHoldCount</span>
-                            <span class="menu-hold-summary__caption">Right</span>
-                        </span>
-                    </div>
+                    <span class="menu-hold-summary__label">Holds</span>
+                    <span class="menu-hold-summary__counts">
+                        <span class="menu-hold-summary__count" aria-label="Left hold requests">L: @holdSummary.LeftHoldCount</span>
+                        <span class="menu-hold-summary__count" aria-label="Total hold requests">T: @holdSummary.TotalHoldCount</span>
+                        <span class="menu-hold-summary__count" aria-label="Right hold requests">R: @holdSummary.RightHoldCount</span>
+                    </span>
                 </div>
             }
         </div>
