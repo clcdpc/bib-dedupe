@@ -6,6 +6,7 @@ using Clc.BibDedupe.Web.Extensions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
@@ -75,6 +76,13 @@ namespace Clc.BibDedupe.Web.Controllers
                 RightBibXml = MarcXmlRenderer.TransformFile(right.BibXml, "marc-to-html.xslt"),
                 LeftItems = left.Items,
                 RightItems = right.Items,
+                Matches = pair?.Matches
+                    .Select(m => new PairMatch
+                    {
+                        MatchType = m.MatchType,
+                        MatchValue = m.MatchValue
+                    })
+                    .ToList() ?? new List<PairMatch>(),
                 ReturnUrl = returnUrl
             };
 

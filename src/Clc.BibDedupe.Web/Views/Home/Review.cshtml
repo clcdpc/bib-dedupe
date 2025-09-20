@@ -15,6 +15,10 @@
 <body>
 <div class="page" data-resolve-url="@Url.Action("Resolve")" data-left-bib-id="@Model.LeftBibId" data-right-bib-id="@Model.RightBibId" data-return-url="@Model.ReturnUrl">
     @await Html.PartialAsync("_Menu")
+    <section class="match-summary" aria-labelledby="matchSummaryHeading">
+        <h2 id="matchSummaryHeading" class="match-summary-title">Match Types</h2>
+        @await Html.PartialAsync("_MatchPoints", Model.Matches)
+    </section>
     <form id="token-form" method="post" asp-antiforgery="true" style="display:none"></form>
     <div class="frames">
         <div class="frame">
@@ -49,6 +53,8 @@
         <button data-action="@nameof(BibDupePairAction.KeepRight)" type="button">➡️ Keep Right</button>
     </div>
 </div>
+<script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+<script src="~/js/site.js" asp-append-version="true"></script>
 <script src="~/js/clc-dedupe.js" asp-append-version="true"></script>
 </body>
 </html>

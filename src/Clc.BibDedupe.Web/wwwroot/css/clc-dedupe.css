@@ -10,6 +10,27 @@ html, body {
     flex-direction: column;
 }
 
+.match-summary {
+    flex: 0 0 auto;
+    padding: 12px 16px;
+    background: var(--bg);
+    border-bottom: 1px solid var(--frame-border);
+}
+
+.match-summary-title {
+    margin: 0 0 8px;
+    font-size: 0.875rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--val);
+}
+
+.match-summary .match-points,
+.match-summary .text-muted {
+    margin: 0;
+}
+
 .page.initializing .frames,
 .page.initializing .controls {
     visibility: hidden;
