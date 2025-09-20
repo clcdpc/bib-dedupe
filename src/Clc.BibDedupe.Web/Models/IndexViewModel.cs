@@ -14,6 +14,7 @@ namespace Clc.BibDedupe.Web.Models
         {
             new("AssignedBranch", "Assigned Branch"),
             new("Collection", "Collection"),
+            new("MaterialType", "Material Type"),
             new("ShelfLocation", "Shelf Location"),
             new("CallNumber", "Call #"),
             new("CircStatus", "Status"),

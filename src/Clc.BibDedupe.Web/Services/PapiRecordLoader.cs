@@ -23,6 +23,7 @@ public class PapiRecordLoader(IPapiClient papi) : IRecordLoader
             {
                 ["AssignedBranch"] = r.LocationName ?? string.Empty,
                 ["Collection"] = r.CollectionName ?? string.Empty,
+                ["MaterialType"] = r.MaterialType ?? string.Empty,
                 ["ShelfLocation"] = r.ShelfLocation ?? string.Empty,
                 ["CallNumber"] = r.CallNumber ?? string.Empty,
                 ["CircStatus"] = r.CircStatus ?? string.Empty,
