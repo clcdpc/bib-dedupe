@@ -26,6 +26,9 @@ GO
 IF OBJECT_ID('BibDedupe.PairDecisions','U') IS NOT NULL
     DROP TABLE BibDedupe.PairDecisions;
 GO
+IF OBJECT_ID('BibDedupe.PairMatches','U') IS NOT NULL
+    DROP TABLE BibDedupe.PairMatches;
+GO
 IF OBJECT_ID('BibDedupe.Pairs','U') IS NOT NULL
     DROP TABLE BibDedupe.Pairs;
 GO
@@ -44,12 +47,24 @@ GO
 
 CREATE TABLE BibDedupe.Pairs (
     PairId INT IDENTITY(1,1) NOT NULL,
-    MatchType NVARCHAR(50) NOT NULL,
-    MatchValue NVARCHAR(256) NOT NULL,
     PrimaryMARCTOMID INT NOT NULL,
     LeftBibId INT NOT NULL,
     RightBibId INT NOT NULL,
-    CONSTRAINT PK_Pairs PRIMARY KEY (PairId)
+    CONSTRAINT PK_Pairs PRIMARY KEY (PairId),
+    CONSTRAINT UQ_Pairs_LeftRight UNIQUE (LeftBibId, RightBibId)
+);
+GO
+
+CREATE TABLE BibDedupe.PairMatches (
+    PairMatchId INT IDENTITY(1,1) NOT NULL,
+    PairId INT NOT NULL,
+    MatchType NVARCHAR(50) NOT NULL,
+    MatchValue NVARCHAR(256) NOT NULL,
+    CONSTRAINT PK_PairMatches PRIMARY KEY (PairMatchId),
+    CONSTRAINT FK_PairMatches_Pairs FOREIGN KEY (PairId)
+        REFERENCES BibDedupe.Pairs(PairId)
+        ON DELETE CASCADE,
+    CONSTRAINT UQ_PairMatches UNIQUE (PairId, MatchType, MatchValue)
 );
 GO
 
@@ -88,8 +103,24 @@ CREATE OR ALTER FUNCTION BibDedupe.GetPairs (@Top INT = 1000)
 RETURNS TABLE
 AS
 RETURN (
-    SELECT TOP (@Top) PairId, MatchType, MatchValue, PrimaryMARCTOMID, LeftBibId, RightBibId
-    FROM BibDedupe.Pairs
+    SELECT TOP (@Top)
+        p.PairId,
+        p.PrimaryMARCTOMID,
+        p.LeftBibId,
+        p.RightBibId,
+        LeftTitle = CAST(NULL AS NVARCHAR(512)),
+        LeftAuthor = CAST(NULL AS NVARCHAR(256)),
+        RightTitle = CAST(NULL AS NVARCHAR(512)),
+        RightAuthor = CAST(NULL AS NVARCHAR(256)),
+        MatchesJson = ISNULL(pm.MatchesJson, '[]')
+    FROM BibDedupe.Pairs p
+    OUTER APPLY (
+        SELECT MatchType, MatchValue
+        FROM BibDedupe.PairMatches m
+        WHERE m.PairId = p.PairId
+        ORDER BY m.MatchType, m.MatchValue
+        FOR JSON PATH
+    ) pm(MatchesJson)
 );
 GO
 

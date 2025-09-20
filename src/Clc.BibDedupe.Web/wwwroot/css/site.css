@@ -189,6 +189,12 @@ body {
 
 .pairs-table .work-column {
   min-width: 0;
+  max-width: 18rem;
+}
+
+.pairs-table .work-column > .work-title,
+.pairs-table .work-column > .work-author {
+  max-width: 100%;
 }
 
 .pairs-table .work-title {
@@ -199,9 +205,31 @@ body {
   font-size: 0.8125rem;
 }
 
-.pairs-table .match-value {
-  font-variant-numeric: tabular-nums;
-  white-space: normal;
+
+.match-points {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.35rem;
+}
+
+.match-point {
+  display: flex;
+}
+
+.match-point-badge {
+  cursor: help;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.35rem 0.55rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.match-point-badge:focus-visible {
+  outline: 2px solid rgba(13, 110, 253, 0.35);
+  outline-offset: 2px;
 }
 
 .pairs-table .text-nowrap {

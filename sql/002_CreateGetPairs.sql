@@ -6,7 +6,23 @@ CREATE FUNCTION BibDedupe.GetPairs (@Top INT = 1000)
 RETURNS TABLE
 AS
 RETURN (
-    SELECT TOP (@Top) PairId, MatchType, MatchValue, PrimaryMARCTOMID, LeftBibId, RightBibId
-    FROM BibDedupe.Pairs
+    SELECT TOP (@Top)
+        p.PairId,
+        p.PrimaryMARCTOMID,
+        p.LeftBibId,
+        p.RightBibId,
+        LeftTitle = CAST(NULL AS NVARCHAR(512)),
+        LeftAuthor = CAST(NULL AS NVARCHAR(256)),
+        RightTitle = CAST(NULL AS NVARCHAR(512)),
+        RightAuthor = CAST(NULL AS NVARCHAR(256)),
+        MatchesJson = ISNULL(pm.MatchesJson, '[]')
+    FROM BibDedupe.Pairs p
+    OUTER APPLY (
+        SELECT MatchType, MatchValue
+        FROM BibDedupe.PairMatches m
+        WHERE m.PairId = p.PairId
+        ORDER BY m.MatchType, m.MatchValue
+        FOR JSON PATH
+    ) pm(MatchesJson)
 );
 GO

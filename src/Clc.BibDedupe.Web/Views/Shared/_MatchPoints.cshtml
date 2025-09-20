@@ -1,0 +1,43 @@
+@using System.Linq
+@using System.Text.Encodings.Web
+@model IEnumerable<Clc.BibDedupe.Web.Models.PairMatch>
+
+@if (Model?.Any() == true)
+{
+    var groupedMatches = Model
+        .GroupBy(m => string.IsNullOrWhiteSpace(m.MatchType) ? "Match" : m.MatchType)
+        .ToList();
+
+    <div class="match-points match-points--stacked">
+        @foreach (var matchGroup in groupedMatches)
+        {
+            var encodedValues = matchGroup
+                .Select(m => HtmlEncoder.Default.Encode(m.MatchValue ?? string.Empty))
+                .Where(v => !string.IsNullOrEmpty(v))
+                .ToList();
+            var tooltipHtml = encodedValues.Count > 0 ? string.Join("<br />", encodedValues) : "No match value";
+            var accessibleValues = matchGroup
+                .Select(m => m.MatchValue ?? string.Empty)
+                .Where(v => !string.IsNullOrWhiteSpace(v))
+                .ToList();
+
+            <div class="match-point">
+                <span class="badge bg-info text-dark match-point-badge"
+                      data-bs-toggle="tooltip"
+                      data-bs-container="body"
+                      data-bs-html="true"
+                      title="@Html.Raw(tooltipHtml)">
+                    @matchGroup.Key
+                </span>
+                @if (accessibleValues.Count > 0)
+                {
+                    <span class="visually-hidden">: @string.Join(", ", accessibleValues)</span>
+                }
+            </div>
+        }
+    </div>
+}
+else
+{
+    <span class="text-muted">No matches</span>
+}

@@ -14,15 +14,12 @@ namespace Clc.BibDedupe.Web.Models
         {
             new("AssignedBranch", "Assigned Branch"),
             new("Collection", "Collection"),
+            new("MaterialType", "Material Type"),
             new("ShelfLocation", "Shelf Location"),
             new("CallNumber", "Call #"),
             new("CircStatus", "Status"),
             new("Barcode", "Barcode")
         };
-        public string LeftTitle { get; set; } = string.Empty;
-        public string LeftAuthor { get; set; } = string.Empty;
-        public string RightTitle { get; set; } = string.Empty;
-        public string RightAuthor { get; set; } = string.Empty;
         public string? ReturnUrl { get; set; }
     }
 }

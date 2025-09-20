@@ -29,6 +29,7 @@ public class TestFileRecordLoader : IRecordLoader
                 {
                     ["AssignedBranch"] = $"Branch {rng.Next(1, 5)}",
                     ["Collection"] = $"Coll {rng.Next(1, 3)}",
+                    ["MaterialType"] = rng.Next(0, 2) == 0 ? "Book" : "AV",
                     ["ShelfLocation"] = $"Shelf {rng.Next(1, 20)}",
                     ["CallNumber"] = $"CN{rng.Next(100, 999)}",
                     ["CircStatus"] = "IN",

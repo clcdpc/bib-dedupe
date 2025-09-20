@@ -10,7 +10,7 @@ public class PapiRecordLoader(IPapiClient papi) : IRecordLoader
 {
     public Task<(RecordData Left, RecordData Right)> LoadAsync(int leftBibId, int rightBibId)
     {
-        var bibResponse = papi.Synch_BibsByIdGet(new[] { leftBibId, rightBibId }, true);
+        var bibResponse = papi.Synch_BibsByIdGet(new[] { leftBibId, rightBibId }, includeItems: false);
         var bibRows = bibResponse.Data.GetBibsByIDRows;
         var leftXml = bibRows.First().BibliographicRecordXML;
         var rightXml = bibRows.Last().BibliographicRecordXML;
@@ -23,6 +23,7 @@ public class PapiRecordLoader(IPapiClient papi) : IRecordLoader
             {
                 ["AssignedBranch"] = r.LocationName ?? string.Empty,
                 ["Collection"] = r.CollectionName ?? string.Empty,
+                ["MaterialType"] = r.MaterialType ?? string.Empty,
                 ["ShelfLocation"] = r.ShelfLocation ?? string.Empty,
                 ["CallNumber"] = r.CallNumber ?? string.Empty,
                 ["CircStatus"] = r.CircStatus ?? string.Empty,

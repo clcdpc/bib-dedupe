@@ -1,4 +1,5 @@
 using System.Data;
+using System.Linq;
 using Dapper;
 using Clc.BibDedupe.Web.Models;
 
@@ -26,14 +27,19 @@ public class SqlDecisionStore(IDbConnection db) : IDecisionStore
         }
     }
 
-    public async Task<IEnumerable<DecisionItem>> GetAllAsync(string userId) =>
-            await db.QueryAsync<DecisionItem>(
-                $@"SELECT d.LeftBibId, d.RightBibId, d.ActionId AS Action, p.MatchType, p.MatchValue, p.PrimaryMARCTOMID AS PrimaryMarcTomId,
-                      p.LeftTitle, p.LeftAuthor, p.RightTitle, p.RightAuthor
+    public async Task<IEnumerable<DecisionItem>> GetAllAsync(string userId)
+    {
+        var rows = await db.QueryAsync<DecisionRow>(
+            $@"SELECT d.LeftBibId, d.RightBibId, d.ActionId, p.PrimaryMARCTOMID AS PrimaryMarcTomId,
+                      p.LeftTitle, p.LeftAuthor, p.RightTitle, p.RightAuthor,
+                      p.MatchesJson
                FROM {Table} d
                JOIN BibDedupe.GetPairs(@Top) p ON d.LeftBibId = p.LeftBibId AND d.RightBibId = p.RightBibId
                WHERE d.UserEmail = @UserEmail",
-                new { UserEmail = userId, Top = int.MaxValue });
+            new { UserEmail = userId, Top = int.MaxValue });
+
+        return rows.Select(MapRow).ToList();
+    }
 
     public Task RemoveAsync(string userId, int leftBibId, int rightBibId) =>
         db.ExecuteAsync($"DELETE FROM {Table} WHERE UserEmail = @UserEmail AND LeftBibId = @LeftBibId AND RightBibId = @RightBibId",
@@ -43,4 +49,22 @@ public class SqlDecisionStore(IDbConnection db) : IDecisionStore
 
     public async Task<int> CountAsync(string userId) =>
         await db.ExecuteScalarAsync<int>($"SELECT COUNT(*) FROM {Table} WHERE UserEmail = @UserEmail", new { UserEmail = userId });
+
+    private static DecisionItem MapRow(DecisionRow row) => new()
+    {
+        LeftBibId = row.LeftBibId,
+        RightBibId = row.RightBibId,
+        PrimaryMarcTomId = row.PrimaryMarcTomId,
+        Action = (BibDupePairAction)row.ActionId,
+        Matches = PairMatch.FromJson(row.MatchesJson)
+    };
+
+    private sealed class DecisionRow
+    {
+        public int LeftBibId { get; init; }
+        public int RightBibId { get; init; }
+        public int ActionId { get; init; }
+        public int PrimaryMarcTomId { get; init; }
+        public string MatchesJson { get; init; } = string.Empty;
+    }
 }

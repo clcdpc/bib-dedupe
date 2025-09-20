@@ -75,10 +75,6 @@ namespace Clc.BibDedupe.Web.Controllers
                 RightBibXml = MarcXmlRenderer.TransformFile(right.BibXml, "marc-to-html.xslt"),
                 LeftItems = left.Items,
                 RightItems = right.Items,
-                LeftTitle = pair?.LeftTitle ?? string.Empty,
-                LeftAuthor = pair?.LeftAuthor ?? string.Empty,
-                RightTitle = pair?.RightTitle ?? string.Empty,
-                RightAuthor = pair?.RightAuthor ?? string.Empty,
                 ReturnUrl = returnUrl
             };
 
@@ -111,18 +107,23 @@ namespace Clc.BibDedupe.Web.Controllers
                 return BadRequest();
             }
             var userEmail = User.GetEmail();
-            var pair = await repository.GetByBibIdsAsync(leftBibId, rightBibId);
+            var pair = await repository.GetByBibIdsAsync(leftBibId, rightBibId)
+                ?? new BibDupePair
+                {
+                    LeftBibId = leftBibId,
+                    RightBibId = rightBibId
+                };
+
             var decision = new DecisionItem
             {
                 LeftBibId = leftBibId,
                 RightBibId = rightBibId,
-                MatchType = pair?.MatchType ?? string.Empty,
-                MatchValue = pair?.MatchValue ?? string.Empty,
-                PrimaryMarcTomId = pair?.PrimaryMarcTomId ?? 0,
-                LeftTitle = pair?.LeftTitle ?? string.Empty,
-                LeftAuthor = pair?.LeftAuthor ?? string.Empty,
-                RightTitle = pair?.RightTitle ?? string.Empty,
-                RightAuthor = pair?.RightAuthor ?? string.Empty,
+                PrimaryMarcTomId = pair.PrimaryMarcTomId,
+                Matches = pair.Matches.Select(m => new PairMatch
+                {
+                    MatchType = m.MatchType,
+                    MatchValue = m.MatchValue
+                }).ToList(),
                 Action = parsed
             };
             await decisionStore.AddAsync(userEmail, decision);

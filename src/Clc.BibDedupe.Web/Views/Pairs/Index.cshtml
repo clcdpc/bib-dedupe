@@ -39,8 +39,7 @@
                 <th scope="col">Right Bib</th>
                 <th scope="col">Right Title</th>
                 <th scope="col">Right Author</th>
-                <th scope="col">Match Type</th>
-                <th scope="col" class="text-end">Match Value</th>
+                <th scope="col">Matches</th>
                 <th scope="col" class="text-center">Review</th>
             </tr>
         </thead>
@@ -64,10 +63,9 @@
                         <td class="work-column">
                             <div class="work-author text-muted">@p.RightAuthor</div>
                         </td>
-                        <td class="text-nowrap">
-                            <span class="badge bg-info text-dark">@p.MatchType</span>
+                        <td>
+                            @await Html.PartialAsync("_MatchPoints", p.Matches)
                         </td>
-                        <td class="text-end fw-semibold match-value">@p.MatchValue</td>
                         <td class="text-center">
                             <a asp-controller="Home" asp-action="Review" asp-route-leftBibId="@p.LeftBibId" asp-route-rightBibId="@p.RightBibId" asp-route-returnUrl="@Url.Action("Index", new { page = currentPage, pageSize = Model.PageSize })" class="btn btn-sm review-btn">Review</a>
                         </td>
@@ -77,7 +75,7 @@
             else
             {
                 <tr>
-                    <td colspan="9" class="text-center py-5 text-muted">No pairs are available for review right now.</td>
+                    <td colspan="8" class="text-center py-5 text-muted">No pairs are available for review right now.</td>
                 </tr>
             }
         </tbody>

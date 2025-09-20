@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using System.Linq;
 using System.Text.Json;
 using Clc.BibDedupe.Web.Models;
 using Microsoft.AspNetCore.Http;
@@ -27,17 +29,12 @@ public class SessionDecisionStore(IHttpContextAccessor accessor) : IDecisionStor
         if (existing is not null)
         {
             existing.Action = decision.Action;
-            existing.MatchType = decision.MatchType;
-            existing.MatchValue = decision.MatchValue;
             existing.PrimaryMarcTomId = decision.PrimaryMarcTomId;
-            existing.LeftTitle = decision.LeftTitle;
-            existing.LeftAuthor = decision.LeftAuthor;
-            existing.RightTitle = decision.RightTitle;
-            existing.RightAuthor = decision.RightAuthor;
+            existing.Matches = CloneMatches(decision.Matches);
         }
         else
         {
-            items.Add(decision);
+            items.Add(CloneDecision(decision));
         }
         Save(items);
         return Task.CompletedTask;
@@ -57,4 +54,20 @@ public class SessionDecisionStore(IHttpContextAccessor accessor) : IDecisionStor
     public Task UpdateAsync(string userId, DecisionItem decision) => AddAsync(userId, decision);
 
     public Task<int> CountAsync(string userId) => Task.FromResult(Load().Count);
+
+    private static DecisionItem CloneDecision(DecisionItem decision) => new()
+    {
+        LeftBibId = decision.LeftBibId,
+        RightBibId = decision.RightBibId,
+        Matches = CloneMatches(decision.Matches),
+        PrimaryMarcTomId = decision.PrimaryMarcTomId,
+        Action = decision.Action
+    };
+
+    private static List<PairMatch> CloneMatches(IEnumerable<PairMatch> matches) =>
+        matches.Select(m => new PairMatch
+        {
+            MatchType = m.MatchType,
+            MatchValue = m.MatchValue
+        }).ToList();
 }

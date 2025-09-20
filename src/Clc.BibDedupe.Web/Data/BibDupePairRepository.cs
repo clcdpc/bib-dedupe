@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Data;
+using System.Linq;
 using System.Threading.Tasks;
 using Dapper;
 using Clc.BibDedupe.Web.Models;
@@ -18,31 +19,37 @@ namespace Clc.BibDedupe.Web.Data
 
         public async Task<IEnumerable<BibDupePair>> GetAsync()
         {
-            const string sql = "SELECT PairId, MatchType, MatchValue, PrimaryMARCTOMID AS PrimaryMarcTomId, LeftBibId, RightBibId, LeftTitle, LeftAuthor, RightTitle, RightAuthor FROM BibDedupe.GetPairs(DEFAULT)";
-            return await _db.QueryAsync<BibDupePair>(sql);
+            const string sql = @"SELECT PairId, PrimaryMARCTOMID AS PrimaryMarcTomId, LeftBibId, RightBibId,
+       LeftTitle, LeftAuthor, RightTitle, RightAuthor, MatchesJson
+FROM BibDedupe.GetPairs(DEFAULT)";
+            var rows = await _db.QueryAsync<PairRow>(sql);
+            return rows.Select(MapRow).ToList();
         }
 
         public async Task<(IEnumerable<BibDupePair> Items, int TotalCount)> GetPagedAsync(int page, int pageSize)
         {
-            const string sql = @"SELECT PairId, MatchType, MatchValue, PrimaryMARCTOMID AS PrimaryMarcTomId, LeftBibId, RightBibId, LeftTitle, LeftAuthor, RightTitle, RightAuthor
+            const string sql = @"SELECT PairId, PrimaryMARCTOMID AS PrimaryMarcTomId, LeftBibId, RightBibId,
+       LeftTitle, LeftAuthor, RightTitle, RightAuthor, MatchesJson
 FROM BibDedupe.GetPairs(DEFAULT)
 ORDER BY (select null)
 OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY;
 SELECT COUNT(*) FROM BibDedupe.GetPairs(DEFAULT);";
             var offset = (page - 1) * pageSize;
             using var multi = await _db.QueryMultipleAsync(sql, new { Offset = offset, PageSize = pageSize });
-            var items = await multi.ReadAsync<BibDupePair>();
+            var rows = await multi.ReadAsync<PairRow>();
             var total = await multi.ReadFirstAsync<int>();
+            var items = rows.Select(MapRow).ToList();
             return (items, total);
         }
 
         public async Task<BibDupePair?> GetByBibIdsAsync(int leftBibId, int rightBibId)
         {
-            const string sql = @"SELECT PairId, MatchType, MatchValue, PrimaryMARCTOMID AS PrimaryMarcTomId, LeftBibId, RightBibId, LeftTitle, LeftAuthor, RightTitle, RightAuthor
+            const string sql = @"SELECT PairId, PrimaryMARCTOMID AS PrimaryMarcTomId, LeftBibId, RightBibId,
+       LeftTitle, LeftAuthor, RightTitle, RightAuthor, MatchesJson
 FROM BibDedupe.GetPairs(@Top)
 WHERE LeftBibId = @LeftBibId AND RightBibId = @RightBibId;";
-            // TODO: revert to QuerySingleOrDefaultAsync once duplicate rows are eliminated from GetPairs.
-            return await _db.QueryFirstOrDefaultAsync<BibDupePair>(sql, new { LeftBibId = leftBibId, RightBibId = rightBibId, Top = UnlimitedPairsLimit });
+            var row = await _db.QueryFirstOrDefaultAsync<PairRow>(sql, new { LeftBibId = leftBibId, RightBibId = rightBibId, Top = UnlimitedPairsLimit });
+            return row is null ? null : MapRow(row);
         }
 
         public Task MergeAsync(int keepBibId, int deleteBibId, string userEmail, BibDupePairAction action) =>
@@ -62,5 +69,31 @@ WHERE LeftBibId = @LeftBibId AND RightBibId = @RightBibId;";
                 "BibDedupe.Skip",
                 new { LeftBibId = leftBibId, RightBibId = rightBibId, UserEmail = userEmail },
                 commandType: CommandType.StoredProcedure);
+
+        private static BibDupePair MapRow(PairRow row) => new()
+        {
+            PairId = row.PairId,
+            PrimaryMarcTomId = row.PrimaryMarcTomId,
+            LeftBibId = row.LeftBibId,
+            RightBibId = row.RightBibId,
+            LeftTitle = row.LeftTitle,
+            LeftAuthor = row.LeftAuthor,
+            RightTitle = row.RightTitle,
+            RightAuthor = row.RightAuthor,
+            Matches = PairMatch.FromJson(row.MatchesJson)
+        };
+
+        private sealed class PairRow
+        {
+            public int PairId { get; set; }
+            public int PrimaryMarcTomId { get; set; }
+            public int LeftBibId { get; set; }
+            public int RightBibId { get; set; }
+            public string? LeftTitle { get; set; }
+            public string? LeftAuthor { get; set; }
+            public string? RightTitle { get; set; }
+            public string? RightAuthor { get; set; }
+            public string MatchesJson { get; set; } = string.Empty;
+        }
     }
 }
