@@ -10,8 +10,11 @@
     var matchPoints = (ViewData["MatchPoints"] as IEnumerable<PairMatch>)?.ToList();
     var matchSummaryTitle = ViewData["MatchSummaryTitle"] as string ?? "Match Types";
     var showMatchSummary = matchPoints?.Any() == true;
+    var holdSummary = ViewData["HoldSummary"] as HoldSummary;
+    var showHoldSummary = holdSummary is not null;
+    var showSummary = showMatchSummary || showHoldSummary;
 }
-<nav class="menu@(showMatchSummary ? " menu--with-summary" : string.Empty)">
+<nav class="menu@(showSummary ? " menu--with-summary" : string.Empty)">
     <div class="menu-links">
         <a asp-controller="Pairs" asp-action="Index">Pair List</a>
         <a asp-controller="Decisions" asp-action="Index">Decisions <span class="badge">@decisionCount</span></a>
@@ -24,10 +27,35 @@
             <a asp-controller="Home" asp-action="Review" asp-route-leftBibId="@currentPair.LeftBibId" asp-route-rightBibId="@currentPair.RightBibId" data-current-pair="true">Current Pair</a>
         }
     </div>
-    @if (showMatchSummary)
+    @if (showSummary)
     {
-        <div class="menu-match-summary" role="group" aria-label="@matchSummaryTitle">
-            @await Html.PartialAsync("_MatchPoints", matchPoints)
+        <div class="menu-summary">
+            @if (showMatchSummary)
+            {
+                <div class="menu-match-summary" role="group" aria-label="@matchSummaryTitle">
+                    @await Html.PartialAsync("_MatchPoints", matchPoints)
+                </div>
+            }
+            @if (showHoldSummary && holdSummary is not null)
+            {
+                <div class="menu-hold-summary" role="group" aria-label="Hold requests">
+                    <span class="menu-hold-summary__title">Hold Requests</span>
+                    <div class="menu-hold-summary__counts">
+                        <span class="menu-hold-summary__count menu-hold-summary__count--left" aria-label="Left hold requests">
+                            <span class="menu-hold-summary__value">@holdSummary.LeftHoldCount</span>
+                            <span class="menu-hold-summary__caption">Left</span>
+                        </span>
+                        <span class="menu-hold-summary__count menu-hold-summary__count--total" aria-label="Total hold requests">
+                            <span class="menu-hold-summary__value">@holdSummary.TotalHoldCount</span>
+                            <span class="menu-hold-summary__caption">Total</span>
+                        </span>
+                        <span class="menu-hold-summary__count menu-hold-summary__count--right" aria-label="Right hold requests">
+                            <span class="menu-hold-summary__value">@holdSummary.RightHoldCount</span>
+                            <span class="menu-hold-summary__caption">Right</span>
+                        </span>
+                    </div>
+                </div>
+            }
         </div>
     }
     <a class="signout" asp-controller="Account" asp-action="SignOut">Sign out</a>

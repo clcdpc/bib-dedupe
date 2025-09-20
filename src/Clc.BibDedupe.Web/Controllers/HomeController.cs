@@ -83,6 +83,9 @@ namespace Clc.BibDedupe.Web.Controllers
                         MatchValue = m.MatchValue
                     })
                     .ToList() ?? new List<PairMatch>(),
+                LeftHoldCount = pair?.LeftHoldCount ?? 0,
+                RightHoldCount = pair?.RightHoldCount ?? 0,
+                TotalHoldCount = pair?.TotalHoldCount ?? 0,
                 ReturnUrl = returnUrl
             };
 

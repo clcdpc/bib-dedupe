@@ -11,6 +11,9 @@ namespace Clc.BibDedupe.Web.Models
         public List<Dictionary<string, string>> LeftItems { get; set; } = new();
         public List<Dictionary<string, string>> RightItems { get; set; } = new();
         public List<PairMatch> Matches { get; set; } = new();
+        public int LeftHoldCount { get; set; }
+        public int RightHoldCount { get; set; }
+        public int TotalHoldCount { get; set; }
         public List<ItemField> ItemFields { get; set; } = new()
         {
             new("AssignedBranch", "Assigned Branch"),
