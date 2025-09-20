@@ -80,6 +80,9 @@ WHERE LeftBibId = @LeftBibId AND RightBibId = @RightBibId;";
             LeftAuthor = row.LeftAuthor,
             RightTitle = row.RightTitle,
             RightAuthor = row.RightAuthor,
+            LeftHoldCount = row.LeftHoldCount,
+            RightHoldCount = row.RightHoldCount,
+            TotalHoldCount = row.TotalHoldCount,
             Matches = PairMatch.FromJson(row.MatchesJson)
         };
 
@@ -93,6 +96,9 @@ WHERE LeftBibId = @LeftBibId AND RightBibId = @RightBibId;";
             public string? LeftAuthor { get; set; }
             public string? RightTitle { get; set; }
             public string? RightAuthor { get; set; }
+            public int LeftHoldCount { get; set; }
+            public int RightHoldCount { get; set; }
+            public int TotalHoldCount { get; set; }
             public string MatchesJson { get; set; } = string.Empty;
         }
     }
