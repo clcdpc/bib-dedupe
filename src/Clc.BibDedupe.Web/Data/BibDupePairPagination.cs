@@ -46,6 +46,43 @@ internal static class BibDupePairPagination
             var groupPairs = group.Pairs;
             var groupCount = groupPairs.Count;
 
+            if (groupCount > normalizedPageSize)
+            {
+                if (currentCount > 0)
+                {
+                    currentPage++;
+                    currentCount = 0;
+                }
+
+                var index = 0;
+                while (index < groupCount)
+                {
+                    var remaining = groupCount - index;
+                    var take = Math.Min(normalizedPageSize, remaining);
+                    var chunk = groupPairs.GetRange(index, take);
+                    groupPages.Add((currentPage, chunk));
+                    index += take;
+
+                    if (take == normalizedPageSize)
+                    {
+                        currentPage++;
+                        currentCount = 0;
+                    }
+                    else
+                    {
+                        currentCount = take;
+                    }
+                }
+
+                if (currentCount >= normalizedPageSize)
+                {
+                    currentPage++;
+                    currentCount = 0;
+                }
+
+                continue;
+            }
+
             if (currentCount > 0 && currentCount + groupCount > normalizedPageSize)
             {
                 currentPage++;
@@ -53,13 +90,6 @@ internal static class BibDupePairPagination
             }
 
             groupPages.Add((currentPage, groupPairs));
-
-            if (groupCount >= normalizedPageSize)
-            {
-                currentPage++;
-                currentCount = 0;
-                continue;
-            }
 
             currentCount += groupCount;
             if (currentCount >= normalizedPageSize)
