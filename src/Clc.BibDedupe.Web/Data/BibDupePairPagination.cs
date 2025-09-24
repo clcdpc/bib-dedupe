@@ -21,37 +21,60 @@ internal static class BibDupePairPagination
         var normalizedPageSize = Math.Max(pageSize, 1);
         var normalizedPage = Math.Max(page, 1);
 
-        var grouped = pairs
+        var orderedGroups = pairs
             .GroupBy(p => p.PrimaryMarcTomId)
-            .OrderBy(g => g.Min(p => p.PairId))
-            .ThenBy(g => g.Key)
+            .Select(g =>
+            {
+                var orderedPairs = g.OrderBy(p => p.PairId).ToList();
+                return new
+                {
+                    Primary = g.Key,
+                    Pairs = orderedPairs,
+                    FirstPairId = orderedPairs.Count > 0 ? orderedPairs[0].PairId : 0
+                };
+            })
+            .OrderBy(g => g.FirstPairId)
+            .ThenBy(g => g.Primary)
             .ToList();
 
-        var groupPages = new Dictionary<int, int>();
-        var runningTotal = 0;
-        var currentPage = 1;
+        var pages = new List<List<BibDupePair>>();
+        var currentPagePairs = new List<BibDupePair>();
+        var currentCount = 0;
 
-        foreach (var group in grouped)
+        foreach (var group in orderedGroups)
         {
-            var groupCount = group.Count();
-            if (runningTotal > 0 && runningTotal + groupCount > normalizedPageSize)
+            var groupCount = group.Pairs.Count;
+            if (currentCount > 0 && currentCount + groupCount > normalizedPageSize)
             {
-                currentPage++;
-                runningTotal = 0;
+                pages.Add(currentPagePairs);
+                currentPagePairs = new List<BibDupePair>();
+                currentCount = 0;
             }
 
-            groupPages[group.Key] = currentPage;
-            runningTotal += groupCount;
+            currentPagePairs.AddRange(group.Pairs);
+            currentCount += groupCount;
+
+            if (groupCount >= normalizedPageSize)
+            {
+                pages.Add(currentPagePairs);
+                currentPagePairs = new List<BibDupePair>();
+                currentCount = 0;
+            }
         }
 
-        var totalPages = groupPages.Count == 0
-            ? 0
-            : groupPages.Values.Max();
+        if (currentCount > 0)
+        {
+            pages.Add(currentPagePairs);
+        }
 
-        var items = grouped
-            .Where(g => groupPages[g.Key] == normalizedPage)
-            .SelectMany(g => g.OrderBy(p => p.PairId))
-            .ToList();
+        var totalPages = pages.Count;
+        if (totalPages == 0)
+        {
+            return (Array.Empty<BibDupePair>(), total, 0);
+        }
+
+        var clampedPage = Math.Min(normalizedPage, totalPages);
+        var items = pages[clampedPage - 1];
 
         return (items, total, totalPages);
     }
