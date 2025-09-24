@@ -31,7 +31,7 @@ FROM BibDedupe.GetPairs(DEFAULT)";
             const string sql = @"DECLARE @NormalizedPageSize INT = CASE WHEN @PageSize <= 0 THEN 1 ELSE @PageSize END;
 DECLARE @NormalizedPage INT = CASE WHEN @Page <= 0 THEN 1 ELSE @Page END;
 
-WITH PairSource AS (
+;WITH PairSource AS (
     SELECT PairId, PrimaryMARCTOMID AS PrimaryMarcTomId, LeftBibId, RightBibId,
            LeftTitle, LeftAuthor, RightTitle, RightAuthor, MatchesJson
     FROM BibDedupe.GetPairs(DEFAULT)
@@ -63,8 +63,28 @@ JOIN GroupPages gp ON gp.PrimaryMarcTomId = ps.PrimaryMarcTomId
 WHERE gp.PageNumber = @NormalizedPage
 ORDER BY ps.PrimaryMarcTomId, ps.PairId;
 
-SELECT COALESCE(SUM(PairCount), 0) FROM GroupCounts;
+SELECT COUNT(*) FROM BibDedupe.GetPairs(DEFAULT);
 
+;WITH PairSource AS (
+    SELECT PairId, PrimaryMARCTOMID AS PrimaryMarcTomId
+    FROM BibDedupe.GetPairs(DEFAULT)
+),
+GroupCounts AS (
+    SELECT PrimaryMarcTomId,
+           COUNT(*) AS PairCount
+    FROM PairSource
+    GROUP BY PrimaryMarcTomId
+),
+OrderedGroups AS (
+    SELECT PrimaryMarcTomId,
+           PairCount,
+           SUM(PairCount) OVER (ORDER BY PrimaryMarcTomId ROWS UNBOUNDED PRECEDING) AS RunningTotal
+    FROM GroupCounts
+),
+GroupPages AS (
+    SELECT (RunningTotal - PairCount) / @NormalizedPageSize + 1 AS PageNumber
+    FROM OrderedGroups
+)
 SELECT COALESCE(MAX(PageNumber), 0) FROM GroupPages;";
 
             var parameters = new { Page = page, PageSize = pageSize };
