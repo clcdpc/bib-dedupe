@@ -37,44 +37,49 @@ internal static class BibDupePairPagination
             .ThenBy(g => g.Primary)
             .ToList();
 
-        var pages = new List<List<BibDupePair>>();
-        var currentPagePairs = new List<BibDupePair>();
+        var groupPages = new List<(int Page, List<BibDupePair> Pairs)>();
+        var currentPage = 1;
         var currentCount = 0;
 
         foreach (var group in orderedGroups)
         {
-            var groupCount = group.Pairs.Count;
+            var groupPairs = group.Pairs;
+            var groupCount = groupPairs.Count;
+
             if (currentCount > 0 && currentCount + groupCount > normalizedPageSize)
             {
-                pages.Add(currentPagePairs);
-                currentPagePairs = new List<BibDupePair>();
+                currentPage++;
                 currentCount = 0;
             }
 
-            currentPagePairs.AddRange(group.Pairs);
-            currentCount += groupCount;
+            groupPages.Add((currentPage, groupPairs));
 
             if (groupCount >= normalizedPageSize)
             {
-                pages.Add(currentPagePairs);
-                currentPagePairs = new List<BibDupePair>();
+                currentPage++;
+                currentCount = 0;
+                continue;
+            }
+
+            currentCount += groupCount;
+            if (currentCount >= normalizedPageSize)
+            {
+                currentPage++;
                 currentCount = 0;
             }
         }
 
-        if (currentCount > 0)
-        {
-            pages.Add(currentPagePairs);
-        }
-
-        var totalPages = pages.Count;
-        if (totalPages == 0)
+        if (groupPages.Count == 0)
         {
             return (Array.Empty<BibDupePair>(), total, 0);
         }
 
+        var totalPages = groupPages[^1].Page;
         var clampedPage = Math.Min(normalizedPage, totalPages);
-        var items = pages[clampedPage - 1];
+        var items = groupPages
+            .Where(g => g.Page == clampedPage)
+            .SelectMany(g => g.Pairs)
+            .ToList();
 
         return (items, total, totalPages);
     }
