@@ -49,35 +49,49 @@ SELECT PairId, PrimaryMARCTOMID AS PrimaryMarcTomId, LeftBibId, RightBibId,
 FROM BibDedupe.GetPairs(DEFAULT);
 
 DECLARE @GroupPages TABLE (
-    PrimaryMarcTomId INT,
-    PairCount INT,
-    RunningTotal INT,
-    PageNumber INT
+    PrimaryMarcTomId INT PRIMARY KEY,
+    PageNumber INT,
+    MinPairId INT
 );
 
-INSERT INTO @GroupPages (PrimaryMarcTomId, PairCount, RunningTotal, PageNumber)
-SELECT PrimaryMarcTomId,
-       PairCount,
-       RunningTotal,
-       (RunningTotal - PairCount) / @NormalizedPageSize + 1 AS PageNumber
-FROM (
-    SELECT PrimaryMarcTomId,
+;WITH OrderedGroups AS (
+    SELECT ROW_NUMBER() OVER (ORDER BY MIN(PairId), PrimaryMarcTomId) AS RowNumber,
+           PrimaryMarcTomId,
+           COUNT(*) AS PairCount,
+           MIN(PairId) AS MinPairId
+    FROM @PairSource
+    GROUP BY PrimaryMarcTomId
+),
+RecursivePages AS (
+    SELECT RowNumber,
+           PrimaryMarcTomId,
            PairCount,
-           SUM(PairCount) OVER (ORDER BY PrimaryMarcTomId ROWS UNBOUNDED PRECEDING) AS RunningTotal
-    FROM (
-        SELECT PrimaryMarcTomId,
-               COUNT(*) AS PairCount
-        FROM @PairSource
-        GROUP BY PrimaryMarcTomId
-    ) GroupCounts
-) OrderedGroups;
+           MinPairId,
+           1 AS PageNumber,
+           PairCount AS CurrentPageTotal
+    FROM OrderedGroups
+    WHERE RowNumber = 1
+    UNION ALL
+    SELECT og.RowNumber,
+           og.PrimaryMarcTomId,
+           og.PairCount,
+           og.MinPairId,
+           CASE WHEN rp.CurrentPageTotal + og.PairCount > @NormalizedPageSize THEN rp.PageNumber + 1 ELSE rp.PageNumber END AS PageNumber,
+           CASE WHEN rp.CurrentPageTotal + og.PairCount > @NormalizedPageSize THEN og.PairCount ELSE rp.CurrentPageTotal + og.PairCount END AS CurrentPageTotal
+    FROM OrderedGroups og
+    JOIN RecursivePages rp ON og.RowNumber = rp.RowNumber + 1
+)
+INSERT INTO @GroupPages (PrimaryMarcTomId, PageNumber, MinPairId)
+SELECT PrimaryMarcTomId, PageNumber, MinPairId
+FROM RecursivePages
+OPTION (MAXRECURSION 0);
 
 SELECT ps.PairId, ps.PrimaryMarcTomId, ps.LeftBibId, ps.RightBibId,
        ps.LeftTitle, ps.LeftAuthor, ps.RightTitle, ps.RightAuthor, ps.MatchesJson
 FROM @PairSource ps
 JOIN @GroupPages gp ON gp.PrimaryMarcTomId = ps.PrimaryMarcTomId
 WHERE gp.PageNumber = @NormalizedPage
-ORDER BY ps.PrimaryMarcTomId, ps.PairId;
+ORDER BY gp.PageNumber, gp.MinPairId, ps.PairId;
 
 SELECT COUNT(*) FROM @PairSource;
 

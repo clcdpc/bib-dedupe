@@ -65,21 +65,29 @@ public class TestFileBibDupePairRepository : IBibDupePairRepository
 
         var grouped = _pairs
             .GroupBy(p => p.PrimaryMarcTomId)
-            .OrderBy(g => g.Key)
+            .OrderBy(g => g.Min(p => p.PairId))
+            .ThenBy(g => g.Key)
             .ToList();
 
         var groupPages = new Dictionary<int, int>();
         var runningTotal = 0;
+        var currentPage = 1;
         foreach (var group in grouped)
         {
-            var pageNumber = runningTotal / normalizedPageSize + 1;
-            groupPages[group.Key] = pageNumber;
-            runningTotal += group.Count();
+            var groupCount = group.Count();
+            if (runningTotal > 0 && runningTotal + groupCount > normalizedPageSize)
+            {
+                currentPage++;
+                runningTotal = 0;
+            }
+
+            groupPages[group.Key] = currentPage;
+            runningTotal += groupCount;
         }
 
         var totalPages = groupPages.Count == 0
             ? 0
-            : groupPages.Values.DefaultIfEmpty(0).Max();
+            : groupPages.Values.Max();
 
         var items = grouped
             .Where(g => groupPages[g.Key] == normalizedPage)
