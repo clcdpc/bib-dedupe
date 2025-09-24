@@ -31,61 +31,57 @@ FROM BibDedupe.GetPairs(DEFAULT)";
             const string sql = @"DECLARE @NormalizedPageSize INT = CASE WHEN @PageSize <= 0 THEN 1 ELSE @PageSize END;
 DECLARE @NormalizedPage INT = CASE WHEN @Page <= 0 THEN 1 ELSE @Page END;
 
-;WITH PairSource AS (
-    SELECT PairId, PrimaryMARCTOMID AS PrimaryMarcTomId, LeftBibId, RightBibId,
-           LeftTitle, LeftAuthor, RightTitle, RightAuthor, MatchesJson
-    FROM BibDedupe.GetPairs(DEFAULT)
-),
-GroupCounts AS (
-    SELECT PrimaryMarcTomId,
-           COUNT(*) AS PairCount
-    FROM PairSource
-    GROUP BY PrimaryMarcTomId
-),
-OrderedGroups AS (
+DECLARE @PairSource TABLE (
+    PairId INT,
+    PrimaryMarcTomId INT,
+    LeftBibId INT,
+    RightBibId INT,
+    LeftTitle NVARCHAR(MAX),
+    LeftAuthor NVARCHAR(MAX),
+    RightTitle NVARCHAR(MAX),
+    RightAuthor NVARCHAR(MAX),
+    MatchesJson NVARCHAR(MAX)
+);
+
+INSERT INTO @PairSource (PairId, PrimaryMarcTomId, LeftBibId, RightBibId, LeftTitle, LeftAuthor, RightTitle, RightAuthor, MatchesJson)
+SELECT PairId, PrimaryMARCTOMID AS PrimaryMarcTomId, LeftBibId, RightBibId,
+       LeftTitle, LeftAuthor, RightTitle, RightAuthor, MatchesJson
+FROM BibDedupe.GetPairs(DEFAULT);
+
+DECLARE @GroupPages TABLE (
+    PrimaryMarcTomId INT,
+    PairCount INT,
+    RunningTotal INT,
+    PageNumber INT
+);
+
+INSERT INTO @GroupPages (PrimaryMarcTomId, PairCount, RunningTotal, PageNumber)
+SELECT PrimaryMarcTomId,
+       PairCount,
+       RunningTotal,
+       (RunningTotal - PairCount) / @NormalizedPageSize + 1 AS PageNumber
+FROM (
     SELECT PrimaryMarcTomId,
            PairCount,
            SUM(PairCount) OVER (ORDER BY PrimaryMarcTomId ROWS UNBOUNDED PRECEDING) AS RunningTotal
-    FROM GroupCounts
-),
-GroupPages AS (
-    SELECT PrimaryMarcTomId,
-           PairCount,
-           RunningTotal,
-           RunningTotal - PairCount AS RunningTotalBefore,
-           (RunningTotal - PairCount) / @NormalizedPageSize + 1 AS PageNumber
-    FROM OrderedGroups
-)
+    FROM (
+        SELECT PrimaryMarcTomId,
+               COUNT(*) AS PairCount
+        FROM @PairSource
+        GROUP BY PrimaryMarcTomId
+    ) GroupCounts
+) OrderedGroups;
+
 SELECT ps.PairId, ps.PrimaryMarcTomId, ps.LeftBibId, ps.RightBibId,
        ps.LeftTitle, ps.LeftAuthor, ps.RightTitle, ps.RightAuthor, ps.MatchesJson
-FROM PairSource ps
-JOIN GroupPages gp ON gp.PrimaryMarcTomId = ps.PrimaryMarcTomId
+FROM @PairSource ps
+JOIN @GroupPages gp ON gp.PrimaryMarcTomId = ps.PrimaryMarcTomId
 WHERE gp.PageNumber = @NormalizedPage
 ORDER BY ps.PrimaryMarcTomId, ps.PairId;
 
-SELECT COUNT(*) FROM BibDedupe.GetPairs(DEFAULT);
+SELECT COUNT(*) FROM @PairSource;
 
-;WITH PairSource AS (
-    SELECT PairId, PrimaryMARCTOMID AS PrimaryMarcTomId
-    FROM BibDedupe.GetPairs(DEFAULT)
-),
-GroupCounts AS (
-    SELECT PrimaryMarcTomId,
-           COUNT(*) AS PairCount
-    FROM PairSource
-    GROUP BY PrimaryMarcTomId
-),
-OrderedGroups AS (
-    SELECT PrimaryMarcTomId,
-           PairCount,
-           SUM(PairCount) OVER (ORDER BY PrimaryMarcTomId ROWS UNBOUNDED PRECEDING) AS RunningTotal
-    FROM GroupCounts
-),
-GroupPages AS (
-    SELECT (RunningTotal - PairCount) / @NormalizedPageSize + 1 AS PageNumber
-    FROM OrderedGroups
-)
-SELECT COALESCE(MAX(PageNumber), 0) FROM GroupPages;";
+SELECT COALESCE(MAX(PageNumber), 0) FROM @GroupPages;";
 
             var parameters = new { Page = page, PageSize = pageSize };
             using var multi = await _db.QueryMultipleAsync(sql, parameters);
