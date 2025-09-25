@@ -21,8 +21,8 @@ namespace Clc.BibDedupe.Web.Data
         {
             const string sql = @"SELECT PairId, PrimaryMARCTOMID AS PrimaryMarcTomId, LeftBibId, RightBibId,
        LeftTitle, LeftAuthor, RightTitle, RightAuthor, MatchesJson
-FROM BibDedupe.GetPairs(DEFAULT)";
-            var rows = await _db.QueryAsync<PairRow>(sql);
+FROM BibDedupe.GetPairs(@Top)";
+            var rows = await _db.QueryAsync<PairRow>(sql, new { Top = UnlimitedPairsLimit });
             return rows.Select(MapRow).ToList();
         }
 
@@ -30,9 +30,9 @@ FROM BibDedupe.GetPairs(DEFAULT)";
         {
             const string sql = @"SELECT PairId, PrimaryMARCTOMID AS PrimaryMarcTomId, LeftBibId, RightBibId,
        LeftTitle, LeftAuthor, RightTitle, RightAuthor, MatchesJson
-FROM BibDedupe.GetPairs(DEFAULT);";
+FROM BibDedupe.GetPairs(@Top);";
 
-            var rows = await _db.QueryAsync<PairRow>(sql);
+            var rows = await _db.QueryAsync<PairRow>(sql, new { Top = UnlimitedPairsLimit });
             var pairs = rows.Select(MapRow).ToList();
             var (items, totalCount, totalPages) = BibDupePairPagination.Paginate(pairs, page, pageSize);
             return (items, totalCount, totalPages);
