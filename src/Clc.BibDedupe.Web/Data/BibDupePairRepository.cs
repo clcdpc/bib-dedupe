@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
@@ -12,6 +13,105 @@ namespace Clc.BibDedupe.Web.Data
         private readonly IDbConnection _db;
         private const int UnlimitedPairsLimit = int.MaxValue;
 
+        private const string PagedPairsCte = @"WITH PairSource AS (
+    SELECT
+        PairId,
+        PrimaryMARCTOMID AS PrimaryMarcTomId,
+        LeftBibId,
+        RightBibId,
+        LeftTitle,
+        LeftAuthor,
+        RightTitle,
+        RightAuthor,
+        MatchesJson,
+        LeftHoldCount,
+        RightHoldCount,
+        TotalHoldCount
+    FROM BibDedupe.GetPairs(@Top)
+),
+OrderedPairs AS (
+    SELECT
+        ps.*,
+        ROW_NUMBER() OVER (PARTITION BY ps.PrimaryMarcTomId ORDER BY ps.PairId) AS RowNumberInGroup,
+        COUNT(*) OVER (PARTITION BY ps.PrimaryMarcTomId) AS GroupSize,
+        MIN(ps.PairId) OVER (PARTITION BY ps.PrimaryMarcTomId) AS FirstPairId
+    FROM PairSource ps
+),
+ChunkedPairs AS (
+    SELECT
+        op.*,
+        (op.RowNumberInGroup - 1) / @PageSize AS ChunkIndex
+    FROM OrderedPairs op
+),
+GroupChunks AS (
+    SELECT
+        cp.PrimaryMarcTomId,
+        cp.ChunkIndex,
+        MIN(cp.FirstPairId) AS FirstPairId,
+        COUNT(*) AS ChunkSize
+    FROM ChunkedPairs cp
+    GROUP BY cp.PrimaryMarcTomId, cp.ChunkIndex
+),
+OrderedChunks AS (
+    SELECT
+        gc.*,
+        ROW_NUMBER() OVER (ORDER BY gc.FirstPairId, gc.PrimaryMarcTomId, gc.ChunkIndex) AS ChunkOrder,
+        SUM(gc.ChunkSize) OVER (ORDER BY gc.FirstPairId, gc.PrimaryMarcTomId, gc.ChunkIndex ROWS UNBOUNDED PRECEDING) AS RunningTotal
+    FROM GroupChunks gc
+),
+PagedChunks AS (
+    SELECT
+        oc.*,
+        ((oc.RunningTotal - 1) / @PageSize) + 1 AS PageNumber
+    FROM OrderedChunks oc
+),
+PagedPairs AS (
+    SELECT
+        cp.PairId,
+        cp.PrimaryMarcTomId,
+        cp.LeftBibId,
+        cp.RightBibId,
+        cp.LeftTitle,
+        cp.LeftAuthor,
+        cp.RightTitle,
+        cp.RightAuthor,
+        cp.MatchesJson,
+        cp.LeftHoldCount,
+        cp.RightHoldCount,
+        cp.TotalHoldCount,
+        cp.FirstPairId,
+        cp.RowNumberInGroup,
+        pc.PageNumber
+    FROM ChunkedPairs cp
+    INNER JOIN PagedChunks pc
+        ON cp.PrimaryMarcTomId = pc.PrimaryMarcTomId
+       AND cp.ChunkIndex = pc.ChunkIndex
+)";
+
+        private const string PagedPairsStatsSql = PagedPairsCte + @"
+SELECT
+    COUNT(*) AS TotalCount,
+    ISNULL(MAX(PageNumber), 0) AS TotalPages
+FROM PagedPairs;";
+
+        private const string PagedPairsDataSql = PagedPairsCte + @"
+SELECT
+    PairId,
+    PrimaryMarcTomId,
+    LeftBibId,
+    RightBibId,
+    LeftTitle,
+    LeftAuthor,
+    RightTitle,
+    RightAuthor,
+    MatchesJson,
+    LeftHoldCount,
+    RightHoldCount,
+    TotalHoldCount
+FROM PagedPairs
+WHERE PageNumber = @TargetPage
+ORDER BY FirstPairId, PrimaryMarcTomId, RowNumberInGroup;";
+
         public BibDupePairRepository(IDbConnection db)
         {
             _db = db;
@@ -20,7 +120,8 @@ namespace Clc.BibDedupe.Web.Data
         public async Task<IEnumerable<BibDupePair>> GetAsync()
         {
             const string sql = @"SELECT PairId, PrimaryMARCTOMID AS PrimaryMarcTomId, LeftBibId, RightBibId,
-       LeftTitle, LeftAuthor, RightTitle, RightAuthor, MatchesJson
+       LeftTitle, LeftAuthor, RightTitle, RightAuthor, MatchesJson,
+       LeftHoldCount, RightHoldCount, TotalHoldCount
 FROM BibDedupe.GetPairs(@Top)";
             var rows = await _db.QueryAsync<PairRow>(sql, new { Top = UnlimitedPairsLimit });
             return rows.Select(MapRow).ToList();
@@ -28,20 +129,28 @@ FROM BibDedupe.GetPairs(@Top)";
 
         public async Task<(IEnumerable<BibDupePair> Items, int TotalCount, int TotalPages)> GetPagedAsync(int page, int pageSize)
         {
-            const string sql = @"SELECT PairId, PrimaryMARCTOMID AS PrimaryMarcTomId, LeftBibId, RightBibId,
-       LeftTitle, LeftAuthor, RightTitle, RightAuthor, MatchesJson
-FROM BibDedupe.GetPairs(@Top);";
+            var normalizedPageSize = Math.Max(pageSize, 1);
+            var requestedPage = Math.Max(page, 1);
 
-            var rows = await _db.QueryAsync<PairRow>(sql, new { Top = UnlimitedPairsLimit });
-            var pairs = rows.Select(MapRow).ToList();
-            var (items, totalCount, totalPages) = BibDupePairPagination.Paginate(pairs, page, pageSize);
-            return (items, totalCount, totalPages);
+            var stats = await _db.QuerySingleAsync<PaginationStats>(
+                PagedPairsStatsSql,
+                new { Top = UnlimitedPairsLimit, PageSize = normalizedPageSize });
+
+            var clampedPage = stats.TotalPages <= 0 ? 1 : Math.Min(requestedPage, stats.TotalPages);
+
+            var rows = await _db.QueryAsync<PairRow>(
+                PagedPairsDataSql,
+                new { Top = UnlimitedPairsLimit, PageSize = normalizedPageSize, TargetPage = clampedPage });
+
+            var items = rows.Select(MapRow).ToList();
+            return (items, stats.TotalCount, stats.TotalPages);
         }
 
         public async Task<BibDupePair?> GetByBibIdsAsync(int leftBibId, int rightBibId)
         {
             const string sql = @"SELECT PairId, PrimaryMARCTOMID AS PrimaryMarcTomId, LeftBibId, RightBibId,
-       LeftTitle, LeftAuthor, RightTitle, RightAuthor, MatchesJson
+       LeftTitle, LeftAuthor, RightTitle, RightAuthor, MatchesJson,
+       LeftHoldCount, RightHoldCount, TotalHoldCount
 FROM BibDedupe.GetPairs(@Top)
 WHERE LeftBibId = @LeftBibId AND RightBibId = @RightBibId;";
             var row = await _db.QueryFirstOrDefaultAsync<PairRow>(sql, new { LeftBibId = leftBibId, RightBibId = rightBibId, Top = UnlimitedPairsLimit });
@@ -96,6 +205,12 @@ WHERE LeftBibId = @LeftBibId AND RightBibId = @RightBibId;";
             public int RightHoldCount { get; set; }
             public int TotalHoldCount { get; set; }
             public string MatchesJson { get; set; } = string.Empty;
+        }
+
+        private sealed class PaginationStats
+        {
+            public int TotalCount { get; set; }
+            public int TotalPages { get; set; }
         }
     }
 }
