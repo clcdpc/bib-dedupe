@@ -1,10 +1,15 @@
+@using System
 @using System.Linq
 @using Clc.BibDedupe.Web.Models
 @model PairsListViewModel
 @{
     ViewData["Title"] = "Pairs";
     ViewBag.ContainerClass = "container-fluid px-4 px-lg-5";
-    var visiblePairs = Model.Items.ToList();
+    var visiblePairs = Model.Items
+        .OrderBy(p => p.LeftTitle ?? string.Empty, StringComparer.OrdinalIgnoreCase)
+        .ThenBy(p => p.LeftBibId)
+        .ThenBy(p => p.RightBibId)
+        .ToList();
     var totalPages = System.Math.Max(Model.TotalPages, 1);
     var currentPage = System.Math.Min(System.Math.Max(Model.Page, 1), totalPages);
     var totalPairs = System.Math.Max(Model.TotalCount, 0);
