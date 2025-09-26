@@ -441,6 +441,21 @@ body {
     border: 1px solid #1e40af;
   }
 
+  .modal-content {
+    background-color: #252a31;
+    color: #f8f9fa;
+    border-color: #343a40;
+  }
+
+  .modal-header,
+  .modal-footer {
+    border-color: #343a40;
+  }
+
+  .modal .btn-close {
+    filter: invert(1) grayscale(100%) brightness(200%);
+  }
+
   .pairs-toolbar {
     background-color: #1f242b;
     border-color: #2c3239;
