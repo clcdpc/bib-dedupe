@@ -279,6 +279,11 @@ BEGIN
         END
 
         FETCH NEXT FROM decision_cursor INTO @LeftBibId, @RightBibId, @ActionId;
+
+        IF @@FETCH_STATUS = 0
+        BEGIN
+            WAITFOR DELAY '00:01:00';
+        END
     END
 
     CLOSE decision_cursor;
