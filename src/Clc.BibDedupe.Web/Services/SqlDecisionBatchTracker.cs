@@ -10,7 +10,7 @@ public class SqlDecisionBatchTracker(IDbConnectionFactory factory) : IDecisionBa
 
     public async Task CompleteAsync(string userEmail, DateTimeOffset completedAt)
     {
-        await using var connection = factory.Create();
+        using var connection = factory.Create();
         await connection.ExecuteAsync($"UPDATE {Table} SET CompletedAt = @CompletedAt WHERE UserEmail = @UserEmail AND CompletedAt IS NULL", new
         {
             UserEmail = userEmail,
@@ -20,7 +20,7 @@ public class SqlDecisionBatchTracker(IDbConnectionFactory factory) : IDecisionBa
 
     public async Task<DecisionBatchStatus?> GetCurrentAsync(string userEmail)
     {
-        await using var connection = factory.Create();
+        using var connection = factory.Create();
         var row = await connection.QueryFirstOrDefaultAsync<DecisionBatchRow>($"SELECT TOP 1 JobId, StartedAt, CompletedAt FROM {Table} WHERE UserEmail = @UserEmail ORDER BY StartedAt DESC", new { UserEmail = userEmail });
 
         if (row is null || row.CompletedAt.HasValue)
@@ -40,7 +40,7 @@ public class SqlDecisionBatchTracker(IDbConnectionFactory factory) : IDecisionBa
 
     public async Task<DecisionBatchStatus> StartAsync(string userEmail, DateTimeOffset startedAt, string jobId)
     {
-        await using var connection = factory.Create();
+        using var connection = factory.Create();
         await connection.ExecuteAsync($"INSERT INTO {Table} (UserEmail, JobId, StartedAt) VALUES (@UserEmail, @JobId, @StartedAt)", new
         {
             UserEmail = userEmail,
