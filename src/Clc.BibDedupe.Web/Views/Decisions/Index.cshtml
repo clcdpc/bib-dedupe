@@ -1,76 +1,322 @@
 @using Clc.BibDedupe.Web.Models
-@model IEnumerable<DecisionItem>
+@model DecisionIndexViewModel
 @{
     ViewData["Title"] = "Decisions";
+    var summary = Model.Summary;
+    var hasDecisions = Model.HasDecisions;
+    var batch = Model.BatchStatus;
 }
 
 <h1>Decisions</h1>
-<table class="table table-striped">
-    <thead class="table-dark">
-        <tr>
-            <th>Left Bib</th>
-            <th>Right Bib</th>
-            <th>Primary Bib</th>
-            <th>Matches</th>
-            <th>Action</th>
-            <th>Review</th>
-            <th>Remove</th>
-        </tr>
-    </thead>
-    <tbody>
-@foreach (var d in Model)
+
+@if (TempData["Error"] is string errorMessage && !string.IsNullOrWhiteSpace(errorMessage))
 {
-        <tr>
-            <td>@d.LeftBibId</td>
-            <td>@d.RightBibId</td>
-            <td>@d.PrimaryMarcTomId</td>
-            <td>
-                @await Html.PartialAsync("_MatchPoints", d.Matches)
-            </td>
-            <td>@d.Action</td>
-            <td>
-                <a asp-action="Review" asp-route-leftBibId="@d.LeftBibId" asp-route-rightBibId="@d.RightBibId" class="btn btn-sm btn-primary">Review</a>
-            </td>
-            <td>
-                <form asp-action="Remove" method="post" class="remove-form">
-                    <input type="hidden" name="leftBibId" value="@d.LeftBibId" />
-                    <input type="hidden" name="rightBibId" value="@d.RightBibId" />
-                    <button type="submit" class="btn btn-sm btn-danger">Remove</button>
-                </form>
-            </td>
-        </tr>
+    <div class="alert alert-danger" role="alert">@errorMessage</div>
 }
-    </tbody>
-</table>
+
+@if (Model.HasPendingBatch && batch is not null)
+{
+    <div class="alert alert-info" role="status">
+        You have a batch in process that started at
+        <strong>@batch.StartedAt.ToLocalTime().ToString("g")</strong>.
+        You will be notified once processing is complete.
+    </div>
+}
+else
+{
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+        <div class="decision-summary" aria-live="polite">
+            <span class="badge bg-secondary me-1" id="summary-total">Total: @summary.Total</span>
+            <span class="badge bg-success me-1" id="summary-keep-left">Keep Left: @summary.KeepLeft</span>
+            <span class="badge bg-success me-1" id="summary-keep-right">Keep Right: @summary.KeepRight</span>
+            <span class="badge bg-primary me-1" id="summary-keep-both">Keep Both: @summary.KeepBoth</span>
+            <span class="badge bg-warning text-dark" id="summary-skip">Skip: @summary.Skip</span>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <div class="alert alert-danger d-none mb-0 py-1 px-2" data-submit-error role="alert"></div>
+            <button type="button" class="btn btn-success" id="submit-decisions" @(hasDecisions ? string.Empty : "disabled")>
+                Submit Decisions
+            </button>
+        </div>
+    </div>
+
+    @if (hasDecisions)
+    {
+        <table class="table table-striped" id="decision-table">
+            <thead class="table-dark">
+                <tr>
+                    <th>Left Bib</th>
+                    <th>Right Bib</th>
+                    <th>Primary Bib</th>
+                    <th>Matches</th>
+                    <th>Action</th>
+                    <th>Review</th>
+                    <th>Remove</th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var d in Model.Decisions)
+            {
+                <tr data-action="@((int)d.Action)">
+                    <td>@d.LeftBibId</td>
+                    <td>@d.RightBibId</td>
+                    <td>@d.PrimaryMarcTomId</td>
+                    <td>
+                        @await Html.PartialAsync("_MatchPoints", d.Matches)
+                    </td>
+                    <td class="decision-action" data-action-label="@d.Action">@d.Action</td>
+                    <td>
+                        <a asp-action="Review" asp-route-leftBibId="@d.LeftBibId" asp-route-rightBibId="@d.RightBibId" class="btn btn-sm btn-primary">Review</a>
+                    </td>
+                    <td>
+                        <form asp-action="Remove" method="post" class="remove-form">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="leftBibId" value="@d.LeftBibId" />
+                            <input type="hidden" name="rightBibId" value="@d.RightBibId" />
+                            <button type="submit" class="btn btn-sm btn-danger">Remove</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <p>No decisions are currently queued for processing.</p>
+    }
+}
+
+<form asp-action="Submit" method="post" id="submit-form" class="d-none">
+    @Html.AntiForgeryToken()
+</form>
+
+<div class="modal fade" id="submitModal" tabindex="-1" aria-labelledby="submitModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="submitModalLabel">Confirm submission</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>You are about to submit the following changes for processing:</p>
+                <ul class="list-unstyled mb-3" id="submit-summary">
+                    <li><strong id="modal-total">0</strong> total decisions</li>
+                    <li><strong id="modal-keep-left">0</strong> keep left</li>
+                    <li><strong id="modal-keep-right">0</strong> keep right</li>
+                    <li><strong id="modal-keep-both">0</strong> keep both</li>
+                    <li><strong id="modal-skip">0</strong> skip</li>
+                </ul>
+                <p class="mb-0">Processing will continue in the background. You will not be able to make additional submissions while it is running.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success" id="confirm-submit">Submit</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 @section Scripts {
     <script>
-        document.querySelectorAll('.remove-form').forEach(form => {
-            form.addEventListener('submit', async e => {
-                e.preventDefault();
-                const token = form.querySelector('input[name="__RequestVerificationToken"]').value;
-                const left = form.querySelector('input[name="leftBibId"]').value;
-                const right = form.querySelector('input[name="rightBibId"]').value;
-                try {
-                    await fetch(form.action, {
-                        method: 'POST',
-                        headers: {
-                            'RequestVerificationToken': token,
-                            'X-Requested-With': 'XMLHttpRequest',
-                            'Content-Type': 'application/x-www-form-urlencoded'
-                        },
-                        body: new URLSearchParams({ leftBibId: left, rightBibId: right })
-                    });
-                    const row = form.closest('tr');
-                    row.remove();
-                    const badge = document.querySelector('.menu .badge');
-                    if (badge) {
-                        badge.textContent = (parseInt(badge.textContent || '0', 10) - 1).toString();
-                    }
-                } catch (err) {
-                    console.error(err);
+        (function () {
+            const submitButton = document.getElementById('submit-decisions');
+            const summaryElements = {
+                total: document.getElementById('summary-total'),
+                keepLeft: document.getElementById('summary-keep-left'),
+                keepRight: document.getElementById('summary-keep-right'),
+                keepBoth: document.getElementById('summary-keep-both'),
+                skip: document.getElementById('summary-skip')
+            };
+            const modalElements = {
+                total: document.getElementById('modal-total'),
+                keepLeft: document.getElementById('modal-keep-left'),
+                keepRight: document.getElementById('modal-keep-right'),
+                keepBoth: document.getElementById('modal-keep-both'),
+                skip: document.getElementById('modal-skip')
+            };
+            const errorAlert = document.querySelector('[data-submit-error]');
+            const tableBody = document.querySelector('#decision-table tbody');
+            const modalElement = document.getElementById('submitModal');
+            const confirmButton = document.getElementById('confirm-submit');
+            const submitForm = document.getElementById('submit-form');
+
+            function updateSummaryDisplay(summary) {
+                if (!summaryElements.total) {
+                    return;
                 }
+
+                summaryElements.total.textContent = `Total: ${summary.total}`;
+                summaryElements.keepLeft.textContent = `Keep Left: ${summary.keepLeft}`;
+                summaryElements.keepRight.textContent = `Keep Right: ${summary.keepRight}`;
+                summaryElements.keepBoth.textContent = `Keep Both: ${summary.keepBoth}`;
+                summaryElements.skip.textContent = `Skip: ${summary.skip}`;
+            }
+
+            function updateModalSummary(summary) {
+                modalElements.total.textContent = summary.total;
+                modalElements.keepLeft.textContent = summary.keepLeft;
+                modalElements.keepRight.textContent = summary.keepRight;
+                modalElements.keepBoth.textContent = summary.keepBoth;
+                modalElements.skip.textContent = summary.skip;
+            }
+
+            function calculateSummary() {
+                const summary = {
+                    total: 0,
+                    keepLeft: 0,
+                    keepRight: 0,
+                    keepBoth: 0,
+                    skip: 0
+                };
+
+                if (!tableBody) {
+                    return summary;
+                }
+
+                tableBody.querySelectorAll('tr').forEach(row => {
+                    const action = Number(row.getAttribute('data-action'));
+                    if (!Number.isFinite(action)) {
+                        return;
+                    }
+
+                    summary.total += 1;
+
+                    switch (action) {
+                        case 1:
+                            summary.keepLeft += 1;
+                            break;
+                        case 2:
+                            summary.keepBoth += 1;
+                            break;
+                        case 3:
+                            summary.skip += 1;
+                            break;
+                        case 4:
+                            summary.keepRight += 1;
+                            break;
+                        default:
+                            break;
+                    }
+                });
+
+                return summary;
+            }
+
+            function updateSubmitButtonState(summary) {
+                if (!submitButton) {
+                    return;
+                }
+
+                submitButton.disabled = summary.total === 0;
+            }
+
+            function showError(message) {
+                if (!errorAlert) {
+                    return;
+                }
+
+                errorAlert.textContent = message;
+                errorAlert.classList.remove('d-none');
+            }
+
+            function clearError() {
+                if (!errorAlert) {
+                    return;
+                }
+
+                errorAlert.textContent = '';
+                errorAlert.classList.add('d-none');
+            }
+
+            if (submitButton && modalElement) {
+                const modal = new bootstrap.Modal(modalElement);
+
+                submitButton.addEventListener('click', () => {
+                    const summary = calculateSummary();
+                    updateModalSummary(summary);
+                    clearError();
+                    modal.show();
+                });
+
+                confirmButton?.addEventListener('click', async () => {
+                    if (!submitForm) {
+                        return;
+                    }
+
+                    clearError();
+                    confirmButton.disabled = true;
+
+                    const token = submitForm.querySelector('input[name="__RequestVerificationToken"]').value;
+
+                    try {
+                        const response = await fetch(submitForm.action, {
+                            method: 'POST',
+                            headers: {
+                                'RequestVerificationToken': token,
+                                'X-Requested-With': 'XMLHttpRequest'
+                            }
+                        });
+
+                        if (!response.ok) {
+                            const data = await response.json().catch(() => ({}));
+                            const message = data.error || 'Unable to submit decisions at this time.';
+                            showError(message);
+                            confirmButton.disabled = false;
+                            return;
+                        }
+
+                        modal.hide();
+                        window.location.reload();
+                    } catch (err) {
+                        console.error(err);
+                        showError('An unexpected error occurred.');
+                        confirmButton.disabled = false;
+                    }
+                });
+            }
+
+            document.querySelectorAll('.remove-form').forEach(form => {
+                form.addEventListener('submit', async e => {
+                    e.preventDefault();
+                    const token = form.querySelector('input[name="__RequestVerificationToken"]').value;
+                    const left = form.querySelector('input[name="leftBibId"]').value;
+                    const right = form.querySelector('input[name="rightBibId"]').value;
+
+                    try {
+                        const response = await fetch(form.action, {
+                            method: 'POST',
+                            headers: {
+                                'RequestVerificationToken': token,
+                                'X-Requested-With': 'XMLHttpRequest',
+                                'Content-Type': 'application/x-www-form-urlencoded'
+                            },
+                            body: new URLSearchParams({ leftBibId: left, rightBibId: right })
+                        });
+
+                        if (!response.ok) {
+                            const data = await response.json().catch(() => ({}));
+                            const message = data.error || 'Unable to remove this decision while processing is in progress.';
+                            showError(message);
+                            return;
+                        }
+
+                        const row = form.closest('tr');
+                        row?.remove();
+                        const badge = document.querySelector('.menu .badge');
+                        if (badge) {
+                            badge.textContent = (Math.max(parseInt(badge.textContent || '0', 10) - 1, 0)).toString();
+                        }
+
+                        const summary = calculateSummary();
+                        updateSummaryDisplay(summary);
+                        updateSubmitButtonState(summary);
+                    } catch (err) {
+                        console.error(err);
+                        showError('Unable to remove this decision.');
+                    }
+                });
             });
-        });
+        })();
     </script>
 }

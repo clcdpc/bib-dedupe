@@ -12,6 +12,9 @@ GO
 IF OBJECT_ID('BibDedupe.Skip','P') IS NOT NULL
     DROP PROCEDURE BibDedupe.Skip;
 GO
+IF OBJECT_ID('BibDedupe.ProcessDecisionBatch','P') IS NOT NULL
+    DROP PROCEDURE BibDedupe.ProcessDecisionBatch;
+GO
 IF OBJECT_ID('BibDedupe.IsAuthorizedUser','P') IS NOT NULL
     DROP PROCEDURE BibDedupe.IsAuthorizedUser;
 GO
@@ -22,6 +25,9 @@ GO
 -- Drop tables in foreign key order
 IF OBJECT_ID('BibDedupe.DecisionQueue','U') IS NOT NULL
     DROP TABLE BibDedupe.DecisionQueue;
+GO
+IF OBJECT_ID('BibDedupe.DecisionBatches','U') IS NOT NULL
+    DROP TABLE BibDedupe.DecisionBatches;
 GO
 IF OBJECT_ID('BibDedupe.PairDecisions','U') IS NOT NULL
     DROP TABLE BibDedupe.PairDecisions;
@@ -98,6 +104,16 @@ CREATE TABLE BibDedupe.DecisionQueue (
 );
 GO
 
+CREATE TABLE BibDedupe.DecisionBatches
+(
+    BatchId INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
+    UserEmail NVARCHAR(256) NOT NULL,
+    JobId NVARCHAR(128) NOT NULL,
+    StartedAt DATETIME2 NOT NULL,
+    CompletedAt DATETIME2 NULL
+);
+GO
+
 
 CREATE OR ALTER FUNCTION BibDedupe.GetPairs (@Top INT = 1000)
 RETURNS TABLE
@@ -161,6 +177,54 @@ BEGIN
     -- TODO: implement logic to skip processing this pair
     INSERT INTO BibDedupe.PairDecisions (DecisionTimestamp, UserEmail, KeptBibId, DeletedBibId, ActionId)
         VALUES (SYSDATETIME(), @UserEmail, @LeftBibId, @RightBibId, 3);
+END
+GO
+
+CREATE OR ALTER PROCEDURE BibDedupe.ProcessDecisionBatch
+    @UserEmail NVARCHAR(256)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    DECLARE @LeftBibId INT;
+    DECLARE @RightBibId INT;
+    DECLARE @ActionId INT;
+
+    DECLARE decision_cursor CURSOR LOCAL FAST_FORWARD FOR
+        SELECT LeftBibId, RightBibId, ActionId
+        FROM BibDedupe.DecisionQueue
+        WHERE UserEmail = @UserEmail
+        ORDER BY LeftBibId, RightBibId;
+
+    OPEN decision_cursor;
+    FETCH NEXT FROM decision_cursor INTO @LeftBibId, @RightBibId, @ActionId;
+
+    WHILE @@FETCH_STATUS = 0
+    BEGIN
+        IF (@ActionId = 1)
+        BEGIN
+            EXEC BibDedupe.MergePair @KeepBibId = @LeftBibId, @DeleteBibId = @RightBibId, @UserEmail = @UserEmail, @ActionId = @ActionId;
+        END
+        ELSE IF (@ActionId = 2)
+        BEGIN
+            EXEC BibDedupe.KeepBoth @LeftBibId = @LeftBibId, @RightBibId = @RightBibId, @UserEmail = @UserEmail;
+        END
+        ELSE IF (@ActionId = 3)
+        BEGIN
+            EXEC BibDedupe.Skip @LeftBibId = @LeftBibId, @RightBibId = @RightBibId, @UserEmail = @UserEmail;
+        END
+        ELSE IF (@ActionId = 4)
+        BEGIN
+            EXEC BibDedupe.MergePair @KeepBibId = @RightBibId, @DeleteBibId = @LeftBibId, @UserEmail = @UserEmail, @ActionId = @ActionId;
+        END
+
+        FETCH NEXT FROM decision_cursor INTO @LeftBibId, @RightBibId, @ActionId;
+    END
+
+    CLOSE decision_cursor;
+    DEALLOCATE decision_cursor;
+
+    DELETE FROM BibDedupe.DecisionQueue WHERE UserEmail = @UserEmail;
 END
 GO
 
