@@ -9,9 +9,9 @@
   <ItemGroup>
     <PackageReference Include="Clc.Polaris.Api" Version="3.1.3-alpha" />
     <PackageReference Include="Dapper" Version="2.0.123" />
-    <PackageReference Include="Hangfire.AspNetCore" Version="1.7.35" />
+    <PackageReference Include="Hangfire.AspNetCore" Version="1.8.12" />
     <PackageReference Include="Hangfire.MemoryStorage.Core" Version="1.8.0" />
-    <PackageReference Include="Hangfire.SqlServer" Version="1.7.35" />
+    <PackageReference Include="Hangfire.SqlServer" Version="1.8.12" />
     <PackageReference Include="Microsoft.Data.SqlClient" Version="6.1.1" />
     <PackageReference Include="Microsoft.Identity.Web" Version="3.14.0" />
     <PackageReference Include="Microsoft.Identity.Web.UI" Version="3.14.0" />
