@@ -74,7 +74,10 @@ END
 ELSE
 BEGIN
     IF NOT EXISTS (
-        SELECT 1 FROM sys.key_constraints WHERE name = 'PK_Actions' AND parent_object_id = OBJECT_ID('BibDedupe.Actions')
+        SELECT 1
+        FROM sys.key_constraints
+        WHERE parent_object_id = OBJECT_ID('BibDedupe.Actions')
+          AND type = 'PK'
     )
         ALTER TABLE BibDedupe.Actions ADD CONSTRAINT PK_Actions PRIMARY KEY (ActionId);
 END
@@ -116,7 +119,13 @@ BEGIN
             REFERENCES BibDedupe.Actions (ActionId);
 
     IF NOT EXISTS (
-        SELECT 1 FROM sys.default_constraints WHERE name = 'DF_PairDecisions_DecisionTimestamp' AND parent_object_id = OBJECT_ID('BibDedupe.PairDecisions')
+        SELECT 1
+        FROM sys.default_constraints dc
+        INNER JOIN sys.columns c
+            ON c.object_id = dc.parent_object_id
+           AND c.column_id = dc.parent_column_id
+        WHERE dc.parent_object_id = OBJECT_ID('BibDedupe.PairDecisions')
+          AND c.name = 'DecisionTimestamp'
     )
     BEGIN
         ALTER TABLE BibDedupe.PairDecisions
