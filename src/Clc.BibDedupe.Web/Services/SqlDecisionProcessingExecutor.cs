@@ -10,7 +10,7 @@ public class SqlDecisionProcessingExecutor(IDbConnectionFactory factory) : IDeci
 
     public async Task ExecuteAsync(string userEmail, CancellationToken cancellationToken = default)
     {
-        await using var connection = factory.Create();
+        using var connection = factory.Create();
         await connection.ExecuteAsync(
             "BibDedupe.ProcessDecisionBatch",
             new { UserEmail = userEmail },
