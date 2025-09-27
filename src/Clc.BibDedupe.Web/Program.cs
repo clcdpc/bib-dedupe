@@ -14,6 +14,9 @@ using Microsoft.Identity.Web;
 using Microsoft.Identity.Web.UI;
 using System.Threading.Tasks;
 using Clc.BibDedupe.Web.Extensions;
+using Hangfire;
+using Hangfire.MemoryStorage;
+using Hangfire.SqlServer;
 
 namespace Clc.BibDedupe.Web
 {
@@ -47,14 +50,39 @@ namespace Clc.BibDedupe.Web
 
             if (string.IsNullOrWhiteSpace(bibDedupeConn))
             {
-                builder.Services.AddSingleton<IBibDupePairRepository, TestFileBibDupePairRepository>();
+                builder.Services
+                    .AddSingleton<IBibDupePairRepository, TestFileBibDupePairRepository>()
+                    .AddSingleton<IDecisionStore, SessionDecisionStore>()
+                    .AddSingleton<IDecisionBatchTracker, InMemoryDecisionBatchTracker>()
+                    .AddSingleton<IDecisionProcessingExecutor, NoOpDecisionProcessingExecutor>();
+
+                builder.Services.AddHangfire(configuration => configuration
+                    .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
+                    .UseSimpleAssemblyNameTypeSerializer()
+                    .UseRecommendedSerializerSettings()
+                    .UseMemoryStorage());
             }
             else
             {
                 builder.Services
                     .AddScoped<IDbConnection>(sp => new SqlConnection(bibDedupeConn))
-                    .AddScoped<IBibDupePairRepository, BibDupePairRepository>();
+                    .AddSingleton<IDbConnectionFactory>(new SqlDbConnectionFactory(bibDedupeConn))
+                    .AddScoped<IBibDupePairRepository, BibDupePairRepository>()
+                    .AddScoped<IDecisionStore, SqlDecisionStore>()
+                    .AddScoped<IDecisionBatchTracker, SqlDecisionBatchTracker>()
+                    .AddScoped<IDecisionProcessingExecutor, SqlDecisionProcessingExecutor>();
+
+                builder.Services.AddHangfire(configuration => configuration
+                    .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
+                    .UseSimpleAssemblyNameTypeSerializer()
+                    .UseRecommendedSerializerSettings()
+                    .UseSqlServerStorage(bibDedupeConn, new SqlServerStorageOptions
+                    {
+                        PrepareSchemaIfNecessary = true
+                    }));
             }
+
+            builder.Services.AddHangfireServer();
 
             var authorizedUsers = builder.Configuration.GetSection("AuthorizedUsers").Get<string[]>();
 
@@ -69,8 +97,11 @@ namespace Clc.BibDedupe.Web
 
             builder.Services
                 .AddSingleton<IHttpContextAccessor, HttpContextAccessor>()
-                .AddSingleton<IDecisionStore, SessionDecisionStore>()
                 .AddSingleton<ICurrentPairStore, SessionCurrentPairStore>();
+
+            builder.Services
+                .AddScoped<IDecisionSubmissionService, DecisionSubmissionService>()
+                .AddTransient<DecisionProcessingJob>();
 
             builder.Services.AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
                 .AddMicrosoftIdentityWebApp(builder.Configuration.GetSection("AzureAd"));
