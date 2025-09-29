@@ -3,7 +3,7 @@
 @model PairsListViewModel
 @{
     ViewData["Title"] = "Pairs";
-    ViewBag.ContainerClass = "container-fluid px-4 px-lg-5";
+    ViewBag.ContainerClass = "container-fluid";
     var visiblePairs = Model.Items.ToList();
     var totalPages = System.Math.Max(Model.TotalPages, 1);
     var currentPage = System.Math.Min(System.Math.Max(Model.Page, 1), totalPages);

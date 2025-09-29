@@ -1,7 +1,8 @@
 @using Clc.BibDedupe.Web.Models
 @model DecisionIndexViewModel
-@{
+@{ 
     ViewData["Title"] = "Decisions";
+    ViewBag.ContainerClass = "container-fluid";
     var summary = Model.Summary;
     var hasDecisions = Model.HasDecisions;
     var batch = Model.BatchStatus;
