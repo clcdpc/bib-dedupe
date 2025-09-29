@@ -202,14 +202,15 @@ body {
   box-shadow: 0 0.25rem 1rem rgba(33, 37, 41, 0.05);
 }
 
-.pairs-table-wrapper {
+.data-table-wrapper {
   background-color: #ffffff;
   border: 1px solid #dee2e6;
   border-radius: 0.75rem;
   box-shadow: 0 0.5rem 1.5rem rgba(33, 37, 41, 0.08);
 }
 
-.pairs-table {
+.pairs-table,
+.decisions-table {
   table-layout: auto;
   width: 100%;
   --pairs-hover-bg: rgba(66, 98, 147, 0.24);
@@ -219,11 +220,13 @@ body {
   --bs-table-hover-color: var(--pairs-hover-color);
 }
 
-.pairs-table tbody tr.pairs-row {
+.pairs-table tbody tr.pairs-row,
+.decisions-table tbody tr {
   transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
 }
 
-.pairs-table thead th {
+.pairs-table thead th,
+.decisions-table thead th {
   font-size: 0.75rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -232,24 +235,29 @@ body {
   border-bottom-width: 0;
 }
 
-.pairs-table tbody tr:hover {
+.pairs-table tbody tr:hover,
+.decisions-table tbody tr:hover {
   background-color: var(--pairs-hover-bg);
   color: var(--pairs-hover-color);
 }
 
-.pairs-table tbody tr:hover .text-muted {
+.pairs-table tbody tr:hover .text-muted,
+.decisions-table tbody tr:hover .text-muted {
   color: var(--pairs-hover-muted-color) !important;
 }
 
 .pairs-table th,
-.pairs-table td {
+.pairs-table td,
+.decisions-table th,
+.decisions-table td {
   vertical-align: middle;
   white-space: normal;
   word-break: break-word;
   overflow-wrap: anywhere;
 }
 
-.pairs-table .bib-column {
+.pairs-table .bib-column,
+.decisions-table .bib-column {
   font-family: var(--bs-font-monospace);
   font-size: 0.95rem;
   white-space: nowrap;
@@ -257,21 +265,26 @@ body {
   overflow-wrap: normal;
 }
 
-.pairs-table .work-column {
+.pairs-table .work-column,
+.decisions-table .work-column {
   min-width: 0;
   max-width: 18rem;
 }
 
 .pairs-table .work-column > .work-title,
-.pairs-table .work-column > .work-author {
+.pairs-table .work-column > .work-author,
+.decisions-table .work-column > .work-title,
+.decisions-table .work-column > .work-author {
   max-width: 100%;
 }
 
-.pairs-table .work-title {
+.pairs-table .work-title,
+.decisions-table .work-title {
   font-weight: 600;
 }
 
-.pairs-table .work-author {
+.pairs-table .work-author,
+.decisions-table .work-author {
   font-size: 0.8125rem;
 }
 
@@ -302,11 +315,13 @@ body {
   outline-offset: 2px;
 }
 
-.pairs-table .text-nowrap {
+.pairs-table .text-nowrap,
+.decisions-table .text-nowrap {
   white-space: nowrap;
 }
 
-.pairs-table .review-btn {
+.pairs-table .review-btn,
+.decisions-table .review-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -329,7 +344,9 @@ body {
 }
 
 .pairs-table .review-btn:hover,
-.pairs-table .review-btn:focus {
+.pairs-table .review-btn:focus,
+.decisions-table .review-btn:hover,
+.decisions-table .review-btn:focus {
   background-color: #0b5ed7;
   border-color: #0a53be;
   box-shadow: 0 0.35rem 1rem rgba(13, 110, 253, 0.3);
@@ -337,12 +354,14 @@ body {
   text-decoration: none;
 }
 
-.pairs-table .review-btn:focus-visible {
+.pairs-table .review-btn:focus-visible,
+.decisions-table .review-btn:focus-visible {
   outline: none;
   box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.35), 0 0.35rem 1rem rgba(13, 110, 253, 0.35);
 }
 
-.pairs-table .review-btn:active {
+.pairs-table .review-btn:active,
+.decisions-table .review-btn:active {
   box-shadow: 0 0.15rem 0.5rem rgba(13, 110, 253, 0.2);
 }
 
@@ -462,13 +481,14 @@ body {
     box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.4);
   }
 
-  .pairs-table-wrapper {
+  .data-table-wrapper {
     background-color: #15191f;
     border-color: #2c3239;
     box-shadow: 0 0.75rem 2rem rgba(0, 0, 0, 0.6);
   }
 
-  .pairs-table {
+  .pairs-table,
+  .decisions-table {
     --pairs-hover-bg: rgba(64, 97, 148, 0.78);
     --pairs-hover-color: #f3f6ff;
     --pairs-hover-muted-color: #dee6f4;
@@ -476,21 +496,25 @@ body {
     --bs-table-hover-color: var(--pairs-hover-color);
   }
 
-  .pairs-table thead th {
+  .pairs-table thead th,
+  .decisions-table thead th {
     color: #ced4da;
     background-color: #212730;
   }
 
-  .pairs-table tbody tr:hover {
+  .pairs-table tbody tr:hover,
+  .decisions-table tbody tr:hover {
     background-color: var(--pairs-hover-bg);
     color: var(--pairs-hover-color);
   }
 
-  .pairs-table tbody tr:hover .text-muted {
+  .pairs-table tbody tr:hover .text-muted,
+  .decisions-table tbody tr:hover .text-muted {
     color: var(--pairs-hover-muted-color) !important;
   }
 
-  .pairs-table .review-btn {
+  .pairs-table .review-btn,
+  .decisions-table .review-btn {
     background-color: #2563eb;
     border-color: #1d4ed8;
     color: #f8fafc;
@@ -498,18 +522,22 @@ body {
   }
 
   .pairs-table .review-btn:hover,
-  .pairs-table .review-btn:focus {
+  .pairs-table .review-btn:focus,
+  .decisions-table .review-btn:hover,
+  .decisions-table .review-btn:focus {
     background-color: #1d4ed8;
     border-color: #1e40af;
     color: #f8fafc;
     box-shadow: 0 0.45rem 1.2rem rgba(37, 99, 235, 0.45);
   }
 
-  .pairs-table .review-btn:focus-visible {
+  .pairs-table .review-btn:focus-visible,
+  .decisions-table .review-btn:focus-visible {
     box-shadow: 0 0 0 0.2rem rgba(37, 99, 235, 0.45), 0 0.45rem 1.2rem rgba(37, 99, 235, 0.45);
   }
 
-  .pairs-table .review-btn:active {
+  .pairs-table .review-btn:active,
+  .decisions-table .review-btn:active {
     box-shadow: 0 0.2rem 0.75rem rgba(37, 99, 235, 0.35);
   }
 
