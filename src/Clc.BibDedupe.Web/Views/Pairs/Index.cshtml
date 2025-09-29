@@ -47,8 +47,13 @@
         <tbody>
             @if (visiblePairs.Any())
             {
-                foreach (var p in visiblePairs)
+                for (var i = 0; i < visiblePairs.Count; i++)
                 {
+                    var p = visiblePairs[i];
+                    var queue = string.Join("|", visiblePairs
+                        .Skip(i + 1)
+                        .Select(pair => $"{pair.LeftBibId}:{pair.RightBibId}"));
+                    var queueParam = string.IsNullOrWhiteSpace(queue) ? null : queue;
                     <tr class="pairs-row">
                         <td class="bib-column">@p.LeftBibId</td>
                         <td class="work-column">
@@ -69,7 +74,7 @@
                             @await Html.PartialAsync("_MatchPoints", p.Matches)
                         </td>
                         <td class="text-center">
-                            <a asp-controller="Home" asp-action="Review" asp-route-leftBibId="@p.LeftBibId" asp-route-rightBibId="@p.RightBibId" asp-route-returnUrl="@Url.Action("Index", new { page = currentPage, pageSize = Model.PageSize })" class="btn btn-sm review-btn">Review</a>
+                            <a asp-controller="Home" asp-action="Review" asp-route-leftBibId="@p.LeftBibId" asp-route-rightBibId="@p.RightBibId" asp-route-returnUrl="@Url.Action("Index", new { page = currentPage, pageSize = Model.PageSize })" asp-route-queue="@queueParam" class="btn btn-sm review-btn">Review</a>
                         </td>
                     </tr>
                 }

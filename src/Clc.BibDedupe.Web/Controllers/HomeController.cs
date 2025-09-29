@@ -41,7 +41,7 @@ namespace Clc.BibDedupe.Web.Controllers
             return View(model);
         }
 
-        public async Task<IActionResult> Review(int? leftBibId, int? rightBibId, string? returnUrl)
+        public async Task<IActionResult> Review(int? leftBibId, int? rightBibId, string? returnUrl, string? queue)
         {
             var userEmail = User.GetEmail();
             BibDupePair? pair;
@@ -86,7 +86,8 @@ namespace Clc.BibDedupe.Web.Controllers
                 LeftHoldCount = pair?.LeftHoldCount ?? 0,
                 RightHoldCount = pair?.RightHoldCount ?? 0,
                 TotalHoldCount = pair?.TotalHoldCount ?? 0,
-                ReturnUrl = returnUrl
+                ReturnUrl = returnUrl,
+                Queue = queue
             };
 
             await currentPairStore.SetAsync(userEmail, new CurrentPair

@@ -25,5 +25,6 @@ namespace Clc.BibDedupe.Web.Models
             new("Barcode", "Barcode")
         };
         public string? ReturnUrl { get; set; }
+        public string? Queue { get; set; }
     }
 }

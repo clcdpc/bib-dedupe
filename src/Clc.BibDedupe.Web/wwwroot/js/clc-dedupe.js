@@ -132,13 +132,36 @@
     const leftBibId = parseInt(page.dataset.leftBibId, 10);
     const rightBibId = parseInt(page.dataset.rightBibId, 10);
     const returnUrl = page.dataset.returnUrl;
-    document.querySelectorAll('.controls button').forEach(btn => {
+    const queuePairs = (page?.dataset.queue || '')
+        .split('|')
+        .map(pair => pair.trim())
+        .filter(pair => pair.length > 0);
+    const actionButtons = Array.from(document.querySelectorAll('.controls button'));
+
+    function setControlsDisabled(disabled) {
+        actionButtons.forEach(button => {
+            button.disabled = disabled;
+        });
+    }
+
+    if (actionButtons.length > 0) {
+        const INITIAL_CONTROL_LOCK_MS = 500;
+        setControlsDisabled(true);
+        setTimeout(() => setControlsDisabled(false), INITIAL_CONTROL_LOCK_MS);
+    }
+
+    actionButtons.forEach(btn => {
         btn.addEventListener('click', async () => {
+            if (btn.disabled) {
+                return;
+            }
             const body = new URLSearchParams({
                 action: btn.dataset.action,
                 leftBibId,
                 rightBibId
             });
+            setControlsDisabled(true);
+            let keepDisabled = false;
             try {
                 await fetch(url, {
                     method: 'POST',
@@ -162,11 +185,42 @@
                     disabled.textContent = currentPairControl.textContent;
                     currentPairControl.replaceWith(disabled);
                 }
+                if (queuePairs.length > 0) {
+                    const nextPair = queuePairs.shift();
+                    if (nextPair) {
+                        const [nextLeftRaw, nextRightRaw] = nextPair.split(':');
+                        const nextLeft = parseInt(nextLeftRaw, 10);
+                        const nextRight = parseInt(nextRightRaw, 10);
+                        if (Number.isInteger(nextLeft) && Number.isInteger(nextRight)) {
+                            const nextUrl = new URL(window.location.href);
+                            nextUrl.searchParams.set('leftBibId', nextLeft.toString());
+                            nextUrl.searchParams.set('rightBibId', nextRight.toString());
+                            if (returnUrl) {
+                                nextUrl.searchParams.set('returnUrl', returnUrl);
+                            } else {
+                                nextUrl.searchParams.delete('returnUrl');
+                            }
+                            if (queuePairs.length > 0) {
+                                nextUrl.searchParams.set('queue', queuePairs.join('|'));
+                            } else {
+                                nextUrl.searchParams.delete('queue');
+                            }
+                            keepDisabled = true;
+                            window.location.href = nextUrl.toString();
+                            return;
+                        }
+                    }
+                }
                 if (returnUrl) {
+                    keepDisabled = true;
                     window.location.href = returnUrl;
                 }
             } catch (err) {
                 console.error(err);
+            } finally {
+                if (!keepDisabled) {
+                    setControlsDisabled(false);
+                }
             }
         });
     });
