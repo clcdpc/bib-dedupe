@@ -19,6 +19,8 @@ public class SqlDecisionStore(IDbConnection db) : IDecisionStore
             ActionId = (int)decision.Action
         };
 
+        await EnsureNoMergeConflictsAsync(userId, decision);
+
         var updated = await db.ExecuteAsync($"UPDATE {Table} SET ActionId = @ActionId WHERE UserEmail = @UserEmail AND LeftBibId = @LeftBibId AND RightBibId = @RightBibId", parameters);
 
         if (updated == 0)
@@ -49,6 +51,78 @@ public class SqlDecisionStore(IDbConnection db) : IDecisionStore
 
     public async Task<int> CountAsync(string userId) =>
         await db.ExecuteScalarAsync<int>($"SELECT COUNT(*) FROM {Table} WHERE UserEmail = @UserEmail", new { UserEmail = userId });
+
+    private async Task EnsureNoMergeConflictsAsync(string userId, DecisionItem decision)
+    {
+        if (!TryGetKeepDelete(decision, out var current))
+        {
+            return;
+        }
+
+        var deleteConflict = await db.QuerySingleOrDefaultAsync<DecisionRow>(
+            $@"SELECT TOP (1) LeftBibId, RightBibId, ActionId
+               FROM {Table}
+               WHERE UserEmail = @UserEmail
+                 AND ActionId IN (1, 4)
+                 AND NOT (LeftBibId = @LeftBibId AND RightBibId = @RightBibId)
+                 AND (CASE WHEN ActionId = 1 THEN LeftBibId ELSE RightBibId END) = @DeleteBibId",
+            new
+            {
+                UserEmail = userId,
+                decision.LeftBibId,
+                decision.RightBibId,
+                DeleteBibId = current.DeleteBibId
+            });
+
+        if (deleteConflict is not null)
+        {
+            var otherDeleteBibId = deleteConflict.ActionId == (int)BibDupePairAction.KeepLeft
+                ? deleteConflict.RightBibId
+                : deleteConflict.LeftBibId;
+            throw new ConflictingMergeDecisionException(
+                $"Cannot delete bib {current.DeleteBibId} because it is already set to keep bib {otherDeleteBibId}.");
+        }
+
+        var keepConflict = await db.QuerySingleOrDefaultAsync<DecisionRow>(
+            $@"SELECT TOP (1) LeftBibId, RightBibId, ActionId
+               FROM {Table}
+               WHERE UserEmail = @UserEmail
+                 AND ActionId IN (1, 4)
+                 AND NOT (LeftBibId = @LeftBibId AND RightBibId = @RightBibId)
+                 AND (CASE WHEN ActionId = 1 THEN RightBibId ELSE LeftBibId END) = @KeepBibId",
+            new
+            {
+                UserEmail = userId,
+                decision.LeftBibId,
+                decision.RightBibId,
+                KeepBibId = current.KeepBibId
+            });
+
+        if (keepConflict is not null)
+        {
+            var otherKeepBibId = keepConflict.ActionId == (int)BibDupePairAction.KeepLeft
+                ? keepConflict.LeftBibId
+                : keepConflict.RightBibId;
+            throw new ConflictingMergeDecisionException(
+                $"Cannot keep bib {current.KeepBibId} because it is already marked to be merged into bib {otherKeepBibId}.");
+        }
+    }
+
+    private static bool TryGetKeepDelete(DecisionItem decision, out (int KeepBibId, int DeleteBibId) result)
+    {
+        switch (decision.Action)
+        {
+            case BibDupePairAction.KeepLeft:
+                result = (decision.LeftBibId, decision.RightBibId);
+                return true;
+            case BibDupePairAction.KeepRight:
+                result = (decision.RightBibId, decision.LeftBibId);
+                return true;
+            default:
+                result = default;
+                return false;
+        }
+    }
 
     private static DecisionItem MapRow(DecisionRow row) => new()
     {

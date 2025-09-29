@@ -25,22 +25,11 @@ public class SessionDecisionStore(IHttpContextAccessor accessor) : IDecisionStor
     public Task AddAsync(string userId, DecisionItem decision)
     {
         var items = Load();
-        var existing = items.FirstOrDefault(d => d.LeftBibId == decision.LeftBibId && d.RightBibId == decision.RightBibId);
-        if (existing is not null)
-        {
-            existing.Action = decision.Action;
-            existing.PrimaryMarcTomId = decision.PrimaryMarcTomId;
-            existing.Matches = CloneMatches(decision.Matches);
-            existing.LeftTitle = decision.LeftTitle;
-            existing.LeftAuthor = decision.LeftAuthor;
-            existing.RightTitle = decision.RightTitle;
-            existing.RightAuthor = decision.RightAuthor;
-            existing.TOM = decision.TOM;
-        }
-        else
-        {
-            items.Add(CloneDecision(decision));
-        }
+        items.RemoveAll(d => d.LeftBibId == decision.LeftBibId && d.RightBibId == decision.RightBibId);
+
+        EnsureNoMergeConflicts(decision, items);
+
+        items.Add(CloneDecision(decision));
         Save(items);
         return Task.CompletedTask;
     }
@@ -59,6 +48,50 @@ public class SessionDecisionStore(IHttpContextAccessor accessor) : IDecisionStor
     public Task UpdateAsync(string userId, DecisionItem decision) => AddAsync(userId, decision);
 
     public Task<int> CountAsync(string userId) => Task.FromResult(Load().Count);
+
+    private static void EnsureNoMergeConflicts(DecisionItem decision, IEnumerable<DecisionItem> existing)
+    {
+        if (!TryGetKeepDelete(decision, out var current))
+        {
+            return;
+        }
+
+        foreach (var item in existing)
+        {
+            if (!TryGetKeepDelete(item, out var other))
+            {
+                continue;
+            }
+
+            if (other.KeepBibId == current.DeleteBibId)
+            {
+                throw new ConflictingMergeDecisionException(
+                    $"Cannot delete bib {current.DeleteBibId} because it is already set to keep bib {other.DeleteBibId}.");
+            }
+
+            if (other.DeleteBibId == current.KeepBibId)
+            {
+                throw new ConflictingMergeDecisionException(
+                    $"Cannot keep bib {current.KeepBibId} because it is already marked to be merged into bib {other.KeepBibId}.");
+            }
+        }
+    }
+
+    private static bool TryGetKeepDelete(DecisionItem decision, out (int KeepBibId, int DeleteBibId) result)
+    {
+        switch (decision.Action)
+        {
+            case BibDupePairAction.KeepLeft:
+                result = (decision.LeftBibId, decision.RightBibId);
+                return true;
+            case BibDupePairAction.KeepRight:
+                result = (decision.RightBibId, decision.LeftBibId);
+                return true;
+            default:
+                result = default;
+                return false;
+        }
+    }
 
     private static DecisionItem CloneDecision(DecisionItem decision) => new()
     {

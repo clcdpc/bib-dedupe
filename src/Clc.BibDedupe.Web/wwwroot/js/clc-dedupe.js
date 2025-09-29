@@ -140,7 +140,7 @@
                 rightBibId
             });
             try {
-                await fetch(url, {
+                const response = await fetch(url, {
                     method: 'POST',
                     headers: {
                         'RequestVerificationToken': token,
@@ -149,6 +149,18 @@
                     },
                     body: body.toString()
                 });
+                if (!response.ok) {
+                    let message = 'Unable to save decision.';
+                    try {
+                        const data = await response.json();
+                        if (data && typeof data.error === 'string' && data.error.trim()) {
+                            message = data.error;
+                        }
+                    } catch (_) {
+                        // ignore JSON parsing errors
+                    }
+                    throw new Error(message);
+                }
                 const badge = document.querySelector('.menu .badge');
                 if (badge) {
                     badge.textContent = (parseInt(badge.textContent || '0', 10) + 1).toString();
@@ -166,7 +178,8 @@
                     window.location.href = returnUrl;
                 }
             } catch (err) {
-                console.error(err);
+                const message = err instanceof Error ? err.message : 'Unable to save decision.';
+                alert(message);
             }
         });
     });
