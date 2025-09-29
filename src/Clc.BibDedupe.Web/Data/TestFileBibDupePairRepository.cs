@@ -62,8 +62,20 @@ public class TestFileBibDupePairRepository : IBibDupePairRepository
         }
 
         var take = Math.Min(pageSize, total - skip);
-        var items = _pairs.Skip(skip).Take(take);
-        return Task.FromResult((items, total));
+        var items = _pairs.Skip(skip).Take(take).ToList();
+
+        if (items.Count > 0)
+        {
+            var lastLeftBibId = items[^1].LeftBibId;
+            var existingPairIds = items.Select(i => i.PairId).ToHashSet();
+            var maxExistingPairId = items
+                .Where(i => i.LeftBibId == lastLeftBibId)
+                .Max(i => i.PairId);
+            var additionalItems = _pairs.Where(p => p.LeftBibId == lastLeftBibId && p.PairId > maxExistingPairId && !existingPairIds.Contains(p.PairId));
+            items.AddRange(additionalItems);
+        }
+
+        return Task.FromResult(((IEnumerable<BibDupePair>)items, total));
     }
 
     public Task<BibDupePair?> GetByBibIdsAsync(int leftBibId, int rightBibId)
