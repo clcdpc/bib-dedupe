@@ -26,16 +26,28 @@ FROM BibDedupe.GetPairs(DEFAULT)";
             return rows.Select(MapRow).ToList();
         }
 
-        public async Task<(IEnumerable<BibDupePair> Items, int TotalCount)> GetPagedAsync(int page, int pageSize)
+        public async Task<(IEnumerable<BibDupePair> Items, int TotalCount)> GetPagedAsync(int page, int pageSize, string? userEmail = null)
         {
             const string sql = @"SELECT PairId, PrimaryMARCTOMID AS PrimaryMarcTomId, LeftBibId, RightBibId,
        LeftTitle, LeftAuthor, RightTitle, RightAuthor, TOM, MatchesJson
-FROM BibDedupe.GetPairs(DEFAULT)
+FROM BibDedupe.GetPairs(DEFAULT) p
+WHERE @UserEmail IS NULL OR NOT EXISTS (
+    SELECT 1
+    FROM BibDedupe.DecisionQueue dq
+    WHERE dq.UserEmail = @UserEmail
+      AND dq.LeftBibId = p.LeftBibId
+      AND dq.RightBibId = p.RightBibId)
 ORDER BY (select null)
 OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY;
-SELECT COUNT(*) FROM BibDedupe.GetPairs(@CountTop);";
+SELECT COUNT(*) FROM BibDedupe.GetPairs(@CountTop) p
+WHERE @UserEmail IS NULL OR NOT EXISTS (
+    SELECT 1
+    FROM BibDedupe.DecisionQueue dq
+    WHERE dq.UserEmail = @UserEmail
+      AND dq.LeftBibId = p.LeftBibId
+      AND dq.RightBibId = p.RightBibId);";
             var offset = (page - 1) * pageSize;
-            using var multi = await _db.QueryMultipleAsync(sql, new { Offset = offset, PageSize = pageSize, CountTop = UnlimitedPairsLimit });
+            using var multi = await _db.QueryMultipleAsync(sql, new { Offset = offset, PageSize = pageSize, CountTop = UnlimitedPairsLimit, UserEmail = userEmail });
             var rows = await multi.ReadAsync<PairRow>();
             var total = await multi.ReadFirstAsync<int>();
             var items = rows.Select(MapRow).ToList();
