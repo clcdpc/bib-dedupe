@@ -31,7 +31,7 @@ FROM BibDedupe.GetPairs(DEFAULT)";
             const string sql = @"SELECT PairId, PrimaryMARCTOMID AS PrimaryMarcTomId, LeftBibId, RightBibId,
        LeftTitle, LeftAuthor, RightTitle, RightAuthor, MatchesJson
 FROM BibDedupe.GetPairs(DEFAULT)
-ORDER BY (select null)
+ORDER BY LeftTitle, LeftBibId, RightBibId
 OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY;
 SELECT COUNT(*) FROM BibDedupe.GetPairs(DEFAULT);";
             var offset = (page - 1) * pageSize;
@@ -47,7 +47,7 @@ SELECT COUNT(*) FROM BibDedupe.GetPairs(DEFAULT);";
             const string sql = @"SELECT PairId, PrimaryMARCTOMID AS PrimaryMarcTomId, LeftBibId, RightBibId,
        LeftTitle, LeftAuthor, RightTitle, RightAuthor, MatchesJson
 FROM BibDedupe.GetPairs(DEFAULT)
-ORDER BY (select null)
+ORDER BY LeftTitle, LeftBibId, RightBibId
 OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY;";
             var rows = await _db.QueryAsync<PairRow>(sql, new { Offset = offset, PageSize = size });
             return rows.Select(MapRow).ToList();
