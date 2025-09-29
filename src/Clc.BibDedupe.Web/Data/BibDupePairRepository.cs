@@ -20,7 +20,7 @@ namespace Clc.BibDedupe.Web.Data
         public async Task<IEnumerable<BibDupePair>> GetAsync()
         {
             const string sql = @"SELECT PairId, PrimaryMARCTOMID AS PrimaryMarcTomId, LeftBibId, RightBibId,
-       LeftTitle, LeftAuthor, RightTitle, RightAuthor, MatchesJson
+       LeftTitle, LeftAuthor, RightTitle, RightAuthor, TOM, MatchesJson
 FROM BibDedupe.GetPairs(DEFAULT)";
             var rows = await _db.QueryAsync<PairRow>(sql);
             return rows.Select(MapRow).ToList();
@@ -29,7 +29,7 @@ FROM BibDedupe.GetPairs(DEFAULT)";
         public async Task<(IEnumerable<BibDupePair> Items, int TotalCount)> GetPagedAsync(int page, int pageSize)
         {
             const string sql = @"SELECT PairId, PrimaryMARCTOMID AS PrimaryMarcTomId, LeftBibId, RightBibId,
-       LeftTitle, LeftAuthor, RightTitle, RightAuthor, MatchesJson
+       LeftTitle, LeftAuthor, RightTitle, RightAuthor, TOM, MatchesJson
 FROM BibDedupe.GetPairs(DEFAULT)
 ORDER BY (select null)
 OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY;
@@ -45,7 +45,7 @@ SELECT COUNT(*) FROM BibDedupe.GetPairs(DEFAULT);";
         public async Task<BibDupePair?> GetByBibIdsAsync(int leftBibId, int rightBibId)
         {
             const string sql = @"SELECT PairId, PrimaryMARCTOMID AS PrimaryMarcTomId, LeftBibId, RightBibId,
-       LeftTitle, LeftAuthor, RightTitle, RightAuthor, MatchesJson
+       LeftTitle, LeftAuthor, RightTitle, RightAuthor, TOM, MatchesJson
 FROM BibDedupe.GetPairs(@Top)
 WHERE LeftBibId = @LeftBibId AND RightBibId = @RightBibId;";
             var row = await _db.QueryFirstOrDefaultAsync<PairRow>(sql, new { LeftBibId = leftBibId, RightBibId = rightBibId, Top = UnlimitedPairsLimit });
@@ -80,6 +80,7 @@ WHERE LeftBibId = @LeftBibId AND RightBibId = @RightBibId;";
             LeftAuthor = row.LeftAuthor,
             RightTitle = row.RightTitle,
             RightAuthor = row.RightAuthor,
+            TOM = row.TOM,
             LeftHoldCount = row.LeftHoldCount,
             RightHoldCount = row.RightHoldCount,
             TotalHoldCount = row.TotalHoldCount,
@@ -96,6 +97,7 @@ WHERE LeftBibId = @LeftBibId AND RightBibId = @RightBibId;";
             public string? LeftAuthor { get; set; }
             public string? RightTitle { get; set; }
             public string? RightAuthor { get; set; }
+            public string? TOM { get; set; }
             public int LeftHoldCount { get; set; }
             public int RightHoldCount { get; set; }
             public int TotalHoldCount { get; set; }

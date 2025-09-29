@@ -13,6 +13,7 @@ namespace Clc.BibDedupe.Web.Models
         public string? LeftAuthor { get; set; }
         public string? RightTitle { get; set; }
         public string? RightAuthor { get; set; }
+        public string? TOM { get; set; }
         public int LeftHoldCount { get; set; }
         public int RightHoldCount { get; set; }
         public int TotalHoldCount { get; set; }

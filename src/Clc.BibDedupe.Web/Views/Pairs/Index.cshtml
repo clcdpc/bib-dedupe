@@ -39,6 +39,7 @@
                 <th scope="col">Right Bib</th>
                 <th scope="col">Right Title</th>
                 <th scope="col">Right Author</th>
+                <th scope="col">TOM</th>
                 <th scope="col">Matches</th>
                 <th scope="col" class="text-center">Review</th>
             </tr>
@@ -63,6 +64,7 @@
                         <td class="work-column">
                             <div class="work-author text-muted">@p.RightAuthor</div>
                         </td>
+                        <td class="tom-column">@p.TOM</td>
                         <td>
                             @await Html.PartialAsync("_MatchPoints", p.Matches)
                         </td>
@@ -75,7 +77,7 @@
             else
             {
                 <tr>
-                    <td colspan="8" class="text-center py-5 text-muted">No pairs are available for review right now.</td>
+                    <td colspan="9" class="text-center py-5 text-muted">No pairs are available for review right now.</td>
                 </tr>
             }
         </tbody>
