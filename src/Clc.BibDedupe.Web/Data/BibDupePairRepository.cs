@@ -33,9 +33,9 @@ FROM BibDedupe.GetPairs(DEFAULT)";
 FROM BibDedupe.GetPairs(DEFAULT)
 ORDER BY (select null)
 OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY;
-SELECT COUNT(*) FROM BibDedupe.GetPairs(DEFAULT);";
+SELECT COUNT(*) FROM BibDedupe.GetPairs(@CountTop);";
             var offset = (page - 1) * pageSize;
-            using var multi = await _db.QueryMultipleAsync(sql, new { Offset = offset, PageSize = pageSize });
+            using var multi = await _db.QueryMultipleAsync(sql, new { Offset = offset, PageSize = pageSize, CountTop = UnlimitedPairsLimit });
             var rows = await multi.ReadAsync<PairRow>();
             var total = await multi.ReadFirstAsync<int>();
             var items = rows.Select(MapRow).ToList();
