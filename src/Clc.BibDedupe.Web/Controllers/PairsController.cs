@@ -86,12 +86,47 @@ public class PairsController(IBibDupePairRepository repository, IDecisionStore d
             }
 
             totalUndecided += filtered.Count;
-            currentPageItems.AddRange(filtered);
+
+            if (currentPageItems.Count == 0)
+            {
+                currentPageItems.AddRange(filtered);
+                if (currentPageItems.Count >= pageSize)
+                {
+                    FinalizePage();
+                }
+
+                return;
+            }
+
+            var projectedCount = currentPageItems.Count + filtered.Count;
+
+            if (projectedCount < pageSize)
+            {
+                currentPageItems.AddRange(filtered);
+                return;
+            }
+
+            if (projectedCount == pageSize)
+            {
+                currentPageItems.AddRange(filtered);
+                FinalizePage();
+                return;
+            }
 
             if (currentPageItems.Count >= pageSize)
             {
                 FinalizePage();
+                currentPageItems.AddRange(filtered);
+                if (currentPageItems.Count >= pageSize)
+                {
+                    FinalizePage();
+                }
+
+                return;
             }
+
+            currentPageItems.AddRange(filtered);
+            FinalizePage();
         }
 
         while (buffer.Count > 0 || moreData)
