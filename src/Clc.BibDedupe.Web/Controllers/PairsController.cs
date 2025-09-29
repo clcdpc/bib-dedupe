@@ -88,7 +88,7 @@ public class PairsController(IBibDupePairRepository repository, IDecisionStore d
             totalUndecided += filtered.Count;
             currentPageItems.AddRange(filtered);
 
-            if (currentPageItems.Count >= pageSize)
+            if (currentPageItems.Count > pageSize)
             {
                 FinalizePage();
             }
