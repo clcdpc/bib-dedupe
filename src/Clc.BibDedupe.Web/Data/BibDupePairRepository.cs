@@ -20,26 +20,51 @@ namespace Clc.BibDedupe.Web.Data
         public async Task<IEnumerable<BibDupePair>> GetAsync()
         {
             const string sql = @"SELECT PairId, PrimaryMARCTOMID AS PrimaryMarcTomId, LeftBibId, RightBibId,
-       LeftTitle, LeftAuthor, RightTitle, RightAuthor, MatchesJson
-FROM BibDedupe.GetPairs(DEFAULT)";
+       LeftTitle, LeftAuthor, RightTitle, RightAuthor, MatchesJson, LeftHoldCount, RightHoldCount, TotalHoldCount
+FROM BibDedupe.GetPairs(DEFAULT)
+ORDER BY LeftBibId, PairId";
             var rows = await _db.QueryAsync<PairRow>(sql);
             return rows.Select(MapRow).ToList();
         }
 
         public async Task<(IEnumerable<BibDupePair> Items, int TotalCount)> GetPagedAsync(int page, int pageSize)
         {
-            const string sql = @"SELECT PairId, PrimaryMARCTOMID AS PrimaryMarcTomId, LeftBibId, RightBibId,
-       LeftTitle, LeftAuthor, RightTitle, RightAuthor, MatchesJson
+            const string pagedSql = @"SELECT PairId, PrimaryMARCTOMID AS PrimaryMarcTomId, LeftBibId, RightBibId,
+       LeftTitle, LeftAuthor, RightTitle, RightAuthor, MatchesJson, LeftHoldCount, RightHoldCount, TotalHoldCount
 FROM BibDedupe.GetPairs(DEFAULT)
-ORDER BY (select null)
+ORDER BY LeftBibId, PairId
 OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY;
 SELECT COUNT(*) FROM BibDedupe.GetPairs(DEFAULT);";
             var offset = (page - 1) * pageSize;
-            using var multi = await _db.QueryMultipleAsync(sql, new { Offset = offset, PageSize = pageSize });
-            var rows = await multi.ReadAsync<PairRow>();
+            using var multi = await _db.QueryMultipleAsync(pagedSql, new { Offset = offset, PageSize = pageSize });
+            var rows = (await multi.ReadAsync<PairRow>()).ToList();
             var total = await multi.ReadFirstAsync<int>();
+
+            if (rows.Count > 0)
+            {
+                var lastLeftBibId = rows[^1].LeftBibId;
+                var existingPairIds = rows.Select(r => r.PairId).ToHashSet();
+                var maxExistingPairId = rows
+                    .Where(r => r.LeftBibId == lastLeftBibId)
+                    .Max(r => r.PairId);
+                var additionalRows = await GetAdditionalRowsForLeftBibAsync(lastLeftBibId, existingPairIds, maxExistingPairId);
+                rows.AddRange(additionalRows);
+            }
+
             var items = rows.Select(MapRow).ToList();
             return (items, total);
+        }
+
+        private async Task<IEnumerable<PairRow>> GetAdditionalRowsForLeftBibAsync(int leftBibId, HashSet<int> existingPairIds, int maxExistingPairId)
+        {
+            const string sql = @"SELECT PairId, PrimaryMARCTOMID AS PrimaryMarcTomId, LeftBibId, RightBibId,
+       LeftTitle, LeftAuthor, RightTitle, RightAuthor, MatchesJson, LeftHoldCount, RightHoldCount, TotalHoldCount
+FROM BibDedupe.GetPairs(DEFAULT)
+WHERE LeftBibId = @LeftBibId
+ORDER BY PairId;";
+
+            var allRows = await _db.QueryAsync<PairRow>(sql, new { LeftBibId = leftBibId });
+            return allRows.Where(r => r.PairId > maxExistingPairId && !existingPairIds.Contains(r.PairId));
         }
 
         public async Task<BibDupePair?> GetByBibIdsAsync(int leftBibId, int rightBibId)

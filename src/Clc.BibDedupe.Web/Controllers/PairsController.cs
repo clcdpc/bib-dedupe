@@ -4,6 +4,7 @@ using Clc.BibDedupe.Web.Services;
 using Clc.BibDedupe.Web.Extensions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
+using System;
 using System.Linq;
 
 namespace Clc.BibDedupe.Web.Controllers;
@@ -21,11 +22,12 @@ public class PairsController(IBibDupePairRepository repository, IDecisionStore d
         var filteredItems = items
             .Where(p => !decidedPairs.Contains((p.LeftBibId, p.RightBibId)))
             .ToList();
+        var effectivePageSize = Math.Max(pageSize, filteredItems.Count);
         var model = new PairsListViewModel
         {
             Items = filteredItems,
             Page = page,
-            PageSize = pageSize,
+            PageSize = effectivePageSize,
             TotalCount = total - decidedPairs.Count
         };
         return View(model);
