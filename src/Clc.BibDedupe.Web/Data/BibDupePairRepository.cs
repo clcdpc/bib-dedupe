@@ -37,7 +37,7 @@ WHERE @UserEmail IS NULL OR NOT EXISTS (
     WHERE dq.UserEmail = @UserEmail
       AND dq.LeftBibId = p.LeftBibId
       AND dq.RightBibId = p.RightBibId)
-ORDER BY (select null)
+ORDER BY p.LeftTitle, p.RightTitle, p.PairId
 OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY;
 SELECT COUNT(*) FROM BibDedupe.GetPairs(@CountTop) p
 WHERE @UserEmail IS NULL OR NOT EXISTS (
