@@ -139,7 +139,27 @@ namespace Clc.BibDedupe.Web.Controllers
             };
             await decisionStore.AddAsync(userEmail, decision);
             await currentPairStore.ClearAsync(userEmail);
-            return Ok();
+            var decisions = (await decisionStore.GetAllAsync(userEmail)).ToList();
+            var decidedPairs = decisions
+                .Select(d => (d.LeftBibId, d.RightBibId))
+                .ToHashSet();
+            var nextPair = (await repository.GetAsync())
+                .FirstOrDefault(p => !decidedPairs.Contains((p.LeftBibId, p.RightBibId)));
+            var nextUrl = nextPair is null
+                ? null
+                : Url.Action(nameof(Review), new { leftBibId = nextPair.LeftBibId, rightBibId = nextPair.RightBibId });
+
+            return Json(new ResolveResponse
+            {
+                DecisionCount = decisions.Count,
+                NextUrl = nextUrl
+            });
+        }
+
+        private sealed class ResolveResponse
+        {
+            public int DecisionCount { get; init; }
+            public string? NextUrl { get; init; }
         }
     }
 }

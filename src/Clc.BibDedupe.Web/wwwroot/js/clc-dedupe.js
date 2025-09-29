@@ -132,15 +132,29 @@
     const leftBibId = parseInt(page.dataset.leftBibId, 10);
     const rightBibId = parseInt(page.dataset.rightBibId, 10);
     const returnUrl = page.dataset.returnUrl;
-    document.querySelectorAll('.controls button').forEach(btn => {
+    const actionButtons = Array.from(document.querySelectorAll('.controls button'));
+    const disableButtons = () => actionButtons.forEach(btn => { btn.disabled = true; btn.setAttribute('aria-disabled', 'true'); });
+    const enableButtons = () => actionButtons.forEach(btn => { btn.disabled = false; btn.removeAttribute('aria-disabled'); });
+
+    disableButtons();
+    window.setTimeout(() => {
+        page.classList.remove('initializing');
+        enableButtons();
+    }, 500);
+
+    actionButtons.forEach(btn => {
         btn.addEventListener('click', async () => {
+            if (btn.disabled) {
+                return;
+            }
+            disableButtons();
             const body = new URLSearchParams({
                 action: btn.dataset.action,
                 leftBibId,
                 rightBibId
             });
             try {
-                await fetch(url, {
+                const response = await fetch(url, {
                     method: 'POST',
                     headers: {
                         'RequestVerificationToken': token,
@@ -149,9 +163,14 @@
                     },
                     body: body.toString()
                 });
+                if (!response.ok) {
+                    throw new Error(`Failed to resolve pair: ${response.status}`);
+                }
+                const payload = await response.json();
+                const decisionCount = payload && (payload.decisionCount ?? payload.DecisionCount);
                 const badge = document.querySelector('.menu .badge');
-                if (badge) {
-                    badge.textContent = (parseInt(badge.textContent || '0', 10) + 1).toString();
+                if (badge && typeof decisionCount === 'number' && !Number.isNaN(decisionCount)) {
+                    badge.textContent = decisionCount.toString();
                 }
                 const currentPairControl = document.querySelector('.menu [data-current-pair]');
                 if (currentPairControl && currentPairControl.tagName === 'A') {
@@ -162,11 +181,19 @@
                     disabled.textContent = currentPairControl.textContent;
                     currentPairControl.replaceWith(disabled);
                 }
+                const nextUrl = payload && (payload.nextUrl ?? payload.NextUrl);
+                if (nextUrl) {
+                    window.location.href = nextUrl;
+                    return;
+                }
                 if (returnUrl) {
                     window.location.href = returnUrl;
+                    return;
                 }
+                window.location.reload();
             } catch (err) {
                 console.error(err);
+                enableButtons();
             }
         });
     });
