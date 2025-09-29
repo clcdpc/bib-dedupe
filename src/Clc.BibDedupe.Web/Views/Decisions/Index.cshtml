@@ -1,7 +1,8 @@
 @using Clc.BibDedupe.Web.Models
 @model DecisionIndexViewModel
-@{
+@{ 
     ViewData["Title"] = "Decisions";
+    ViewBag.ContainerClass = "container-fluid";
     var summary = Model.Summary;
     var hasDecisions = Model.HasDecisions;
     var batch = Model.BatchStatus;
@@ -42,44 +43,62 @@ else
 
     @if (hasDecisions)
     {
-        <table class="table table-striped" id="decision-table">
-            <thead class="table-dark">
-                <tr>
-                    <th>Left Bib</th>
-                    <th>Right Bib</th>
-                    <th>TOM</th>
-                    <th>Matches</th>
-                    <th>Action</th>
-                    <th>Review</th>
-                    <th>Remove</th>
-                </tr>
-            </thead>
-            <tbody>
-            @foreach (var d in Model.Decisions)
-            {
-                <tr data-action="@((int)d.Action)">
-                    <td>@d.LeftBibId</td>
-                    <td>@d.RightBibId</td>
-                    <td>@d.PrimaryMarcTomId</td>
-                    <td>
-                        @await Html.PartialAsync("_MatchPoints", d.Matches)
-                    </td>
-                    <td class="decision-action" data-action-label="@d.Action">@d.Action</td>
-                    <td>
-                        <a asp-action="Review" asp-route-leftBibId="@d.LeftBibId" asp-route-rightBibId="@d.RightBibId" class="btn btn-sm btn-primary">Review</a>
-                    </td>
-                    <td>
-                        <form asp-action="Remove" method="post" class="remove-form">
-                            @Html.AntiForgeryToken()
-                            <input type="hidden" name="leftBibId" value="@d.LeftBibId" />
-                            <input type="hidden" name="rightBibId" value="@d.RightBibId" />
-                            <button type="submit" class="btn btn-sm btn-danger">Remove</button>
-                        </form>
-                    </td>
-                </tr>
-            }
-            </tbody>
-        </table>
+        <div class="table-responsive">
+            <table class="table table-striped align-middle" id="decision-table">
+                <thead class="table-dark">
+                    <tr>
+                        <th scope="col">Left Bib</th>
+                        <th scope="col">Left Title</th>
+                        <th scope="col">Left Author</th>
+                        <th scope="col">Right Bib</th>
+                        <th scope="col">Right Title</th>
+                        <th scope="col">Right Author</th>
+                        <th scope="col">TOM</th>
+                        <th scope="col">Matches</th>
+                        <th scope="col">Action</th>
+                        <th scope="col">Review</th>
+                        <th scope="col">Remove</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @foreach (var d in Model.Decisions)
+                {
+                    <tr data-action="@((int)d.Action)">
+                        <td class="bib-column">@d.LeftBibId</td>
+                        <td class="work-column">
+                            <div class="work-title">@d.LeftTitle</div>
+                        </td>
+                        <td class="work-column">
+                            <div class="work-author text-muted">@d.LeftAuthor</div>
+                        </td>
+                        <td class="bib-column">@d.RightBibId</td>
+                        <td class="work-column">
+                            <div class="work-title">@d.RightTitle</div>
+                        </td>
+                        <td class="work-column">
+                            <div class="work-author text-muted">@d.RightAuthor</div>
+                        </td>
+                        <td class="tom-column">@d.TOM</td>
+                        <td>
+                            @await Html.PartialAsync("_MatchPoints", d.Matches)
+                        </td>
+                        <td class="decision-action" data-action-label="@d.Action">@d.Action</td>
+                        <td>
+                            <a asp-action="Review" asp-route-leftBibId="@d.LeftBibId" asp-route-rightBibId="@d.RightBibId" class="btn btn-sm btn-primary">Review</a>
+                        </td>
+                        <td>
+                            <form asp-action="Remove" method="post" class="remove-form">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="leftBibId" value="@d.LeftBibId" />
+                                <input type="hidden" name="rightBibId" value="@d.RightBibId" />
+                                <button type="submit" class="btn btn-sm btn-danger">Remove</button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
     }
     else
     {

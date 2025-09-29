@@ -129,6 +129,11 @@ namespace Clc.BibDedupe.Web.Controllers
             {
                 LeftBibId = leftBibId,
                 RightBibId = rightBibId,
+                LeftTitle = pair.LeftTitle,
+                LeftAuthor = pair.LeftAuthor,
+                RightTitle = pair.RightTitle,
+                RightAuthor = pair.RightAuthor,
+                TOM = pair.TOM,
                 PrimaryMarcTomId = pair.PrimaryMarcTomId,
                 Matches = pair.Matches.Select(m => new PairMatch
                 {
