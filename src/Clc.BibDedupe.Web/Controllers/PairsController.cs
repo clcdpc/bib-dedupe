@@ -62,13 +62,13 @@ public class PairsController(IBibDupePairRepository repository, IDecisionStore d
         {
             var groupItems = group.ToList();
 
-            if (currentPageItems.Count > 0 && currentPageItems.Count + groupItems.Count > pageSize)
+            currentPageItems.AddRange(groupItems);
+
+            if (currentPageItems.Count >= pageSize)
             {
                 pages.Add(currentPageItems);
                 currentPageItems = new List<BibDupePair>();
             }
-
-            currentPageItems.AddRange(groupItems);
         }
 
         if (currentPageItems.Count > 0)
