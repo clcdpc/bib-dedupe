@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -52,18 +53,42 @@ public class TestFileBibDupePairRepository : IBibDupePairRepository
     public Task<IEnumerable<BibDupePair>> GetAsync()
         => Task.FromResult<IEnumerable<BibDupePair>>(_pairs);
 
-    public Task<(IEnumerable<BibDupePair> Items, int TotalCount)> GetPagedAsync(int page, int pageSize)
+    public Task<(IEnumerable<BibDupePair> Items, int TotalCount, int TotalPages)> GetPagedAsync(int page, int pageSize)
     {
+        page = Math.Max(page, 1);
+        pageSize = Math.Max(pageSize, 1);
+
         var total = _pairs.Count;
-        var skip = (page - 1) * pageSize;
-        if (skip >= total)
+        if (total == 0)
         {
-            return Task.FromResult(((IEnumerable<BibDupePair>)Enumerable.Empty<BibDupePair>(), total));
+            return Task.FromResult(((IEnumerable<BibDupePair>)Enumerable.Empty<BibDupePair>(), 0, 0));
         }
 
-        var take = Math.Min(pageSize, total - skip);
-        var items = _pairs.Skip(skip).Take(take);
-        return Task.FromResult((items, total));
+        var pageAssignments = new Dictionary<int, List<BibDupePair>>();
+        var totalPages = 0;
+        var index = 0;
+
+        foreach (var group in _pairs.GroupBy(p => p.LeftBibId))
+        {
+            var groupItems = group.ToList();
+            var startRow = index + 1;
+            var pageNumber = (int)((startRow - 1) / pageSize) + 1;
+
+            if (!pageAssignments.TryGetValue(pageNumber, out var itemsForPage))
+            {
+                itemsForPage = new List<BibDupePair>();
+                pageAssignments[pageNumber] = itemsForPage;
+            }
+
+            itemsForPage.AddRange(groupItems);
+            totalPages = Math.Max(totalPages, pageNumber);
+            index += groupItems.Count;
+        }
+
+        pageAssignments.TryGetValue(page, out var selectedPageItems);
+        var items = selectedPageItems ?? new List<BibDupePair>();
+
+        return Task.FromResult(((IEnumerable<BibDupePair>)items, total, totalPages));
     }
 
     public Task<BibDupePair?> GetByBibIdsAsync(int leftBibId, int rightBibId)

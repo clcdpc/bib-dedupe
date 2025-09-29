@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
@@ -26,20 +27,64 @@ FROM BibDedupe.GetPairs(DEFAULT)";
             return rows.Select(MapRow).ToList();
         }
 
-        public async Task<(IEnumerable<BibDupePair> Items, int TotalCount)> GetPagedAsync(int page, int pageSize)
+        public async Task<(IEnumerable<BibDupePair> Items, int TotalCount, int TotalPages)> GetPagedAsync(int page, int pageSize)
         {
-            const string sql = @"SELECT PairId, PrimaryMARCTOMID AS PrimaryMarcTomId, LeftBibId, RightBibId,
-       LeftTitle, LeftAuthor, RightTitle, RightAuthor, MatchesJson
-FROM BibDedupe.GetPairs(DEFAULT)
-ORDER BY (select null)
-OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY;
-SELECT COUNT(*) FROM BibDedupe.GetPairs(DEFAULT);";
-            var offset = (page - 1) * pageSize;
-            using var multi = await _db.QueryMultipleAsync(sql, new { Offset = offset, PageSize = pageSize });
+            page = Math.Max(page, 1);
+            pageSize = Math.Max(pageSize, 1);
+
+            const string commonTableExpression = @"WITH OrderedPairs AS (
+    SELECT
+        ROW_NUMBER() OVER (ORDER BY (SELECT NULL)) AS RowNum,
+        ROW_NUMBER() OVER (PARTITION BY LeftBibId ORDER BY (SELECT NULL)) AS RowInGroup,
+        PairId,
+        PrimaryMARCTOMID AS PrimaryMarcTomId,
+        LeftBibId,
+        RightBibId,
+        LeftTitle,
+        LeftAuthor,
+        RightTitle,
+        RightAuthor,
+        MatchesJson,
+        LeftHoldCount,
+        RightHoldCount,
+        TotalHoldCount
+    FROM BibDedupe.GetPairs(DEFAULT)
+), GroupedPairs AS (
+    SELECT *,
+           RowNum - RowInGroup + 1 AS GroupStartRow
+    FROM OrderedPairs
+), PageAssignments AS (
+    SELECT *,
+           CAST(((GroupStartRow - 1) / CAST(@PageSize AS BIGINT)) + 1 AS INT) AS PageNumber
+    FROM GroupedPairs
+)";
+
+            var sql = $@"{commonTableExpression}
+SELECT PairId,
+       PrimaryMarcTomId,
+       LeftBibId,
+       RightBibId,
+       LeftTitle,
+       LeftAuthor,
+       RightTitle,
+       RightAuthor,
+       MatchesJson,
+       LeftHoldCount,
+       RightHoldCount,
+       TotalHoldCount
+FROM PageAssignments
+WHERE PageNumber = @Page
+ORDER BY RowNum;
+{commonTableExpression}
+SELECT COUNT(*) AS TotalCount,
+       COALESCE(MAX(PageNumber), 0) AS TotalPages
+FROM PageAssignments;";
+
+            using var multi = await _db.QueryMultipleAsync(sql, new { Page = page, PageSize = pageSize });
             var rows = await multi.ReadAsync<PairRow>();
-            var total = await multi.ReadFirstAsync<int>();
+            var summary = await multi.ReadFirstAsync<PageSummaryRow>();
             var items = rows.Select(MapRow).ToList();
-            return (items, total);
+            return (items, summary.TotalCount, summary.TotalPages);
         }
 
         public async Task<BibDupePair?> GetByBibIdsAsync(int leftBibId, int rightBibId)
@@ -85,6 +130,12 @@ WHERE LeftBibId = @LeftBibId AND RightBibId = @RightBibId;";
             TotalHoldCount = row.TotalHoldCount,
             Matches = PairMatch.FromJson(row.MatchesJson)
         };
+
+        private sealed class PageSummaryRow
+        {
+            public int TotalCount { get; set; }
+            public int TotalPages { get; set; }
+        }
 
         private sealed class PairRow
         {
