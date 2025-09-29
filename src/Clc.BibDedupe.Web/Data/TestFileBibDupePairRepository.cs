@@ -66,6 +66,17 @@ public class TestFileBibDupePairRepository : IBibDupePairRepository
         return Task.FromResult((items, total));
     }
 
+    public Task<IReadOnlyList<BibDupePair>> GetSegmentAsync(int offset, int size)
+    {
+        if (offset >= _pairs.Count || size <= 0)
+        {
+            return Task.FromResult<IReadOnlyList<BibDupePair>>(Array.Empty<BibDupePair>());
+        }
+
+        var segment = _pairs.Skip(offset).Take(size).ToList();
+        return Task.FromResult<IReadOnlyList<BibDupePair>>(segment);
+    }
+
     public Task<BibDupePair?> GetByBibIdsAsync(int leftBibId, int rightBibId)
         => Task.FromResult(_pairs.FirstOrDefault(p => p.LeftBibId == leftBibId && p.RightBibId == rightBibId));
 

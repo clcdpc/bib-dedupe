@@ -23,59 +23,134 @@ public class PairsController(IBibDupePairRepository repository, IDecisionStore d
             .Select(d => (d.LeftBibId, d.RightBibId))
             .ToHashSet();
 
-        var allItems = (await repository.GetAsync())
-            .Where(p => !decidedPairs.Contains((p.LeftBibId, p.RightBibId)))
-            .ToList();
+        var chunkSize = Math.Max(pageSize * 2, 128);
+        var (initialItems, totalPairs) = await repository.GetPagedAsync(1, chunkSize);
+        var buffer = new Queue<BibDupePair>(initialItems);
+        var fetched = buffer.Count;
+        var moreData = fetched < totalPairs;
 
-        var pages = BuildPages(allItems, pageSize);
-        var totalPages = pages.Count == 0 ? 1 : pages.Count;
-        var currentPage = Math.Min(page, totalPages);
-        var pageItems = pages.Count == 0 ? new List<BibDupePair>() : pages[currentPage - 1];
+        var currentGroup = new List<BibDupePair>();
+        var currentPageItems = new List<BibDupePair>();
+        List<BibDupePair>? requestedPageItems = null;
+        List<BibDupePair>? lastPageItems = null;
+        var pageCaptured = false;
+        var totalPages = 0;
+        var totalUndecided = 0;
 
-        var model = new PairsListViewModel
+        async Task<bool> LoadNextChunkAsync()
         {
-            Items = pageItems,
-            Page = currentPage,
-            PageSize = pageSize,
-            TotalCount = allItems.Count,
-            TotalPages = totalPages
-        };
+            if (!moreData)
+            {
+                return false;
+            }
 
-        return View(model);
-    }
+            var nextChunk = await repository.GetSegmentAsync(fetched, chunkSize);
+            if (nextChunk.Count == 0)
+            {
+                moreData = false;
+                return false;
+            }
 
-    private static List<List<BibDupePair>> BuildPages(IEnumerable<BibDupePair> items, int pageSize)
-    {
-        var pages = new List<List<BibDupePair>>();
-        var groupedItems = items
-            .GroupBy(p => p.LeftBibId)
-            .ToList();
+            foreach (var item in nextChunk)
+            {
+                buffer.Enqueue(item);
+            }
 
-        if (groupedItems.Count == 0)
-        {
-            return pages;
+            fetched += nextChunk.Count;
+            moreData = fetched < totalPairs;
+            return true;
         }
 
-        var currentPageItems = new List<BibDupePair>();
-
-        foreach (var group in groupedItems)
+        void FinalizePage()
         {
-            var groupItems = group.ToList();
+            totalPages++;
+            if (!pageCaptured && totalPages == page)
+            {
+                requestedPageItems = currentPageItems;
+                pageCaptured = true;
+            }
 
-            currentPageItems.AddRange(groupItems);
+            lastPageItems = currentPageItems;
+            currentPageItems = new List<BibDupePair>();
+        }
+
+        void ProcessGroup(List<BibDupePair> group)
+        {
+            var filtered = group
+                .Where(p => !decidedPairs.Contains((p.LeftBibId, p.RightBibId)))
+                .ToList();
+
+            if (filtered.Count == 0)
+            {
+                return;
+            }
+
+            totalUndecided += filtered.Count;
+            currentPageItems.AddRange(filtered);
 
             if (currentPageItems.Count >= pageSize)
             {
-                pages.Add(currentPageItems);
-                currentPageItems = new List<BibDupePair>();
+                FinalizePage();
             }
+        }
+
+        while (buffer.Count > 0 || moreData)
+        {
+            if (buffer.Count == 0)
+            {
+                var loaded = await LoadNextChunkAsync();
+                if (!loaded && buffer.Count == 0)
+                {
+                    break;
+                }
+            }
+
+            if (buffer.Count == 0)
+            {
+                break;
+            }
+
+            var pair = buffer.Dequeue();
+            if (currentGroup.Count == 0 || currentGroup[0].LeftBibId == pair.LeftBibId)
+            {
+                currentGroup.Add(pair);
+            }
+            else
+            {
+                ProcessGroup(currentGroup);
+                currentGroup = new List<BibDupePair> { pair };
+            }
+        }
+
+        if (currentGroup.Count > 0)
+        {
+            ProcessGroup(currentGroup);
         }
 
         if (currentPageItems.Count > 0)
         {
-            pages.Add(currentPageItems);
+            FinalizePage();
         }
 
-        return pages;
+        if (!pageCaptured)
+        {
+            requestedPageItems = lastPageItems ?? new List<BibDupePair>();
+        }
+
+        requestedPageItems ??= new List<BibDupePair>();
+
+        var effectivePage = pageCaptured ? page : (totalPages > 0 ? totalPages : 1);
+        var effectiveTotalPages = totalPages > 0 ? totalPages : (totalUndecided > 0 ? 1 : 0);
+
+        var model = new PairsListViewModel
+        {
+            Items = requestedPageItems,
+            Page = effectivePage,
+            PageSize = pageSize,
+            TotalCount = totalUndecided,
+            TotalPages = effectiveTotalPages
+        };
+
+        return View(model);
     }
 }
