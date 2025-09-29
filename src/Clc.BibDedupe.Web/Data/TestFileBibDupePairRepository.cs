@@ -14,7 +14,11 @@ public class TestFileBibDupePairRepository : IBibDupePairRepository
 
     public TestFileBibDupePairRepository(int pairCount = 10)
     {
-        _pairs = GeneratePairs(pairCount).ToList();
+        _pairs = GeneratePairs(pairCount)
+            .OrderBy(p => p.LeftTitle)
+            .ThenBy(p => p.LeftBibId)
+            .ThenBy(p => p.RightBibId)
+            .ToList();
     }
 
     private BibDupePair CreatePair()
