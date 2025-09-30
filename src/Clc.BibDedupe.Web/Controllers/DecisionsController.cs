@@ -47,12 +47,9 @@ public class DecisionsController(
 
         await store.RemoveAsync(email, leftBibId, rightBibId);
 
-        if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
-        {
-            return Ok();
-        }
-
-        return RedirectToAction(nameof(Index));
+        return Request.IsAjaxRequest()
+            ? Ok()
+            : RedirectToAction(nameof(Index));
     }
 
     [HttpPost]
@@ -62,11 +59,15 @@ public class DecisionsController(
         var email = User.GetEmail();
         var result = await submissionService.SubmitAsync(email);
 
+        var isAjaxRequest = Request.IsAjaxRequest();
+
         if (!result.Success)
         {
-            var statusCode = result.BatchStatus is not null ? StatusCodes.Status409Conflict : StatusCodes.Status400BadRequest;
+            var statusCode = result.BatchStatus is not null
+                ? StatusCodes.Status409Conflict
+                : StatusCodes.Status400BadRequest;
 
-            if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+            if (isAjaxRequest)
             {
                 return StatusCode(statusCode, new { error = result.ErrorMessage, startedAt = result.BatchStatus?.StartedAt });
             }
@@ -75,11 +76,8 @@ public class DecisionsController(
             return RedirectToAction(nameof(Index));
         }
 
-        if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
-        {
-            return Ok(new { startedAt = result.BatchStatus?.StartedAt });
-        }
-
-        return RedirectToAction(nameof(Index));
+        return isAjaxRequest
+            ? Ok(new { startedAt = result.BatchStatus?.StartedAt })
+            : RedirectToAction(nameof(Index));
     }
 }
