@@ -41,6 +41,9 @@ public class SessionDecisionStore(IHttpContextAccessor accessor) : IDecisionStor
         {
             items.Add(CloneDecision(decision));
         }
+
+        DecisionConflictValidator.EnsureNoMergeConflicts(items);
+
         Save(items);
         return Task.CompletedTask;
     }

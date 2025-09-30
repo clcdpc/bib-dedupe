@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using Dapper;
@@ -11,6 +12,24 @@ public class SqlDecisionStore(IDbConnection db) : IDecisionStore
 
     public async Task AddAsync(string userId, DecisionItem decision)
     {
+        var decisions = await LoadDecisionSummariesAsync(userId);
+        var existing = decisions.FirstOrDefault(d => d.LeftBibId == decision.LeftBibId && d.RightBibId == decision.RightBibId);
+        if (existing is not null)
+        {
+            existing.Action = decision.Action;
+        }
+        else
+        {
+            decisions.Add(new DecisionItem
+            {
+                LeftBibId = decision.LeftBibId,
+                RightBibId = decision.RightBibId,
+                Action = decision.Action
+            });
+        }
+
+        DecisionConflictValidator.EnsureNoMergeConflicts(decisions);
+
         var parameters = new
         {
             UserEmail = userId,
@@ -76,5 +95,26 @@ public class SqlDecisionStore(IDbConnection db) : IDecisionStore
         public string? RightAuthor { get; init; }
         public string? TOM { get; init; }
         public string MatchesJson { get; init; } = string.Empty;
+    }
+
+    private async Task<List<DecisionItem>> LoadDecisionSummariesAsync(string userId)
+    {
+        var rows = await db.QueryAsync<DecisionSummaryRow>(
+            $"SELECT LeftBibId, RightBibId, ActionId FROM {Table} WHERE UserEmail = @UserEmail",
+            new { UserEmail = userId });
+
+        return rows.Select(r => new DecisionItem
+        {
+            LeftBibId = r.LeftBibId,
+            RightBibId = r.RightBibId,
+            Action = (BibDupePairAction)r.ActionId
+        }).ToList();
+    }
+
+    private sealed class DecisionSummaryRow
+    {
+        public int LeftBibId { get; init; }
+        public int RightBibId { get; init; }
+        public int ActionId { get; init; }
     }
 }
