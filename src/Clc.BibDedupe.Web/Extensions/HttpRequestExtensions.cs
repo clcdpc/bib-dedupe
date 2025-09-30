@@ -12,8 +12,7 @@ public static class HttpRequestExtensions
     {
         ArgumentNullException.ThrowIfNull(request);
 
-        var headerValue = request.Headers.XRequestedWith;
-
-        return headerValue.Any(value => string.Equals(value, XmlHttpRequest, StringComparison.OrdinalIgnoreCase));
+        return request.Headers.XRequestedWith
+            .Any(value => string.Equals(value, XmlHttpRequest, StringComparison.OrdinalIgnoreCase));
     }
 }
