@@ -140,7 +140,7 @@
                 rightBibId
             });
             try {
-                await fetch(url, {
+                const response = await fetch(url, {
                     method: 'POST',
                     headers: {
                         'RequestVerificationToken': token,
@@ -149,6 +149,12 @@
                     },
                     body: body.toString()
                 });
+                if (!response.ok) {
+                    const data = await response.json().catch(() => ({}));
+                    const message = data.error || 'Unable to save this decision. Remove any conflicting merges and try again.';
+                    window.alert(message);
+                    return;
+                }
                 const badge = document.querySelector('.menu .badge');
                 if (badge) {
                     badge.textContent = (parseInt(badge.textContent || '0', 10) + 1).toString();

@@ -142,7 +142,15 @@ namespace Clc.BibDedupe.Web.Controllers
                 }).ToList(),
                 Action = parsed
             };
-            await decisionStore.AddAsync(userEmail, decision);
+            try
+            {
+                await decisionStore.AddAsync(userEmail, decision);
+            }
+            catch (DecisionConflictException ex)
+            {
+                return Conflict(new { error = ex.Message });
+            }
+
             await currentPairStore.ClearAsync(userEmail);
             return Ok();
         }
