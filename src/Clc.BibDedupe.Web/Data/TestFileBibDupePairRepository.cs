@@ -52,16 +52,16 @@ public class TestFileBibDupePairRepository : IBibDupePairRepository
     public Task<IEnumerable<BibDupePair>> GetAsync()
         => Task.FromResult<IEnumerable<BibDupePair>>(_pairs);
 
-    public Task<(IEnumerable<BibDupePair> Items, int TotalCount)> GetPagedAsync(int page, int pageSize, string? userEmail = null)
+    public Task<(IEnumerable<BibDupePair> Items, int TotalCount)> GetPagedAsync(int page, string? userEmail = null)
     {
         var total = _pairs.Count;
-        var skip = (page - 1) * pageSize;
+        var skip = (page - 1) * PairsListViewModel.DefaultPageSize;
         if (skip >= total)
         {
             return Task.FromResult(((IEnumerable<BibDupePair>)Enumerable.Empty<BibDupePair>(), total));
         }
 
-        var take = Math.Min(pageSize, total - skip);
+        var take = Math.Min(PairsListViewModel.DefaultPageSize, total - skip);
         var items = _pairs.Skip(skip).Take(take);
         return Task.FromResult((items, total));
     }

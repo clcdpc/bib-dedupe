@@ -11,6 +11,7 @@ namespace Clc.BibDedupe.Web.Data
     {
         private readonly IDbConnection _db;
         private const int UnlimitedPairsLimit = int.MaxValue;
+        private const int DefaultPageSize = PairsListViewModel.DefaultPageSize;
 
         public BibDupePairRepository(IDbConnection db)
         {
@@ -26,7 +27,7 @@ FROM BibDedupe.GetPairs(DEFAULT)";
             return rows.Select(MapRow).ToList();
         }
 
-        public async Task<(IEnumerable<BibDupePair> Items, int TotalCount)> GetPagedAsync(int page, int pageSize, string? userEmail = null)
+        public async Task<(IEnumerable<BibDupePair> Items, int TotalCount)> GetPagedAsync(int page, string? userEmail = null)
         {
             const string sql = @"SELECT PairId, PrimaryMARCTOMID AS PrimaryMarcTomId, LeftBibId, RightBibId,
        LeftTitle, LeftAuthor, RightTitle, RightAuthor, TOM, MatchesJson
@@ -46,8 +47,8 @@ WHERE @UserEmail IS NULL OR NOT EXISTS (
     WHERE dq.UserEmail = @UserEmail
       AND dq.LeftBibId = p.LeftBibId
       AND dq.RightBibId = p.RightBibId);";
-            var offset = (page - 1) * pageSize;
-            using var multi = await _db.QueryMultipleAsync(sql, new { Offset = offset, PageSize = pageSize, CountTop = UnlimitedPairsLimit, UserEmail = userEmail });
+            var offset = (page - 1) * DefaultPageSize;
+            using var multi = await _db.QueryMultipleAsync(sql, new { Offset = offset, PageSize = DefaultPageSize, CountTop = UnlimitedPairsLimit, UserEmail = userEmail });
             var rows = await multi.ReadAsync<PairRow>();
             var total = await multi.ReadFirstAsync<int>();
             var items = rows.Select(MapRow).ToList();

@@ -7,27 +7,7 @@
     var visiblePairs = Model.Items.ToList();
     var totalPages = System.Math.Max(Model.TotalPages, 1);
     var currentPage = System.Math.Min(System.Math.Max(Model.Page, 1), totalPages);
-    var totalPairs = System.Math.Max(Model.TotalCount, 0);
 }
-
-<div class="pairs-toolbar mb-4">
-    <form class="row row-cols-lg-auto g-3 align-items-center" method="get">
-        <div class="col-auto">
-            <label for="pageSize" class="form-label fw-semibold text-uppercase small text-muted mb-0">Page Size</label>
-        </div>
-        <div class="col-auto">
-            <input type="number" class="form-control form-control-sm" id="pageSize" name="pageSize" value="@Model.PageSize" min="1" />
-        </div>
-        <div class="col-auto">
-            <button type="submit" class="btn btn-primary btn-sm px-3">Apply</button>
-        </div>
-        <div class="col-12 col-lg-auto ms-lg-auto">
-            <div class="text-muted small text-lg-end">
-                Showing <strong>@visiblePairs.Count</strong> of <strong>@totalPairs</strong> pairs
-            </div>
-        </div>
-    </form>
-</div>
 
 <div class="table-responsive data-table-wrapper">
     <table class="table table-striped table-hover align-middle pairs-table mb-0">
@@ -69,7 +49,7 @@
                             @await Html.PartialAsync("_MatchPoints", p.Matches)
                         </td>
                         <td class="text-center">
-                            <a asp-controller="Home" asp-action="Review" asp-route-leftBibId="@p.LeftBibId" asp-route-rightBibId="@p.RightBibId" asp-route-returnUrl="@Url.Action("Index", new { page = currentPage, pageSize = Model.PageSize })" class="btn btn-sm review-btn">Review</a>
+                            <a asp-controller="Home" asp-action="Review" asp-route-leftBibId="@p.LeftBibId" asp-route-rightBibId="@p.RightBibId" asp-route-returnUrl="@Url.Action("Index", new { page = currentPage })" class="btn btn-sm review-btn">Review</a>
                         </td>
                     </tr>
                 }
@@ -89,11 +69,11 @@
     <div class="pager">
         @if (currentPage > 1)
         {
-            <a class="btn btn-sm" asp-action="Index" asp-route-page="@(currentPage - 1)" asp-route-pageSize="@Model.PageSize">Prev</a>
+            <a class="btn btn-sm" asp-action="Index" asp-route-page="@(currentPage - 1)">Prev</a>
         }
         @if (currentPage < totalPages)
         {
-            <a class="btn btn-sm" asp-action="Index" asp-route-page="@(currentPage + 1)" asp-route-pageSize="@Model.PageSize">Next</a>
+            <a class="btn btn-sm" asp-action="Index" asp-route-page="@(currentPage + 1)">Next</a>
         }
     </div>
 </div>
