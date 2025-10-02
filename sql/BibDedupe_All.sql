@@ -15,8 +15,8 @@ GO
 IF OBJECT_ID('BibDedupe.ProcessDecisionBatch','P') IS NOT NULL
     DROP PROCEDURE BibDedupe.ProcessDecisionBatch;
 GO
-IF OBJECT_ID('BibDedupe.IsAuthorizedUser','P') IS NOT NULL
-    DROP PROCEDURE BibDedupe.IsAuthorizedUser;
+IF OBJECT_ID('BibDedupe.UserClaims','V') IS NOT NULL
+    DROP VIEW BibDedupe.UserClaims;
 GO
 IF OBJECT_ID('BibDedupe.GetPairs','IF') IS NOT NULL
     DROP FUNCTION BibDedupe.GetPairs;
@@ -233,14 +233,13 @@ BEGIN
 END
 GO
 
-CREATE OR ALTER PROCEDURE BibDedupe.IsAuthorizedUser
-    @Email NVARCHAR(256)
+CREATE VIEW BibDedupe.UserClaims
 AS
-BEGIN
-    SET NOCOUNT ON;
-    -- Replace 'YourUserTable' with the actual table that stores user emails
-    SELECT COUNT(1)
-    FROM YourUserTable
-    WHERE Email = @Email;
-END
+-- Grant application access by returning at least one row with ClaimValue = 'Access'.
+-- Assign additional roles (for example 'Administrator') by returning more rows for the same user.
+-- Each value is added to the caller as a role claim, so the claim type column is optional.
+SELECT TOP (0)
+    CAST(NULL AS NVARCHAR(256)) AS UserEmail,
+    CAST(NULL AS NVARCHAR(128)) AS ClaimType,
+    CAST(NULL AS NVARCHAR(256)) AS ClaimValue;
 GO

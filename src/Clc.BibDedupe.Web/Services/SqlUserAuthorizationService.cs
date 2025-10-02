@@ -1,3 +1,7 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using Clc.BibDedupe.Web.Authorization;
 using Dapper;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
@@ -8,17 +12,34 @@ public class SqlUserAuthorizationService(IConfiguration config) : IUserAuthoriza
 {
     private readonly string? _connectionString =
         config.GetConnectionString("AuthorizedUsersDb") ?? config.GetConnectionString("BibDedupeDb");
-    private const string Query = "EXEC BibDedupe.IsAuthorizedUser @Email";
+
+    private const string Query =
+        "SELECT ClaimValue FROM BibDedupe.UserClaims WHERE UserEmail = @Email";
 
     public async Task<bool> IsAuthorizedAsync(string email)
     {
-        if (string.IsNullOrWhiteSpace(_connectionString))
+        var claims = await GetClaimsAsync(email);
+        return claims.Contains(UserRoles.Access);
+    }
+
+    public async Task<IReadOnlyCollection<string>> GetClaimsAsync(string email)
+    {
+        if (string.IsNullOrWhiteSpace(_connectionString) || string.IsNullOrWhiteSpace(email))
         {
-            return false;
+            return Array.Empty<string>();
         }
 
         await using var conn = new SqlConnection(_connectionString);
-        return await conn.ExecuteScalarAsync<int>(Query, new { Email = email }) > 0;
-    }
-}
+        var rows = await conn.QueryAsync<UserClaimRow>(Query, new { Email = email });
 
+        return rows
+            .Select(row => row.ClaimValue)
+            .Where(value => !string.IsNullOrWhiteSpace(value))
+            .Select(value => value!.Trim())
+            .Where(value => value.Length > 0)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+    }
+
+    private sealed record UserClaimRow(string? ClaimValue);
+}
