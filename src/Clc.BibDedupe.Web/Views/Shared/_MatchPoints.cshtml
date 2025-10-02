@@ -20,12 +20,17 @@
                 .Select(m => m.MatchValue ?? string.Empty)
                 .Where(v => !string.IsNullOrWhiteSpace(v))
                 .ToList();
+            var copyValue = accessibleValues.Count > 0 ? string.Join("\n", accessibleValues) : string.Empty;
 
             <div class="match-point">
                 <span class="badge bg-info text-dark match-point-badge"
                       data-bs-toggle="tooltip"
                       data-bs-container="body"
                       data-bs-html="true"
+                      data-match-values="@copyValue"
+                      data-match-label="@matchGroup.Key"
+                      role="button"
+                      tabindex="0"
                       title="@Html.Raw(tooltipHtml)">
                     @matchGroup.Key
                 </span>
