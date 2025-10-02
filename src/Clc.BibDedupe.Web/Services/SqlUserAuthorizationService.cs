@@ -13,7 +13,7 @@ public class SqlUserAuthorizationService(IConfiguration config) : IUserAuthoriza
         config.GetConnectionString("AuthorizedUsersDb") ?? config.GetConnectionString("BibDedupeDb");
 
     private const string Query =
-        "SELECT * FROM BibDedupe.UserClaims WHERE UserEmail = @Email";
+        "SELECT Claim FROM BibDedupe.UserClaims WHERE UserEmail = @Email";
 
     public async Task<bool> IsAuthorizedAsync(string email)
     {
@@ -29,34 +29,17 @@ public class SqlUserAuthorizationService(IConfiguration config) : IUserAuthoriza
         }
 
         await using var conn = new SqlConnection(_connectionString);
-        var rows = await conn.QueryAsync(Query, new { Email = email });
+        var rows = await conn.QueryAsync<string>(Query, new { Email = email });
         var claims = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
         foreach (var row in rows)
         {
-            if (row is not IDictionary<string, object?> values)
+            if (string.IsNullOrWhiteSpace(row))
             {
                 continue;
             }
 
-            if (!TryGetColumn(values, "Claim", out var raw))
-            {
-                continue;
-            }
-
-            var text = raw switch
-            {
-                null => null,
-                string str => str,
-                _ => raw.ToString()
-            };
-
-            if (string.IsNullOrWhiteSpace(text))
-            {
-                continue;
-            }
-
-            var normalized = text.Trim();
+            var normalized = row.Trim();
 
             if (normalized.Length == 0)
             {
@@ -76,18 +59,4 @@ public class SqlUserAuthorizationService(IConfiguration config) : IUserAuthoriza
         return result;
     }
 
-    private static bool TryGetColumn(IDictionary<string, object?> row, string column, out object? value)
-    {
-        foreach (var (key, columnValue) in row)
-        {
-            if (string.Equals(key, column, StringComparison.OrdinalIgnoreCase))
-            {
-                value = columnValue;
-                return true;
-            }
-        }
-
-        value = null;
-        return false;
-    }
 }
