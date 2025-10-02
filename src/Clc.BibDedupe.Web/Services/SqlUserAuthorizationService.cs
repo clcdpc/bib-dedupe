@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using Clc.BibDedupe.Web.Authorization;
 using Dapper;
 using Microsoft.Data.SqlClient;
@@ -14,7 +13,7 @@ public class SqlUserAuthorizationService(IConfiguration config) : IUserAuthoriza
         config.GetConnectionString("AuthorizedUsersDb") ?? config.GetConnectionString("BibDedupeDb");
 
     private const string Query =
-        "SELECT Claim FROM BibDedupe.UserClaims WHERE UserEmail = @Email";
+        "SELECT * FROM BibDedupe.UserClaims WHERE UserEmail = @Email";
 
     public async Task<bool> IsAuthorizedAsync(string email)
     {
@@ -30,16 +29,66 @@ public class SqlUserAuthorizationService(IConfiguration config) : IUserAuthoriza
         }
 
         await using var conn = new SqlConnection(_connectionString);
-        var rows = await conn.QueryAsync<UserClaimRow>(Query, new { Email = email });
+        var rows = await conn.QueryAsync(Query, new { Email = email });
+        var claims = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-        return rows
-            .Select(row => row.Claim)
-            .Where(value => !string.IsNullOrWhiteSpace(value))
-            .Select(value => value!.Trim())
-            .Where(value => value.Length > 0)
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .ToArray();
+        foreach (var row in rows)
+        {
+            if (row is not IDictionary<string, object?> values)
+            {
+                continue;
+            }
+
+            if (!TryGetColumn(values, "Claim", out var raw) &&
+                !TryGetColumn(values, "ClaimValue", out raw))
+            {
+                continue;
+            }
+
+            var text = raw switch
+            {
+                null => null,
+                string str => str,
+                _ => raw.ToString()
+            };
+
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                continue;
+            }
+
+            var normalized = text.Trim();
+
+            if (normalized.Length == 0)
+            {
+                continue;
+            }
+
+            claims.Add(normalized);
+        }
+
+        if (claims.Count == 0)
+        {
+            return Array.Empty<string>();
+        }
+
+        var result = new string[claims.Count];
+        claims.CopyTo(result);
+        return result;
     }
 
-    private sealed record UserClaimRow(string? Claim);
+    private static bool TryGetColumn(IDictionary<string, object?> row, string column, out object? value)
+    {
+        foreach (var (key, columnValue) in row)
+        {
+            if (string.Equals(key, column, StringComparison.OrdinalIgnoreCase))
+            {
+                value = columnValue;
+                return true;
+            }
+        }
+
+        value = null;
+        return false;
+    }
 }
