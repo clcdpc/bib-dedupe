@@ -71,7 +71,7 @@ public class TestFileBibDupePairRepository : IBibDupePairRepository
 
     public Task MergeAsync(int keepBibId, int deleteBibId, string userEmail, BibDupePairAction action) => Task.CompletedTask;
 
-    public Task KeepBothAsync(int leftBibId, int rightBibId, string userEmail) => Task.CompletedTask;
+    public Task MarkNotDuplicateAsync(int leftBibId, int rightBibId, string userEmail) => Task.CompletedTask;
 
     public Task SkipAsync(int leftBibId, int rightBibId, string userEmail) => Task.CompletedTask;
 }

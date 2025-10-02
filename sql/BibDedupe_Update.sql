@@ -86,7 +86,7 @@ GO
 ;MERGE BibDedupe.Actions AS target
 USING (VALUES
     (1, N'keep left'),
-    (2, N'keep both'),
+    (2, N'not duplicate'),
     (3, N'skip'),
     (4, N'keep right')
 ) AS source (ActionId, ActionName)
@@ -214,7 +214,11 @@ BEGIN
 END
 GO
 
-CREATE OR ALTER PROCEDURE BibDedupe.KeepBoth
+IF OBJECT_ID('BibDedupe.KeepBoth', 'P') IS NOT NULL
+    DROP PROCEDURE BibDedupe.KeepBoth;
+GO
+
+CREATE OR ALTER PROCEDURE BibDedupe.MarkNotDuplicate
     @LeftBibId INT,
     @RightBibId INT,
     @UserEmail NVARCHAR(256)
@@ -267,7 +271,7 @@ BEGIN
         END
         ELSE IF (@ActionId = 2)
         BEGIN
-            EXEC BibDedupe.KeepBoth @LeftBibId = @LeftBibId, @RightBibId = @RightBibId, @UserEmail = @UserEmail;
+            EXEC BibDedupe.MarkNotDuplicate @LeftBibId = @LeftBibId, @RightBibId = @RightBibId, @UserEmail = @UserEmail;
         END
         ELSE IF (@ActionId = 3)
         BEGIN

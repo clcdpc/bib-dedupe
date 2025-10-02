@@ -10,7 +10,7 @@ namespace Clc.BibDedupe.Web.Data
         Task<(IEnumerable<BibDupePair> Items, int TotalCount)> GetPagedAsync(int page, int pageSize, string? userEmail = null);
         Task<BibDupePair?> GetByBibIdsAsync(int leftBibId, int rightBibId);
         Task MergeAsync(int keepBibId, int deleteBibId, string userEmail, BibDupePairAction action);
-        Task KeepBothAsync(int leftBibId, int rightBibId, string userEmail);
+        Task MarkNotDuplicateAsync(int leftBibId, int rightBibId, string userEmail);
         Task SkipAsync(int leftBibId, int rightBibId, string userEmail);
     }
 }

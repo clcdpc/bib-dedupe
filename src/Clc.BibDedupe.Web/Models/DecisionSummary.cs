@@ -8,7 +8,7 @@ public record DecisionSummary
     public int Total { get; init; }
     public int KeepLeft { get; init; }
     public int KeepRight { get; init; }
-    public int KeepBoth { get; init; }
+    public int NotDuplicate { get; init; }
     public int Skip { get; init; }
 
     public static DecisionSummary From(IEnumerable<DecisionItem> decisions)
@@ -29,7 +29,7 @@ public record DecisionSummary
             Total = items.Count,
             KeepLeft = counts.GetValueOrDefault(BibDupePairAction.KeepLeft),
             KeepRight = counts.GetValueOrDefault(BibDupePairAction.KeepRight),
-            KeepBoth = counts.GetValueOrDefault(BibDupePairAction.KeepBoth),
+            NotDuplicate = counts.GetValueOrDefault(BibDupePairAction.NotDuplicate),
             Skip = counts.GetValueOrDefault(BibDupePairAction.Skip)
         };
     }

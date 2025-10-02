@@ -29,7 +29,7 @@ BEGIN
         END
         ELSE IF (@ActionId = 2)
         BEGIN
-            EXEC BibDedupe.KeepBoth @LeftBibId = @LeftBibId, @RightBibId = @RightBibId, @UserEmail = @UserEmail;
+            EXEC BibDedupe.MarkNotDuplicate @LeftBibId = @LeftBibId, @RightBibId = @RightBibId, @UserEmail = @UserEmail;
         END
         ELSE IF (@ActionId = 3)
         BEGIN

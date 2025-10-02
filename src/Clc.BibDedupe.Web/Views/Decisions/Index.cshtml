@@ -30,7 +30,7 @@ else
             <span class="badge bg-secondary me-1" id="summary-total">Total: @summary.Total</span>
             <span class="badge bg-success me-1" id="summary-keep-left">Keep Left: @summary.KeepLeft</span>
             <span class="badge bg-success me-1" id="summary-keep-right">Keep Right: @summary.KeepRight</span>
-            <span class="badge bg-primary me-1" id="summary-keep-both">Keep Both: @summary.KeepBoth</span>
+            <span class="badge bg-primary me-1" id="summary-not-duplicate">Not Duplicate: @summary.NotDuplicate</span>
             <span class="badge bg-warning text-dark" id="summary-skip">Skip: @summary.Skip</span>
         </div>
         <div class="d-flex align-items-center gap-2">
@@ -123,7 +123,7 @@ else
                     <li><strong id="modal-total">0</strong> total decisions</li>
                     <li><strong id="modal-keep-left">0</strong> keep left</li>
                     <li><strong id="modal-keep-right">0</strong> keep right</li>
-                    <li><strong id="modal-keep-both">0</strong> keep both</li>
+                    <li><strong id="modal-not-duplicate">0</strong> not duplicate</li>
                     <li><strong id="modal-skip">0</strong> skip</li>
                 </ul>
                 <p class="mb-0">Processing will continue in the background. You will not be able to make additional submissions while it is running.</p>
@@ -144,14 +144,14 @@ else
                 total: document.getElementById('summary-total'),
                 keepLeft: document.getElementById('summary-keep-left'),
                 keepRight: document.getElementById('summary-keep-right'),
-                keepBoth: document.getElementById('summary-keep-both'),
+                notDuplicate: document.getElementById('summary-not-duplicate'),
                 skip: document.getElementById('summary-skip')
             };
             const modalElements = {
                 total: document.getElementById('modal-total'),
                 keepLeft: document.getElementById('modal-keep-left'),
                 keepRight: document.getElementById('modal-keep-right'),
-                keepBoth: document.getElementById('modal-keep-both'),
+                notDuplicate: document.getElementById('modal-not-duplicate'),
                 skip: document.getElementById('modal-skip')
             };
             const errorAlert = document.querySelector('[data-submit-error]');
@@ -168,7 +168,7 @@ else
                 summaryElements.total.textContent = `Total: ${summary.total}`;
                 summaryElements.keepLeft.textContent = `Keep Left: ${summary.keepLeft}`;
                 summaryElements.keepRight.textContent = `Keep Right: ${summary.keepRight}`;
-                summaryElements.keepBoth.textContent = `Keep Both: ${summary.keepBoth}`;
+                summaryElements.notDuplicate.textContent = `Not Duplicate: ${summary.notDuplicate}`;
                 summaryElements.skip.textContent = `Skip: ${summary.skip}`;
             }
 
@@ -176,7 +176,7 @@ else
                 modalElements.total.textContent = summary.total;
                 modalElements.keepLeft.textContent = summary.keepLeft;
                 modalElements.keepRight.textContent = summary.keepRight;
-                modalElements.keepBoth.textContent = summary.keepBoth;
+                modalElements.notDuplicate.textContent = summary.notDuplicate;
                 modalElements.skip.textContent = summary.skip;
             }
 
@@ -185,7 +185,7 @@ else
                     total: 0,
                     keepLeft: 0,
                     keepRight: 0,
-                    keepBoth: 0,
+                    notDuplicate: 0,
                     skip: 0
                 };
 
@@ -206,7 +206,7 @@ else
                             summary.keepLeft += 1;
                             break;
                         case 2:
-                            summary.keepBoth += 1;
+                            summary.notDuplicate += 1;
                             break;
                         case 3:
                             summary.skip += 1;
