@@ -39,8 +39,7 @@ public class SqlUserAuthorizationService(IConfiguration config) : IUserAuthoriza
                 continue;
             }
 
-            if (!TryGetColumn(values, "Claim", out var raw) &&
-                !TryGetColumn(values, "ClaimValue", out raw))
+            if (!TryGetColumn(values, "Claim", out var raw))
             {
                 continue;
             }
