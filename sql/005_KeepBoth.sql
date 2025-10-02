@@ -9,7 +9,7 @@ CREATE PROCEDURE BibDedupe.KeepBoth
 AS
 BEGIN
     SET NOCOUNT ON;
-    -- TODO: implement logic to keep both records as separate
+    -- TODO: implement logic to mark the records as not duplicates
     INSERT INTO BibDedupe.PairDecisions (DecisionTimestamp, UserEmail, KeptBibId, DeletedBibId, ActionId)
     VALUES (SYSDATETIME(), @UserEmail, @LeftBibId, @RightBibId, 2);
 END

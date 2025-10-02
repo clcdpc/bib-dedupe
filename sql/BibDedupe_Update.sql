@@ -86,7 +86,7 @@ GO
 ;MERGE BibDedupe.Actions AS target
 USING (VALUES
     (1, N'keep left'),
-    (2, N'keep both'),
+    (2, N'not duplicate'),
     (3, N'skip'),
     (4, N'keep right')
 ) AS source (ActionId, ActionName)
