@@ -21,8 +21,15 @@
                 .Where(v => !string.IsNullOrWhiteSpace(v))
                 .ToList();
 
+            var clipboardText = accessibleValues.Count > 0
+                ? string.Join(", ", accessibleValues)
+                : matchGroup.Key;
+
             <div class="match-point">
                 <span class="badge bg-info text-dark match-point-badge"
+                      role="button"
+                      tabindex="0"
+                      data-clipboard-text="@clipboardText"
                       data-bs-toggle="tooltip"
                       data-bs-container="body"
                       data-bs-html="true"
