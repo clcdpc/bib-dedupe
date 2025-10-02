@@ -14,7 +14,7 @@ public class SqlUserAuthorizationService(IConfiguration config) : IUserAuthoriza
         config.GetConnectionString("AuthorizedUsersDb") ?? config.GetConnectionString("BibDedupeDb");
 
     private const string Query =
-        "SELECT ClaimValue FROM BibDedupe.UserClaims WHERE UserEmail = @Email";
+        "SELECT Claim FROM BibDedupe.UserClaims WHERE UserEmail = @Email";
 
     public async Task<bool> IsAuthorizedAsync(string email)
     {
@@ -33,7 +33,7 @@ public class SqlUserAuthorizationService(IConfiguration config) : IUserAuthoriza
         var rows = await conn.QueryAsync<UserClaimRow>(Query, new { Email = email });
 
         return rows
-            .Select(row => row.ClaimValue)
+            .Select(row => row.Claim)
             .Where(value => !string.IsNullOrWhiteSpace(value))
             .Select(value => value!.Trim())
             .Where(value => value.Length > 0)
@@ -41,5 +41,5 @@ public class SqlUserAuthorizationService(IConfiguration config) : IUserAuthoriza
             .ToArray();
     }
 
-    private sealed record UserClaimRow(string? ClaimValue);
+    private sealed record UserClaimRow(string? Claim);
 }
