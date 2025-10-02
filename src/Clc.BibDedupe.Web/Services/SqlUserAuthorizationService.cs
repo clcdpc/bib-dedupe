@@ -19,7 +19,7 @@ public class SqlUserAuthorizationService(IConfiguration config) : IUserAuthoriza
     public async Task<bool> IsAuthorizedAsync(string email)
     {
         var claims = await GetClaimsAsync(email);
-        return claims.Contains(UserRoles.Access);
+        return claims.Contains(UserRoles.Access) || claims.Contains(UserRoles.Administrator);
     }
 
     public async Task<IReadOnlyCollection<string>> GetClaimsAsync(string email)

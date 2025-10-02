@@ -8,7 +8,7 @@ public class AuthorizedUserHandler : AuthorizationHandler<AuthorizedUserRequirem
         AuthorizationHandlerContext context,
         AuthorizedUserRequirement requirement)
     {
-        if (context.User.IsInRole(UserRoles.Access))
+        if (context.User.IsInRole(UserRoles.Access) || context.User.IsInRole(UserRoles.Administrator))
         {
             context.Succeed(requirement);
         }
