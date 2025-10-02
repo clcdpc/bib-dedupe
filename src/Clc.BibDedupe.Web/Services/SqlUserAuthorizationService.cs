@@ -1,3 +1,6 @@
+using System;
+using System.Collections.Generic;
+using Clc.BibDedupe.Web.Authorization;
 using Dapper;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
@@ -8,17 +11,26 @@ public class SqlUserAuthorizationService(IConfiguration config) : IUserAuthoriza
 {
     private readonly string? _connectionString =
         config.GetConnectionString("AuthorizedUsersDb") ?? config.GetConnectionString("BibDedupeDb");
-    private const string Query = "EXEC BibDedupe.IsAuthorizedUser @Email";
+
+    private const string Query =
+        "SELECT Claim FROM BibDedupe.UserClaims WHERE UserEmail = @Email";
 
     public async Task<bool> IsAuthorizedAsync(string email)
     {
-        if (string.IsNullOrWhiteSpace(_connectionString))
+        var claims = await GetClaimsAsync(email);
+        return claims.Contains(UserRoles.Access) || claims.Contains(UserRoles.Administrator);
+    }
+
+    public async Task<IReadOnlyCollection<string>> GetClaimsAsync(string email)
+    {
+        if (string.IsNullOrWhiteSpace(_connectionString) || string.IsNullOrWhiteSpace(email))
         {
-            return false;
+            return Array.Empty<string>();
         }
 
         await using var conn = new SqlConnection(_connectionString);
-        return await conn.ExecuteScalarAsync<int>(Query, new { Email = email }) > 0;
+        var claims = await conn.QueryAsync<string>(Query, new { Email = email });
+        return claims.AsList();
     }
-}
 
+}

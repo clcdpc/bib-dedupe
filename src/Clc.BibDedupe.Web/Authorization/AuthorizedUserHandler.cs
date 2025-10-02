@@ -1,21 +1,18 @@
 using Microsoft.AspNetCore.Authorization;
-using Clc.BibDedupe.Web.Services;
-using Clc.BibDedupe.Web.Extensions;
 
 namespace Clc.BibDedupe.Web.Authorization;
 
-public class AuthorizedUserHandler(IUserAuthorizationService service)
-    : AuthorizationHandler<AuthorizedUserRequirement>
+public class AuthorizedUserHandler : AuthorizationHandler<AuthorizedUserRequirement>
 {
-    protected override async Task HandleRequirementAsync(
+    protected override Task HandleRequirementAsync(
         AuthorizationHandlerContext context,
         AuthorizedUserRequirement requirement)
     {
-        var email = context.User.GetEmail();
-
-        if (!string.IsNullOrEmpty(email) && await service.IsAuthorizedAsync(email))
+        if (context.User.IsInRole(UserRoles.Access) || context.User.IsInRole(UserRoles.Administrator))
         {
             context.Succeed(requirement);
         }
+
+        return Task.CompletedTask;
     }
 }

@@ -8,6 +8,7 @@ using Clc.BibDedupe.Web.Services;
 using Clc.BibDedupe.Web.Authorization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.Identity.Web;
@@ -155,6 +156,7 @@ namespace Clc.BibDedupe.Web
             builder.Services.AddSession();
 
             builder.Services.AddSingleton<IAuthorizationHandler, AuthorizedUserHandler>();
+            builder.Services.AddTransient<IClaimsTransformation, UserClaimsTransformation>();
             builder.Services.AddAuthorization(options =>
             {
                 options.AddPolicy("AuthorizedUser", policy =>
