@@ -373,6 +373,22 @@ body {
 }
 
 @media (prefers-color-scheme: dark) {
+  #match-copy-toast {
+    --bs-toast-bg: rgba(37, 99, 235, 0.88);
+    --bs-toast-color: #f8fafc;
+    --bs-toast-border-color: rgba(96, 165, 250, 0.55);
+    box-shadow: 0 0.6rem 1.8rem rgba(15, 23, 42, 0.65);
+  }
+
+  #match-copy-toast .toast-body {
+    color: var(--bs-toast-color);
+  }
+
+  #match-copy-toast .btn-close {
+    filter: invert(1) grayscale(100%) brightness(220%);
+    opacity: 0.95;
+  }
+
   body {
     background-color: #1b1e22;
     color: #f8f9fa;
