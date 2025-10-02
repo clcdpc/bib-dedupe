@@ -303,13 +303,14 @@ body {
 }
 
 .match-point-badge {
-  cursor: help;
+  cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   padding: 0.35rem 0.55rem;
   font-size: 0.75rem;
   font-weight: 600;
+  user-select: none;
 }
 
 .match-point-badge:focus-visible {
