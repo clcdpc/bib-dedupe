@@ -29,34 +29,8 @@ public class SqlUserAuthorizationService(IConfiguration config) : IUserAuthoriza
         }
 
         await using var conn = new SqlConnection(_connectionString);
-        var rows = await conn.QueryAsync<string>(Query, new { Email = email });
-        var claims = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-
-        foreach (var row in rows)
-        {
-            if (string.IsNullOrWhiteSpace(row))
-            {
-                continue;
-            }
-
-            var normalized = row.Trim();
-
-            if (normalized.Length == 0)
-            {
-                continue;
-            }
-
-            claims.Add(normalized);
-        }
-
-        if (claims.Count == 0)
-        {
-            return Array.Empty<string>();
-        }
-
-        var result = new string[claims.Count];
-        claims.CopyTo(result);
-        return result;
+        var claims = await conn.QueryAsync<string>(Query, new { Email = email });
+        return claims.AsList();
     }
 
 }
