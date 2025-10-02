@@ -70,9 +70,9 @@ WHERE LeftBibId = @LeftBibId AND RightBibId = @RightBibId;";
                 new { KeepBibId = keepBibId, DeleteBibId = deleteBibId, UserEmail = userEmail, ActionId = (int)action },
                 commandType: CommandType.StoredProcedure);
 
-        public Task KeepBothAsync(int leftBibId, int rightBibId, string userEmail) =>
+        public Task MarkNotDuplicateAsync(int leftBibId, int rightBibId, string userEmail) =>
             _db.ExecuteAsync(
-                "BibDedupe.KeepBoth",
+                "BibDedupe.MarkNotDuplicate",
                 new { LeftBibId = leftBibId, RightBibId = rightBibId, UserEmail = userEmail },
                 commandType: CommandType.StoredProcedure);
 

@@ -21,7 +21,7 @@ CREATE TABLE BibDedupe.Actions (
     ActionName NVARCHAR(50) NOT NULL
 );
 INSERT INTO BibDedupe.Actions (ActionId, ActionName)
-VALUES (1, 'keep left'), (2, 'keep both'), (3, 'skip'), (4, 'keep right');
+VALUES (1, 'keep left'), (2, 'not duplicate'), (3, 'skip'), (4, 'keep right');
 GO
 
 CREATE TABLE BibDedupe.PairDecisions (

@@ -9,6 +9,9 @@ GO
 IF OBJECT_ID('BibDedupe.KeepBoth','P') IS NOT NULL
     DROP PROCEDURE BibDedupe.KeepBoth;
 GO
+IF OBJECT_ID('BibDedupe.MarkNotDuplicate','P') IS NOT NULL
+    DROP PROCEDURE BibDedupe.MarkNotDuplicate;
+GO
 IF OBJECT_ID('BibDedupe.Skip','P') IS NOT NULL
     DROP PROCEDURE BibDedupe.Skip;
 GO
@@ -79,7 +82,7 @@ CREATE TABLE BibDedupe.Actions (
     ActionName NVARCHAR(50) NOT NULL
 );
 INSERT INTO BibDedupe.Actions (ActionId, ActionName)
-VALUES (1, 'keep left'), (2, 'keep both'), (3, 'skip'), (4, 'keep right');
+VALUES (1, 'keep left'), (2, 'not duplicate'), (3, 'skip'), (4, 'keep right');
 GO
 
 CREATE TABLE BibDedupe.PairDecisions (
@@ -154,14 +157,14 @@ BEGIN
 END
 GO
 
-CREATE OR ALTER PROCEDURE BibDedupe.KeepBoth
+CREATE OR ALTER PROCEDURE BibDedupe.MarkNotDuplicate
     @LeftBibId INT,
     @RightBibId INT,
     @UserEmail NVARCHAR(256)
 AS
 BEGIN
     SET NOCOUNT ON;
-    -- TODO: implement logic to keep both records as separate
+    -- TODO: implement logic to record that this pair is not a duplicate
     INSERT INTO BibDedupe.PairDecisions (DecisionTimestamp, UserEmail, KeptBibId, DeletedBibId, ActionId)
     VALUES (SYSDATETIME(), @UserEmail, @LeftBibId, @RightBibId, 2);
 END
@@ -207,7 +210,7 @@ BEGIN
         END
         ELSE IF (@ActionId = 2)
         BEGIN
-            EXEC BibDedupe.KeepBoth @LeftBibId = @LeftBibId, @RightBibId = @RightBibId, @UserEmail = @UserEmail;
+            EXEC BibDedupe.MarkNotDuplicate @LeftBibId = @LeftBibId, @RightBibId = @RightBibId, @UserEmail = @UserEmail;
         END
         ELSE IF (@ActionId = 3)
         BEGIN
