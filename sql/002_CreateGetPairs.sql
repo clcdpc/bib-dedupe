@@ -21,14 +21,24 @@ RETURN (
 		,isnull(rightHolds.HoldCount,0) [RightHoldCount]
 		,isnull(leftHolds.HoldCount,0) + isnull(rightHolds.HoldCount,0) [TotalHoldCount]
     FROM BibDedupe.Pairs p
-        join polaris.polaris.BibliographicRecords br_l
-                on br_l.BibliographicRecordID = p.LeftBibId
-        join polaris.polaris.BibliographicRecords br_r
-                on br_r.BibliographicRecordID = p.RightBibId
-        join polaris.polaris.MARCTypeOfMaterial mtom
-                on mtom.MARCTypeOfMaterialID = p.PrimaryMARCTOMID
-        outer apply ( select count(1) [HoldCount] from polaris.polaris.SysHoldRequests shr where shr.BibliographicRecordID = br_l.BibliographicRecordID and shr.SysHoldStatusID in (1,3,4) ) leftHolds
-        outer apply ( select count(1) [HoldCount] from polaris.polaris.SysHoldRequests shr where shr.BibliographicRecordID = br_r.BibliographicRecordID and shr.SysHoldStatusID in (1,3,4) ) rightHolds
+    JOIN polaris.polaris.BibliographicRecords br_l
+        ON br_l.BibliographicRecordID = p.LeftBibId
+    JOIN polaris.polaris.BibliographicRecords br_r
+        ON br_r.BibliographicRecordID = p.RightBibId
+    JOIN polaris.polaris.MARCTypeOfMaterial mtom
+        ON mtom.MARCTypeOfMaterialID = p.PrimaryMARCTOMID
+    OUTER APPLY (
+        SELECT COUNT(1) AS HoldCount
+        FROM polaris.polaris.SysHoldRequests shr
+        WHERE shr.BibliographicRecordID = br_l.BibliographicRecordID
+          AND shr.SysHoldStatusID IN (1,3,4)
+    ) leftHolds
+    OUTER APPLY (
+        SELECT COUNT(1) AS HoldCount
+        FROM polaris.polaris.SysHoldRequests shr
+        WHERE shr.BibliographicRecordID = br_r.BibliographicRecordID
+          AND shr.SysHoldStatusID IN (1,3,4)
+    ) rightHolds
     OUTER APPLY (
         SELECT MatchType, MatchValue
         FROM BibDedupe.PairMatches m
