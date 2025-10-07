@@ -3,7 +3,8 @@ using Microsoft.Data.SqlClient;
 
 namespace Clc.BibDedupe.Web.Services;
 
-public class SqlDbConnectionFactory(string connectionString) : IDbConnectionFactory
+public class SqlDbConnectionFactory(string connectionString)
+    : IDbConnectionFactory, IDecisionProcessingDbConnectionFactory
 {
     public IDbConnection Create()
     {
