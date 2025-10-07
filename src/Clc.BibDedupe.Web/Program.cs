@@ -48,6 +48,7 @@ namespace Clc.BibDedupe.Web
             }
 
             var bibDedupeConn = builder.Configuration.GetConnectionString("BibDedupeDb");
+            var decisionProcessingConn = builder.Configuration.GetConnectionString("DecisionProcessingDb");
 
             if (string.IsNullOrWhiteSpace(bibDedupeConn))
             {
@@ -68,6 +69,8 @@ namespace Clc.BibDedupe.Web
                 builder.Services
                     .AddScoped<IDbConnection>(sp => new SqlConnection(bibDedupeConn))
                     .AddSingleton<IDbConnectionFactory>(new SqlDbConnectionFactory(bibDedupeConn))
+                    .AddSingleton<IDecisionProcessingDbConnectionFactory>(
+                        new SqlDbConnectionFactory(decisionProcessingConn!))
                     .AddScoped<IBibDupePairRepository, BibDupePairRepository>()
                     .AddScoped<IDecisionStore, SqlDecisionStore>()
                     .AddScoped<IDecisionBatchTracker, SqlDecisionBatchTracker>()

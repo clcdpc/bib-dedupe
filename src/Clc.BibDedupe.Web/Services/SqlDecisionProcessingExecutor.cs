@@ -4,7 +4,8 @@ using Dapper;
 
 namespace Clc.BibDedupe.Web.Services;
 
-public class SqlDecisionProcessingExecutor(IDbConnectionFactory factory) : IDecisionProcessingExecutor
+public class SqlDecisionProcessingExecutor(IDecisionProcessingDbConnectionFactory factory)
+    : IDecisionProcessingExecutor
 {
     public Task<bool> CanProcessAsync() => Task.FromResult(true);
 
