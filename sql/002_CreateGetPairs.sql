@@ -22,11 +22,11 @@ RETURN (
 		,isnull(leftHolds.HoldCount,0) + isnull(rightHolds.HoldCount,0) [TotalHoldCount]
     FROM BibDedupe.Pairs p
     JOIN polaris.polaris.BibliographicRecords br_l
-        ON br_l.BibliographicRecordID = p.LeftBibId
+    ON br_l.BibliographicRecordID = p.LeftBibId
     JOIN polaris.polaris.BibliographicRecords br_r
-        ON br_r.BibliographicRecordID = p.RightBibId
+    ON br_r.BibliographicRecordID = p.RightBibId
     JOIN polaris.polaris.MARCTypeOfMaterial mtom
-        ON mtom.MARCTypeOfMaterialID = p.PrimaryMARCTOMID
+    ON mtom.MARCTypeOfMaterialID = p.PrimaryMARCTOMID
     OUTER APPLY (
         SELECT COUNT(1) AS HoldCount
         FROM polaris.polaris.SysHoldRequests shr
@@ -49,8 +49,11 @@ RETURN (
     WHERE NOT EXISTS (
             SELECT 1
             FROM BibDedupe.PairDecisions pd
-            WHERE (pd.KeptBibId = p.LeftBibId AND pd.DeletedBibId = p.RightBibId)
-               OR (pd.KeptBibId = p.RightBibId AND pd.DeletedBibId = p.LeftBibId)
+            WHERE (
+                (pd.KeptBibId = p.LeftBibId AND pd.DeletedBibId = p.RightBibId)
+                OR (pd.KeptBibId = p.RightBibId AND pd.DeletedBibId = p.LeftBibId)
+            )
+              AND (@UserEmail IS NULL OR pd.UserEmail = @UserEmail)
         )
         AND (
             @UserEmail IS NULL

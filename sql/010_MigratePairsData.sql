@@ -142,8 +142,11 @@ RETURN (
     WHERE NOT EXISTS (
             SELECT 1
             FROM BibDedupe.PairDecisions pd
-            WHERE (pd.KeptBibId = p.LeftBibId AND pd.DeletedBibId = p.RightBibId)
-               OR (pd.KeptBibId = p.RightBibId AND pd.DeletedBibId = p.LeftBibId)
+            WHERE (
+                (pd.KeptBibId = p.LeftBibId AND pd.DeletedBibId = p.RightBibId)
+                OR (pd.KeptBibId = p.RightBibId AND pd.DeletedBibId = p.LeftBibId)
+            )
+              AND (@UserEmail IS NULL OR pd.UserEmail = @UserEmail)
         )
         AND (
             @UserEmail IS NULL
