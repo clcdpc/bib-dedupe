@@ -117,7 +117,13 @@ BEGIN TRY
     COMMIT TRANSACTION;
 
     DECLARE @createGetPairsSql NVARCHAR(MAX) = N'
-CREATE FUNCTION BibDedupe.GetPairs (@Top INT = 1000, @UserEmail NVARCHAR(256) = NULL)
+CREATE FUNCTION BibDedupe.GetPairs (
+    @Top INT = 1000,
+    @UserEmail NVARCHAR(256) = NULL,
+    @TomId INT = NULL,
+    @MatchType NVARCHAR(50) = NULL,
+    @HasHolds BIT = NULL
+)
 RETURNS TABLE
 AS
 RETURN (
@@ -130,7 +136,11 @@ RETURN (
         LeftAuthor = CAST(NULL AS NVARCHAR(256)),
         RightTitle = CAST(NULL AS NVARCHAR(512)),
         RightAuthor = CAST(NULL AS NVARCHAR(256)),
-        MatchesJson = ISNULL(pm.MatchesJson, ''[]'')
+        TOM = CAST(NULL AS NVARCHAR(256)),
+        MatchesJson = ISNULL(pm.MatchesJson, ''[]''),
+        LeftHoldCount = CAST(0 AS INT),
+        RightHoldCount = CAST(0 AS INT),
+        TotalHoldCount = CAST(0 AS INT)
     FROM BibDedupe.Pairs p
     OUTER APPLY (
         SELECT MatchType, MatchValue
@@ -158,6 +168,17 @@ RETURN (
                   AND dq.RightBibId = p.RightBibId
             )
         )
+        AND (@TomId IS NULL)
+        AND (
+            @MatchType IS NULL
+            OR EXISTS (
+                SELECT 1
+                FROM BibDedupe.PairMatches mt
+                WHERE mt.PairId = p.PairId
+                  AND mt.MatchType = @MatchType
+            )
+        )
+        AND (@HasHolds IS NULL)
 );';
 
     EXEC sys.sp_executesql @createGetPairsSql;

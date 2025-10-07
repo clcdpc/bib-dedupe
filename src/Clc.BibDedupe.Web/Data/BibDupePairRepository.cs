@@ -21,25 +21,61 @@ namespace Clc.BibDedupe.Web.Data
         {
             const string sql = @"SELECT PairId, PrimaryMARCTOMID AS PrimaryMarcTomId, LeftBibId, RightBibId,
        LeftTitle, LeftAuthor, RightTitle, RightAuthor, TOM, MatchesJson
-FROM BibDedupe.GetPairs(DEFAULT, NULL)";
+FROM BibDedupe.GetPairs(DEFAULT, NULL, NULL, NULL, NULL)";
             var rows = await _db.QueryAsync<PairRow>(sql);
             return rows.Select(MapRow).ToList();
         }
 
-        public async Task<(IEnumerable<BibDupePair> Items, int TotalCount)> GetPagedAsync(int page, int pageSize, string? userEmail = null)
+        public async Task<PairsPageResult> GetPagedAsync(
+            int page,
+            int pageSize,
+            string? userEmail = null,
+            int? tomId = null,
+            string? matchType = null,
+            bool? hasHolds = null)
         {
             const string sql = @"SELECT PairId, PrimaryMARCTOMID AS PrimaryMarcTomId, LeftBibId, RightBibId,
        LeftTitle, LeftAuthor, RightTitle, RightAuthor, TOM, MatchesJson
-FROM BibDedupe.GetPairs(DEFAULT, @UserEmail) p
+FROM BibDedupe.GetPairs(DEFAULT, @UserEmail, @TomId, @MatchType, @HasHolds) p
 ORDER BY p.LeftTitle, p.RightTitle, p.PairId
 OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY;
-SELECT COUNT(*) FROM BibDedupe.GetPairs(@CountTop, @UserEmail) p;";
+SELECT COUNT(*) FROM BibDedupe.GetPairs(@CountTop, @UserEmail, @TomId, @MatchType, @HasHolds) p;
+SELECT DISTINCT gp.PrimaryMarcTomId AS TomId, gp.TOM AS Description
+FROM BibDedupe.GetPairs(@CountTop, @UserEmail, NULL, @MatchType, @HasHolds) gp
+WHERE gp.PrimaryMarcTomId IS NOT NULL AND gp.TOM IS NOT NULL AND LTRIM(RTRIM(gp.TOM)) <> ''
+ORDER BY gp.TOM;
+SELECT DISTINCT pm.MatchType
+FROM BibDedupe.GetPairs(@CountTop, @UserEmail, @TomId, NULL, @HasHolds) gp
+JOIN BibDedupe.PairMatches pm ON pm.PairId = gp.PairId
+ORDER BY pm.MatchType;";
             var offset = (page - 1) * pageSize;
-            using var multi = await _db.QueryMultipleAsync(sql, new { Offset = offset, PageSize = pageSize, CountTop = UnlimitedPairsLimit, UserEmail = userEmail });
+            var hasHoldFilter = hasHolds == true ? true : (bool?)null;
+            using var multi = await _db.QueryMultipleAsync(
+                sql,
+                new
+                {
+                    Offset = offset,
+                    PageSize = pageSize,
+                    CountTop = UnlimitedPairsLimit,
+                    UserEmail = userEmail,
+                    TomId = tomId,
+                    MatchType = matchType,
+                    HasHolds = hasHoldFilter
+                });
             var rows = await multi.ReadAsync<PairRow>();
             var total = await multi.ReadFirstAsync<int>();
+            var tomOptionRows = (await multi.ReadAsync<TomOptionRow>()).ToList();
+            var matchTypeOptions = (await multi.ReadAsync<string>()).ToList();
             var items = rows.Select(MapRow).ToList();
-            return (items, total);
+            return new PairsPageResult
+            {
+                Items = items,
+                TotalCount = total,
+                TomOptions = tomOptionRows
+                    .Select(o => new TomOption(o.TomId, o.Description))
+                    .ToList(),
+                MatchTypeOptions = matchTypeOptions
+            };
         }
 
         public async Task<BibDupePair?> GetByBibIdsAsync(int leftBibId, int rightBibId)
@@ -102,6 +138,12 @@ WHERE LeftBibId = @LeftBibId AND RightBibId = @RightBibId;";
             public int RightHoldCount { get; set; }
             public int TotalHoldCount { get; set; }
             public string MatchesJson { get; set; } = string.Empty;
+        }
+
+        private sealed class TomOptionRow
+        {
+            public int TomId { get; set; }
+            public string Description { get; set; } = string.Empty;
         }
     }
 }

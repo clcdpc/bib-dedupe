@@ -2,7 +2,13 @@ IF OBJECT_ID('BibDedupe.GetPairs','IF') IS NOT NULL
     DROP FUNCTION BibDedupe.GetPairs;
 GO
 
-CREATE FUNCTION [BibDedupe].[GetPairs] (@Top INT = 1000, @UserEmail NVARCHAR(256) = NULL)
+CREATE FUNCTION [BibDedupe].[GetPairs] (
+    @Top INT = 1000,
+    @UserEmail NVARCHAR(256) = NULL,
+    @TomId INT = NULL,
+    @MatchType NVARCHAR(50) = NULL,
+    @HasHolds BIT = NULL
+)
 RETURNS TABLE
 AS
 RETURN (
@@ -64,6 +70,24 @@ RETURN (
                   AND dq.LeftBibId = p.LeftBibId
                   AND dq.RightBibId = p.RightBibId
             )
+        )
+        AND (
+            @TomId IS NULL
+            OR p.PrimaryMARCTOMID = @TomId
+        )
+        AND (
+            @MatchType IS NULL
+            OR EXISTS (
+                SELECT 1
+                FROM BibDedupe.PairMatches mt
+                WHERE mt.PairId = p.PairId
+                  AND mt.MatchType = @MatchType
+            )
+        )
+        AND (
+            @HasHolds IS NULL
+            OR ISNULL(leftHolds.HoldCount, 0) > 0
+            OR ISNULL(rightHolds.HoldCount, 0) > 0
         )
         order by br_l.BrowseTitle, br_r.BrowseTitle
 );

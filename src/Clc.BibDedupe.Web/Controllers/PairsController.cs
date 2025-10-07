@@ -9,16 +9,26 @@ namespace Clc.BibDedupe.Web.Controllers;
 [Authorize(Policy = "AuthorizedUser")]
 public class PairsController(IBibDupePairRepository repository) : Controller
 {
-    public async Task<IActionResult> Index(int page = 1, int pageSize = 20)
+    private const int DefaultPageSize = 20;
+
+    public async Task<IActionResult> Index(int page = 1, int? tom = null, string? matchType = null, bool? hasHolds = null)
     {
         var email = User.GetEmail();
-        var (items, total) = await repository.GetPagedAsync(page, pageSize, email);
+        var sanitizedTom = tom.HasValue && tom.Value > 0 ? tom : null;
+        var sanitizedMatchType = string.IsNullOrWhiteSpace(matchType) ? null : matchType;
+        var hasHoldFilter = hasHolds == true ? true : (bool?)null;
+        var result = await repository.GetPagedAsync(page, DefaultPageSize, email, sanitizedTom, sanitizedMatchType, hasHoldFilter);
         var model = new PairsListViewModel
         {
-            Items = items,
+            Items = result.Items,
             Page = page,
-            PageSize = pageSize,
-            TotalCount = total
+            PageSize = DefaultPageSize,
+            TotalCount = result.TotalCount,
+            TomOptions = result.TomOptions,
+            MatchTypeOptions = result.MatchTypeOptions,
+            SelectedTomId = sanitizedTom,
+            SelectedMatchType = sanitizedMatchType,
+            HasHoldsFilter = hasHolds == true
         };
         return View(model);
     }
