@@ -117,7 +117,7 @@ BEGIN TRY
     COMMIT TRANSACTION;
 
     DECLARE @createGetPairsSql NVARCHAR(MAX) = N'
-CREATE FUNCTION BibDedupe.GetPairs (@Top INT = 1000)
+CREATE FUNCTION BibDedupe.GetPairs (@Top INT = 1000, @UserEmail NVARCHAR(256) = NULL)
 RETURNS TABLE
 AS
 RETURN (
@@ -139,6 +139,22 @@ RETURN (
         ORDER BY m.MatchType, m.MatchValue
         FOR JSON PATH
     ) pm(MatchesJson)
+    WHERE NOT EXISTS (
+            SELECT 1
+            FROM BibDedupe.PairDecisions pd
+            WHERE (pd.KeptBibId = p.LeftBibId AND pd.DeletedBibId = p.RightBibId)
+               OR (pd.KeptBibId = p.RightBibId AND pd.DeletedBibId = p.LeftBibId)
+        )
+        AND (
+            @UserEmail IS NULL
+            OR NOT EXISTS (
+                SELECT 1
+                FROM BibDedupe.DecisionQueue dq
+                WHERE dq.UserEmail = @UserEmail
+                  AND dq.LeftBibId = p.LeftBibId
+                  AND dq.RightBibId = p.RightBibId
+            )
+        )
 );';
 
     EXEC sys.sp_executesql @createGetPairsSql;
