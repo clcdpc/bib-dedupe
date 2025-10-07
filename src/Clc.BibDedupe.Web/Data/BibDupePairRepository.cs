@@ -21,7 +21,7 @@ namespace Clc.BibDedupe.Web.Data
         {
             const string sql = @"SELECT PairId, PrimaryMARCTOMID AS PrimaryMarcTomId, LeftBibId, RightBibId,
        LeftTitle, LeftAuthor, RightTitle, RightAuthor, TOM, MatchesJson
-FROM BibDedupe.GetPairs(DEFAULT)";
+FROM BibDedupe.GetPairs(DEFAULT, NULL)";
             var rows = await _db.QueryAsync<PairRow>(sql);
             return rows.Select(MapRow).ToList();
         }
@@ -30,22 +30,10 @@ FROM BibDedupe.GetPairs(DEFAULT)";
         {
             const string sql = @"SELECT PairId, PrimaryMARCTOMID AS PrimaryMarcTomId, LeftBibId, RightBibId,
        LeftTitle, LeftAuthor, RightTitle, RightAuthor, TOM, MatchesJson
-FROM BibDedupe.GetPairs(DEFAULT) p
-WHERE @UserEmail IS NULL OR NOT EXISTS (
-    SELECT 1
-    FROM BibDedupe.DecisionQueue dq
-    WHERE dq.UserEmail = @UserEmail
-      AND dq.LeftBibId = p.LeftBibId
-      AND dq.RightBibId = p.RightBibId)
+FROM BibDedupe.GetPairs(DEFAULT, @UserEmail) p
 ORDER BY p.LeftTitle, p.RightTitle, p.PairId
 OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY;
-SELECT COUNT(*) FROM BibDedupe.GetPairs(@CountTop) p
-WHERE @UserEmail IS NULL OR NOT EXISTS (
-    SELECT 1
-    FROM BibDedupe.DecisionQueue dq
-    WHERE dq.UserEmail = @UserEmail
-      AND dq.LeftBibId = p.LeftBibId
-      AND dq.RightBibId = p.RightBibId);";
+SELECT COUNT(*) FROM BibDedupe.GetPairs(@CountTop, @UserEmail) p;";
             var offset = (page - 1) * pageSize;
             using var multi = await _db.QueryMultipleAsync(sql, new { Offset = offset, PageSize = pageSize, CountTop = UnlimitedPairsLimit, UserEmail = userEmail });
             var rows = await multi.ReadAsync<PairRow>();
@@ -58,7 +46,7 @@ WHERE @UserEmail IS NULL OR NOT EXISTS (
         {
             const string sql = @"SELECT PairId, PrimaryMARCTOMID AS PrimaryMarcTomId, LeftBibId, RightBibId,
        LeftTitle, LeftAuthor, RightTitle, RightAuthor, TOM, MatchesJson
-FROM BibDedupe.GetPairs(@Top)
+FROM BibDedupe.GetPairs(@Top, NULL)
 WHERE LeftBibId = @LeftBibId AND RightBibId = @RightBibId;";
             var row = await _db.QueryFirstOrDefaultAsync<PairRow>(sql, new { LeftBibId = leftBibId, RightBibId = rightBibId, Top = UnlimitedPairsLimit });
             return row is null ? null : MapRow(row);

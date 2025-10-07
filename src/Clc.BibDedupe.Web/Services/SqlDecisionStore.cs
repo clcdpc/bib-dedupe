@@ -53,7 +53,7 @@ public class SqlDecisionStore(IDbConnection db) : IDecisionStore
                       p.LeftTitle, p.LeftAuthor, p.RightTitle, p.RightAuthor,
                       p.TOM, p.MatchesJson
                FROM {Table} d
-               JOIN BibDedupe.GetPairs(@Top) p ON d.LeftBibId = p.LeftBibId AND d.RightBibId = p.RightBibId
+               JOIN BibDedupe.GetPairs(@Top, NULL) p ON d.LeftBibId = p.LeftBibId AND d.RightBibId = p.RightBibId
                WHERE d.UserEmail = @UserEmail",
             new { UserEmail = userId, Top = int.MaxValue });
 
