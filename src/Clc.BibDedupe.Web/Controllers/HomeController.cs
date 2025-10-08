@@ -121,12 +121,13 @@ namespace Clc.BibDedupe.Web.Controllers
                 return BadRequest();
             }
             var userEmail = User.GetEmail();
-            var pair = await repository.GetByBibIdsAsync(leftBibId, rightBibId, userEmail)
-                ?? new BibDupePair
-                {
-                    LeftBibId = leftBibId,
-                    RightBibId = rightBibId
-                };
+            var pair = await repository.GetByBibIdsAsync(leftBibId, rightBibId, userEmail);
+            if (pair is null)
+            {
+                await pairAssignmentStore.ReleaseAsync(userEmail, leftBibId, rightBibId);
+                await currentPairStore.ClearAsync(userEmail);
+                return Conflict(new { error = "Pair is not available for this user." });
+            }
 
             var decision = new DecisionItem
             {
