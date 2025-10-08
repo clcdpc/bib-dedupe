@@ -123,23 +123,199 @@
     document.addEventListener('DOMContentLoaded', () => initTooltips(document));
 })();
 (function () {
+    const ACTION_LABELS = {
+        KeepLeft: 'Kept left record',
+        KeepRight: 'Kept right record',
+        NotDuplicate: 'Marked as not duplicate',
+        Skip: 'Skipped pair'
+    };
+    const STORAGE_KEY = 'bibDedupe:lastAction';
+    const TOAST_MAX_AGE = 5 * 60 * 1000;
+    const INITIAL_DISABLE_MS = 1500;
+
     const page = document.querySelector('.page');
+    const toastContainer = document.querySelector('.action-toast-container');
     if (page) {
         page.classList.add('initializing');
     }
-    const token = document.querySelector('#token-form input[name="__RequestVerificationToken"]').value;
-    const url = page.dataset.resolveUrl;
-    const leftBibId = parseInt(page.dataset.leftBibId, 10);
-    const rightBibId = parseInt(page.dataset.rightBibId, 10);
-    const reviewUrl = page.dataset.reviewUrl;
-    document.querySelectorAll('.controls button').forEach(btn => {
+
+    function formatRecordLabel(title, bibIdValue) {
+        const trimmedTitle = (title || '').trim();
+        if (trimmedTitle) {
+            return trimmedTitle.length > 70 ? `${trimmedTitle.slice(0, 67)}…` : trimmedTitle;
+        }
+        const fallbackSource = bibIdValue ?? '';
+        const fallback = (typeof fallbackSource === 'string' ? fallbackSource : String(fallbackSource)).trim();
+        if (fallback) {
+            return `Bib ${fallback}`;
+        }
+        return 'this pair';
+    }
+
+    function buildSummary(action, data) {
+        const actionLabel = ACTION_LABELS[action] || action;
+        const leftLabel = formatRecordLabel(data.leftTitle, data.leftBibId);
+        const rightLabel = formatRecordLabel(data.rightTitle, data.rightBibId);
+        return `${actionLabel}: ${leftLabel} vs ${rightLabel}`;
+    }
+
+    function rememberLastAction(payload) {
+        try {
+            const data = {
+                action: payload.action,
+                leftBibId: payload.leftBibId,
+                rightBibId: payload.rightBibId,
+                leftTitle: payload.leftTitle || '',
+                rightTitle: payload.rightTitle || '',
+                reviewUrl: payload.reviewUrl || '',
+                timestamp: Date.now()
+            };
+            sessionStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        } catch (err) {
+            console.warn('Unable to persist last action toast payload.', err);
+        }
+    }
+
+    function loadLastAction() {
+        try {
+            const raw = sessionStorage.getItem(STORAGE_KEY);
+            if (!raw) {
+                return null;
+            }
+            sessionStorage.removeItem(STORAGE_KEY);
+            const data = JSON.parse(raw);
+            if (!data || !data.action) {
+                return null;
+            }
+            if (typeof data.timestamp === 'number' && Date.now() - data.timestamp > TOAST_MAX_AGE) {
+                return null;
+            }
+            return data;
+        } catch (err) {
+            console.warn('Unable to load last action toast payload.', err);
+            return null;
+        }
+    }
+
+    function showToast(data) {
+        if (!toastContainer) {
+            return;
+        }
+        const summary = buildSummary(data.action, data);
+        if (!summary) {
+            return;
+        }
+        const toast = document.createElement('div');
+        toast.className = 'action-toast';
+        toast.setAttribute('role', 'status');
+
+        const message = document.createElement('div');
+        message.className = 'action-toast__message';
+        message.textContent = summary;
+        toast.appendChild(message);
+
+        const actions = document.createElement('div');
+        actions.className = 'action-toast__actions';
+
+        const reviewButton = document.createElement('button');
+        reviewButton.type = 'button';
+        reviewButton.className = 'action-toast__button';
+        reviewButton.textContent = 'Review again';
+        if (data.reviewUrl) {
+            reviewButton.addEventListener('click', () => {
+                clearTimeout(hideTimer);
+                window.location.href = data.reviewUrl;
+            });
+        } else {
+            reviewButton.disabled = true;
+        }
+        actions.appendChild(reviewButton);
+
+        const dismissButton = document.createElement('button');
+        dismissButton.type = 'button';
+        dismissButton.className = 'action-toast__dismiss';
+        dismissButton.setAttribute('aria-label', 'Dismiss notification');
+        dismissButton.textContent = '×';
+        actions.appendChild(dismissButton);
+
+        toast.appendChild(actions);
+        toastContainer.appendChild(toast);
+
+        const hideToast = () => {
+            toast.classList.remove('show');
+            setTimeout(() => toast.remove(), 200);
+        };
+
+        let hideTimer = setTimeout(hideToast, 6000);
+
+        dismissButton.addEventListener('click', () => {
+            clearTimeout(hideTimer);
+            hideToast();
+        });
+
+        requestAnimationFrame(() => toast.classList.add('show'));
+    }
+
+    const storedAction = loadLastAction();
+    if (storedAction) {
+        showToast(storedAction);
+    }
+
+    const tokenInput = document.querySelector('#token-form input[name="__RequestVerificationToken"]');
+    const token = tokenInput ? tokenInput.value : '';
+    const url = page ? page.dataset.resolveUrl : '';
+    const leftBibIdValue = page ? (page.dataset.leftBibId || '') : '';
+    const rightBibIdValue = page ? (page.dataset.rightBibId || '') : '';
+    const leftBibId = parseInt(leftBibIdValue, 10);
+    const rightBibId = parseInt(rightBibIdValue, 10);
+    const reviewUrl = page ? page.dataset.reviewUrl : '';
+    const leftTitle = page ? page.dataset.leftTitle : '';
+    const rightTitle = page ? page.dataset.rightTitle : '';
+
+    const actionButtons = Array.from(document.querySelectorAll('.controls button'));
+    if (actionButtons.length) {
+        actionButtons.forEach(btn => {
+            btn.disabled = true;
+        });
+        setTimeout(() => {
+            actionButtons.forEach(btn => {
+                if (btn.dataset.locked === 'true') {
+                    return;
+                }
+                btn.disabled = false;
+            });
+        }, INITIAL_DISABLE_MS);
+    }
+
+    function setButtonsLocked(isLocked) {
+        actionButtons.forEach(btn => {
+            if (isLocked) {
+                btn.dataset.locked = 'true';
+                btn.disabled = true;
+            } else {
+                delete btn.dataset.locked;
+                btn.disabled = false;
+            }
+        });
+    }
+
+    actionButtons.forEach(btn => {
         btn.addEventListener('click', async () => {
+            if (btn.disabled) {
+                return;
+            }
+            if (!url || !token) {
+                console.error('Resolve endpoint is not configured.');
+                return;
+            }
             const body = new URLSearchParams({
                 action: btn.dataset.action,
-                leftBibId,
-                rightBibId
+                leftBibId: leftBibIdValue,
+                rightBibId: rightBibIdValue
             });
+            const currentPairUrl = window.location.href;
             try {
+                setButtonsLocked(true);
                 const response = await fetch(url, {
                     method: 'POST',
                     headers: {
@@ -153,6 +329,7 @@
                 if (!response.ok) {
                     const message = data.error || 'Unable to save this decision. Remove any conflicting merges and try again.';
                     window.alert(message);
+                    setButtonsLocked(false);
                     return;
                 }
                 const badge = document.querySelector('.menu .badge');
@@ -168,10 +345,19 @@
                     disabled.textContent = currentPairControl.textContent;
                     currentPairControl.replaceWith(disabled);
                 }
+                rememberLastAction({
+                    action: btn.dataset.action,
+                    leftBibId: Number.isNaN(leftBibId) ? leftBibIdValue : leftBibId,
+                    rightBibId: Number.isNaN(rightBibId) ? rightBibIdValue : rightBibId,
+                    leftTitle,
+                    rightTitle,
+                    reviewUrl: currentPairUrl
+                });
                 const nextUrl = data.nextPairUrl || reviewUrl || window.location.href;
                 window.location.href = nextUrl;
             } catch (err) {
                 console.error(err);
+                setButtonsLocked(false);
             }
         });
     });

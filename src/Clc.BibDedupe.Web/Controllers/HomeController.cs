@@ -74,6 +74,8 @@ namespace Clc.BibDedupe.Web.Controllers
             {
                 LeftBibId = leftBibId.Value,
                 RightBibId = rightBibId.Value,
+                LeftTitle = pair?.LeftTitle,
+                RightTitle = pair?.RightTitle,
                 LeftBibXml = MarcXmlRenderer.TransformFile(left.BibXml, "marc-to-html.xslt"),
                 RightBibXml = MarcXmlRenderer.TransformFile(right.BibXml, "marc-to-html.xslt"),
                 LeftItems = left.Items,
