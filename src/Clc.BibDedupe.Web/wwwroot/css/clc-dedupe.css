@@ -136,8 +136,8 @@ html, body {
     display: flex;
     align-items: center;
     gap: 12px;
-    min-width: 260px;
-    max-width: min(90vw, 520px);
+    min-width: min(90vw, 390px);
+    max-width: min(90vw, 780px);
     pointer-events: auto;
     opacity: 0;
     transform: translateY(-10px);
