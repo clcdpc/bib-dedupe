@@ -18,8 +18,7 @@
     <form class="row g-3 align-items-center" method="get">
         <div class="col-12 col-lg">
             <div class="d-flex flex-wrap align-items-center gap-3">
-                <div class="d-flex align-items-center gap-2">
-                    <label class="form-label small mb-0 text-muted" for="tom">TOM</label>
+                <div>
                     <select class="form-select form-select-sm" id="tom" name="tom">
                         <option value="" selected="@(Model.SelectedTomId is null ? "selected" : null)">All TOMs</option>
                         @foreach (var tomOption in Model.TomOptions ?? Enumerable.Empty<TomOption>())
@@ -28,8 +27,7 @@
                         }
                     </select>
                 </div>
-                <div class="d-flex align-items-center gap-2">
-                    <label class="form-label small mb-0 text-muted" for="matchType">Match Type</label>
+                <div>
                     <select class="form-select form-select-sm" id="matchType" name="matchType">
                         <option value="" selected="@(string.IsNullOrWhiteSpace(Model.SelectedMatchType) ? "selected" : null)">All match types</option>
                         @foreach (var matchTypeOption in Model.MatchTypeOptions ?? Enumerable.Empty<string>())
@@ -39,8 +37,7 @@
                         }
                     </select>
                 </div>
-                <div class="d-flex align-items-center gap-2">
-                    <label class="form-label small mb-0 text-muted" for="hasHolds">Holds</label>
+                <div>
                     <select class="form-select form-select-sm" id="hasHolds" name="hasHolds">
                         <option value="" selected="@(Model.SelectedHasHolds is null ? "selected" : null)">All pairs</option>
                         <option value="true" selected="@(Model.SelectedHasHolds == true ? "selected" : null)">Has holds</option>
