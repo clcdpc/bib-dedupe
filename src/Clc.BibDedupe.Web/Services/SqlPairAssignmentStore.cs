@@ -1,3 +1,4 @@
+using System;
 using System.Data;
 using Dapper;
 
@@ -23,4 +24,9 @@ WHEN NOT MATCHED THEN
         db.ExecuteAsync(
             $"DELETE FROM {Table} WHERE LeftBibId = @LeftBibId AND RightBibId = @RightBibId AND UserEmail = @UserEmail",
             new { UserEmail = userId, LeftBibId = leftBibId, RightBibId = rightBibId });
+
+    public Task<int> ReleaseExpiredAsync(DateTimeOffset olderThan) =>
+        db.ExecuteAsync(
+            $"DELETE FROM {Table} WHERE AssignedAt < @Cutoff",
+            new { Cutoff = olderThan });
 }

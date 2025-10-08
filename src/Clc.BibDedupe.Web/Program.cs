@@ -5,6 +5,7 @@ using System.Security.Claims;
 using Microsoft.Data.SqlClient;
 using Clc.BibDedupe.Web.Data;
 using Clc.BibDedupe.Web.Services;
+using Clc.BibDedupe.Web.Options;
 using Clc.BibDedupe.Web.Authorization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -18,6 +19,7 @@ using Clc.BibDedupe.Web.Extensions;
 using Hangfire;
 using Hangfire.MemoryStorage;
 using Hangfire.SqlServer;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Clc.BibDedupe.Web
 {
@@ -49,6 +51,9 @@ namespace Clc.BibDedupe.Web
 
             var bibDedupeConn = builder.Configuration.GetConnectionString("BibDedupeDb");
             var decisionProcessingConn = builder.Configuration.GetConnectionString("DecisionProcessingDb");
+
+            builder.Services.Configure<PairAssignmentCleanupOptions>(
+                builder.Configuration.GetSection("PairAssignmentCleanup"));
 
             if (string.IsNullOrWhiteSpace(bibDedupeConn))
             {
@@ -107,7 +112,8 @@ namespace Clc.BibDedupe.Web
 
             builder.Services
                 .AddScoped<IDecisionSubmissionService, DecisionSubmissionService>()
-                .AddTransient<DecisionProcessingJob>();
+                .AddTransient<DecisionProcessingJob>()
+                .AddTransient<PairAssignmentCleanupJob>();
 
             builder.Services.AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
                 .AddMicrosoftIdentityWebApp(builder.Configuration.GetSection("AzureAd"));
@@ -174,6 +180,15 @@ namespace Clc.BibDedupe.Web
                 .AddMicrosoftIdentityUI();
 
             var app = builder.Build();
+
+            using (var scope = app.Services.CreateScope())
+            {
+                var recurringJobs = scope.ServiceProvider.GetRequiredService<IRecurringJobManager>();
+                recurringJobs.AddOrUpdate<PairAssignmentCleanupJob>(
+                    "pair-assignment-cleanup",
+                    job => job.CleanupAsync(),
+                    Cron.Daily(3));
+            }
 
             // Configure the HTTP request pipeline.
             if (!app.Environment.IsDevelopment())
