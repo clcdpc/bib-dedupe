@@ -131,7 +131,7 @@
     const url = page.dataset.resolveUrl;
     const leftBibId = parseInt(page.dataset.leftBibId, 10);
     const rightBibId = parseInt(page.dataset.rightBibId, 10);
-    const returnUrl = page.dataset.returnUrl;
+    const reviewUrl = page.dataset.reviewUrl;
     document.querySelectorAll('.controls button').forEach(btn => {
         btn.addEventListener('click', async () => {
             const body = new URLSearchParams({
@@ -149,8 +149,8 @@
                     },
                     body: body.toString()
                 });
+                const data = await response.json().catch(() => ({}));
                 if (!response.ok) {
-                    const data = await response.json().catch(() => ({}));
                     const message = data.error || 'Unable to save this decision. Remove any conflicting merges and try again.';
                     window.alert(message);
                     return;
@@ -168,9 +168,8 @@
                     disabled.textContent = currentPairControl.textContent;
                     currentPairControl.replaceWith(disabled);
                 }
-                if (returnUrl) {
-                    window.location.href = returnUrl;
-                }
+                const nextUrl = data.nextPairUrl || reviewUrl || window.location.href;
+                window.location.href = nextUrl;
             } catch (err) {
                 console.error(err);
             }

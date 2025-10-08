@@ -43,7 +43,7 @@ namespace Clc.BibDedupe.Web.Controllers
             return View(model);
         }
 
-        public async Task<IActionResult> Review(int? leftBibId, int? rightBibId, string? returnUrl)
+        public async Task<IActionResult> Review(int? leftBibId, int? rightBibId)
         {
             var userEmail = User.GetEmail();
             BibDupePair? pair;
@@ -87,8 +87,7 @@ namespace Clc.BibDedupe.Web.Controllers
                     .ToList() ?? new List<PairMatch>(),
                 LeftHoldCount = pair?.LeftHoldCount ?? 0,
                 RightHoldCount = pair?.RightHoldCount ?? 0,
-                TotalHoldCount = pair?.TotalHoldCount ?? 0,
-                ReturnUrl = returnUrl
+                TotalHoldCount = pair?.TotalHoldCount ?? 0
             };
 
             await currentPairStore.SetAsync(userEmail, new CurrentPair
@@ -115,7 +114,10 @@ namespace Clc.BibDedupe.Web.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Resolve([FromForm] string action, [FromForm] int leftBibId, [FromForm] int rightBibId)
+        public async Task<IActionResult> Resolve(
+            [FromForm] string action,
+            [FromForm] int leftBibId,
+            [FromForm] int rightBibId)
         {
             if (!Enum.TryParse(action, out BibDupePairAction parsed))
             {
@@ -160,7 +162,33 @@ namespace Clc.BibDedupe.Web.Controllers
 
             await pairAssignmentStore.ReleaseAsync(userEmail, leftBibId, rightBibId);
             await currentPairStore.ClearAsync(userEmail);
-            return Ok();
+
+            var filters = await pairFilterStore.GetAsync(userEmail);
+            var nextPair = (await repository.GetAsync(
+                    userEmail,
+                    filters?.TomId,
+                    filters?.MatchType,
+                    filters?.HasHolds))
+                .FirstOrDefault(p => p.LeftBibId != leftBibId || p.RightBibId != rightBibId);
+
+            var nextPairUrl = nextPair is not null
+                ? Url.Action(
+                    nameof(Review),
+                    new
+                    {
+                        leftBibId = nextPair.LeftBibId,
+                        rightBibId = nextPair.RightBibId
+                    })
+                : Url.Action(nameof(Review));
+
+            nextPairUrl ??= Url.Action("Index", "Pairs");
+            nextPairUrl ??= "/";
+
+            return Ok(new
+            {
+                nextPairUrl,
+                hasNextPair = nextPair is not null
+            });
         }
     }
 }
