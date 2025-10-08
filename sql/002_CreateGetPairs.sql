@@ -72,6 +72,16 @@ RETURN (
             )
         )
         AND (
+            @UserEmail IS NULL
+            OR NOT EXISTS (
+                SELECT 1
+                FROM BibDedupe.PairAssignments pa
+                WHERE pa.LeftBibId = p.LeftBibId
+                  AND pa.RightBibId = p.RightBibId
+                  AND pa.UserEmail <> @UserEmail
+            )
+        )
+        AND (
             @TomId IS NULL
             OR p.PrimaryMARCTOMID = @TomId
         )

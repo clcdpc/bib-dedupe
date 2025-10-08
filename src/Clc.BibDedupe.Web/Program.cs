@@ -55,6 +55,7 @@ namespace Clc.BibDedupe.Web
                 builder.Services
                     .AddSingleton<IBibDupePairRepository, TestFileBibDupePairRepository>()
                     .AddSingleton<IDecisionStore, SessionDecisionStore>()
+                    .AddSingleton<IPairAssignmentStore, InMemoryPairAssignmentStore>()
                     .AddSingleton<IDecisionBatchTracker, InMemoryDecisionBatchTracker>()
                     .AddSingleton<IDecisionProcessingExecutor, NoOpDecisionProcessingExecutor>();
 
@@ -73,6 +74,7 @@ namespace Clc.BibDedupe.Web
                         new SqlDbConnectionFactory(decisionProcessingConn!))
                     .AddScoped<IBibDupePairRepository, BibDupePairRepository>()
                     .AddScoped<IDecisionStore, SqlDecisionStore>()
+                    .AddScoped<IPairAssignmentStore, SqlPairAssignmentStore>()
                     .AddScoped<IDecisionBatchTracker, SqlDecisionBatchTracker>()
                     .AddScoped<IDecisionProcessingExecutor, SqlDecisionProcessingExecutor>();
 

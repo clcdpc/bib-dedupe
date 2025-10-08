@@ -17,12 +17,12 @@ namespace Clc.BibDedupe.Web.Data
             _db = db;
         }
 
-        public async Task<IEnumerable<BibDupePair>> GetAsync()
+        public async Task<IEnumerable<BibDupePair>> GetAsync(string? userEmail = null)
         {
             const string sql = @"SELECT PairId, PrimaryMARCTOMID AS PrimaryMarcTomId, LeftBibId, RightBibId,
        LeftTitle, LeftAuthor, RightTitle, RightAuthor, TOM, MatchesJson
-FROM BibDedupe.GetPairs(DEFAULT, NULL, NULL, NULL, NULL)";
-            var rows = await _db.QueryAsync<PairRow>(sql);
+FROM BibDedupe.GetPairs(DEFAULT, @UserEmail, NULL, NULL, NULL)";
+            var rows = await _db.QueryAsync<PairRow>(sql, new { UserEmail = userEmail });
             return rows.Select(MapRow).ToList();
         }
 
@@ -77,15 +77,15 @@ ORDER BY pm.MatchType;";
             };
         }
 
-        public async Task<BibDupePair?> GetByBibIdsAsync(int leftBibId, int rightBibId)
+        public async Task<BibDupePair?> GetByBibIdsAsync(int leftBibId, int rightBibId, string? userEmail = null)
         {
             const string sql = @"SELECT PairId, PrimaryMARCTOMID AS PrimaryMarcTomId, LeftBibId, RightBibId,
        LeftTitle, LeftAuthor, RightTitle, RightAuthor, TOM, MatchesJson
- FROM BibDedupe.GetPairs(@Top, NULL, NULL, NULL, NULL)
+ FROM BibDedupe.GetPairs(@Top, @UserEmail, NULL, NULL, NULL)
  WHERE LeftBibId = @LeftBibId AND RightBibId = @RightBibId;";
             var row = await _db.QueryFirstOrDefaultAsync<PairRow>(
                 sql,
-                new { LeftBibId = leftBibId, RightBibId = rightBibId, Top = UnlimitedPairsLimit });
+                new { LeftBibId = leftBibId, RightBibId = rightBibId, Top = UnlimitedPairsLimit, UserEmail = userEmail });
             return row is null ? null : MapRow(row);
         }
 
