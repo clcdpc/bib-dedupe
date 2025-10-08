@@ -128,6 +128,7 @@ namespace Clc.BibDedupe.Web.Controllers
             var userEmail = User.GetEmail();
             var pair = await repository.GetByBibIdsAsync(leftBibId, rightBibId, userEmail);
 
+            var isReReview = false;
             DecisionItem decision;
             if (pair is not null)
             {
@@ -161,6 +162,7 @@ namespace Clc.BibDedupe.Web.Controllers
                 }
 
                 decision = existingDecision with { Action = parsed };
+                isReReview = true;
             }
             try
             {
@@ -176,23 +178,35 @@ namespace Clc.BibDedupe.Web.Controllers
             await pairAssignmentStore.ReleaseAsync(userEmail, leftBibId, rightBibId);
             await currentPairStore.ClearAsync(userEmail);
 
-            var filters = await pairFilterStore.GetAsync(userEmail);
-            var nextPair = (await repository.GetAsync(
-                    userEmail,
-                    filters?.TomId,
-                    filters?.MatchType,
-                    filters?.HasHolds))
-                .FirstOrDefault(p => p.LeftBibId != leftBibId || p.RightBibId != rightBibId);
+            string? nextPairUrl = null;
+            bool hasNextPair = false;
 
-            var nextPairUrl = nextPair is not null
-                ? Url.Action(
-                    nameof(Review),
-                    new
-                    {
-                        leftBibId = nextPair.LeftBibId,
-                        rightBibId = nextPair.RightBibId
-                    })
-                : Url.Action(nameof(Review));
+            if (isReReview)
+            {
+                nextPairUrl = Url.Action("Index", "Decisions");
+            }
+            else
+            {
+                var filters = await pairFilterStore.GetAsync(userEmail);
+                var nextPair = (await repository.GetAsync(
+                        userEmail,
+                        filters?.TomId,
+                        filters?.MatchType,
+                        filters?.HasHolds))
+                    .FirstOrDefault(p => p.LeftBibId != leftBibId || p.RightBibId != rightBibId);
+
+                nextPairUrl = nextPair is not null
+                    ? Url.Action(
+                        nameof(Review),
+                        new
+                        {
+                            leftBibId = nextPair.LeftBibId,
+                            rightBibId = nextPair.RightBibId
+                        })
+                    : Url.Action(nameof(Review));
+
+                hasNextPair = nextPair is not null;
+            }
 
             nextPairUrl ??= Url.Action("Index", "Pairs");
             nextPairUrl ??= "/";
@@ -200,7 +214,8 @@ namespace Clc.BibDedupe.Web.Controllers
             return Ok(new
             {
                 nextPairUrl,
-                hasNextPair = nextPair is not null
+                hasNextPair,
+                reReview = isReReview
             });
         }
     }

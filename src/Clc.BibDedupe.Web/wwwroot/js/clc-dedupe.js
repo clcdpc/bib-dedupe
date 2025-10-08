@@ -333,7 +333,7 @@
                     return;
                 }
                 const badge = document.querySelector('.menu .badge');
-                if (badge) {
+                if (badge && !data.reReview) {
                     badge.textContent = (parseInt(badge.textContent || '0', 10) + 1).toString();
                 }
                 const currentPairControl = document.querySelector('.menu [data-current-pair]');
