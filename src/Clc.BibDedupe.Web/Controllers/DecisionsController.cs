@@ -29,8 +29,7 @@ public class DecisionsController(
 
     public IActionResult Review(int leftBibId, int rightBibId)
     {
-        var returnUrl = Url.Action(nameof(Index));
-        return RedirectToAction("Review", "Home", new { leftBibId, rightBibId, returnUrl });
+        return RedirectToAction("Review", "Home", new { leftBibId, rightBibId });
     }
 
     [HttpPost]

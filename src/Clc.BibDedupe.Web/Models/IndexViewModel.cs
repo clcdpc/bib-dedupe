@@ -24,6 +24,5 @@ namespace Clc.BibDedupe.Web.Models
             new("CircStatus", "Status"),
             new("Barcode", "Barcode")
         };
-        public string? ReturnUrl { get; set; }
     }
 }
