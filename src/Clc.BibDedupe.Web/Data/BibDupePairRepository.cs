@@ -81,9 +81,11 @@ ORDER BY pm.MatchType;";
         {
             const string sql = @"SELECT PairId, PrimaryMARCTOMID AS PrimaryMarcTomId, LeftBibId, RightBibId,
        LeftTitle, LeftAuthor, RightTitle, RightAuthor, TOM, MatchesJson
-FROM BibDedupe.GetPairs(@Top, NULL)
-WHERE LeftBibId = @LeftBibId AND RightBibId = @RightBibId;";
-            var row = await _db.QueryFirstOrDefaultAsync<PairRow>(sql, new { LeftBibId = leftBibId, RightBibId = rightBibId, Top = UnlimitedPairsLimit });
+ FROM BibDedupe.GetPairs(@Top, NULL, NULL, NULL, NULL)
+ WHERE LeftBibId = @LeftBibId AND RightBibId = @RightBibId;";
+            var row = await _db.QueryFirstOrDefaultAsync<PairRow>(
+                sql,
+                new { LeftBibId = leftBibId, RightBibId = rightBibId, Top = UnlimitedPairsLimit });
             return row is null ? null : MapRow(row);
         }
 
