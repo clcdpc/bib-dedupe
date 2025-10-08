@@ -7,7 +7,7 @@ using Clc.BibDedupe.Web.Models;
 
 namespace Clc.BibDedupe.Web.Services;
 
-public class SqlDecisionStore(IDbConnection db, IPairFilterStore pairFilterStore) : IDecisionStore
+public class SqlDecisionStore(IDbConnection db) : IDecisionStore
 {
     private const string Table = "BibDedupe.DecisionQueue";
 
@@ -49,21 +49,16 @@ public class SqlDecisionStore(IDbConnection db, IPairFilterStore pairFilterStore
 
     public async Task<IEnumerable<DecisionItem>> GetAllAsync(string userId)
     {
-        var filters = await pairFilterStore.GetAsync(userId);
-
         const string query = @"SELECT LeftBibId, RightBibId, ActionId, PrimaryMarcTomId,
                                          LeftTitle, LeftAuthor, RightTitle, RightAuthor,
                                          TOM, MatchesJson
-                                  FROM BibDedupe.GetDecisionQueue(@UserEmail, @TomId, @MatchType, @HasHolds)";
+                                  FROM BibDedupe.GetDecisionQueue(@UserEmail)";
 
         var rows = (await db.QueryAsync<DecisionRow>(
             query,
             new
             {
-                UserEmail = userId,
-                TomId = filters?.TomId,
-                MatchType = filters?.MatchType,
-                HasHolds = filters?.HasHolds
+                UserEmail = userId
             })).ToList();
 
         var decisions = new List<DecisionItem>(rows.Count);

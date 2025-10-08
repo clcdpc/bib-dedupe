@@ -3,10 +3,7 @@ IF OBJECT_ID('BibDedupe.GetDecisionQueue','IF') IS NOT NULL
 GO
 
 CREATE FUNCTION [BibDedupe].[GetDecisionQueue](
-    @UserEmail NVARCHAR(256),
-    @TomId INT = NULL,
-    @MatchType NVARCHAR(50) = NULL,
-    @HasHolds BIT = NULL
+    @UserEmail NVARCHAR(256)
 )
 RETURNS TABLE
 AS
@@ -33,7 +30,7 @@ RETURN (
             gp.RightAuthor,
             gp.TOM,
             gp.MatchesJson
-        FROM BibDedupe.GetPairs(2147483647, NULL, @TomId, @MatchType, @HasHolds) gp
+        FROM BibDedupe.GetPairs(2147483647, NULL, NULL, NULL, NULL) gp
         WHERE gp.LeftBibId = dq.LeftBibId
           AND gp.RightBibId = dq.RightBibId
     ) p
