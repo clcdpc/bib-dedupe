@@ -108,7 +108,8 @@ namespace Clc.BibDedupe.Web
 
             builder.Services
                 .AddSingleton<IHttpContextAccessor, HttpContextAccessor>()
-                .AddSingleton<ICurrentPairStore, SessionCurrentPairStore>();
+                .AddSingleton<ICurrentPairStore, SessionCurrentPairStore>()
+                .AddSingleton<IPairFilterStore, SessionPairFilterStore>();
 
             builder.Services
                 .AddScoped<IDecisionSubmissionService, DecisionSubmissionService>()

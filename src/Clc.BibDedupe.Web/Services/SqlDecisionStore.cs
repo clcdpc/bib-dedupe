@@ -1,12 +1,13 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Threading.Tasks;
 using Dapper;
 using Clc.BibDedupe.Web.Models;
 
 namespace Clc.BibDedupe.Web.Services;
 
-public class SqlDecisionStore(IDbConnection db) : IDecisionStore
+public class SqlDecisionStore(IDbConnection db, IPairFilterStore pairFilterStore) : IDecisionStore
 {
     private const string Table = "BibDedupe.DecisionQueue";
 
@@ -48,16 +49,70 @@ public class SqlDecisionStore(IDbConnection db) : IDecisionStore
 
     public async Task<IEnumerable<DecisionItem>> GetAllAsync(string userId)
     {
+        var summaries = await LoadDecisionSummariesAsync(userId);
+        if (summaries.Count == 0)
+        {
+            return summaries;
+        }
+
+        var filters = await pairFilterStore.GetAsync(userId);
+        var parameters = new
+        {
+            UserEmail = userId,
+            Top = int.MaxValue,
+            TomId = filters?.TomId,
+            MatchType = filters?.MatchType,
+            HasHolds = filters?.HasHolds
+        };
+
         var rows = await db.QueryAsync<DecisionRow>(
             $@"SELECT d.LeftBibId, d.RightBibId, d.ActionId, p.PrimaryMARCTOMID AS PrimaryMarcTomId,
                       p.LeftTitle, p.LeftAuthor, p.RightTitle, p.RightAuthor,
                       p.TOM, p.MatchesJson
                FROM {Table} d
-               JOIN BibDedupe.GetPairs(@Top, NULL) p ON d.LeftBibId = p.LeftBibId AND d.RightBibId = p.RightBibId
+               JOIN BibDedupe.GetPairs(@Top, NULL, @TomId, @MatchType, @HasHolds) p ON d.LeftBibId = p.LeftBibId AND d.RightBibId = p.RightBibId
                WHERE d.UserEmail = @UserEmail",
-            new { UserEmail = userId, Top = int.MaxValue });
+            parameters);
 
-        return rows.Select(MapRow).ToList();
+        var rowsByPair = rows.ToDictionary(r => (r.LeftBibId, r.RightBibId));
+
+        if (rowsByPair.Count < summaries.Count && filters is not null && !filters.IsEmpty)
+        {
+            var fallbackRows = await db.QueryAsync<DecisionRow>(
+                $@"SELECT d.LeftBibId, d.RightBibId, d.ActionId, p.PrimaryMARCTOMID AS PrimaryMarcTomId,
+                          p.LeftTitle, p.LeftAuthor, p.RightTitle, p.RightAuthor,
+                          p.TOM, p.MatchesJson
+                   FROM {Table} d
+                   JOIN BibDedupe.GetPairs(@Top, NULL, NULL, NULL, NULL) p ON d.LeftBibId = p.LeftBibId AND d.RightBibId = p.RightBibId
+                   WHERE d.UserEmail = @UserEmail",
+                new { UserEmail = userId, Top = int.MaxValue });
+
+            foreach (var row in fallbackRows)
+            {
+                rowsByPair.TryAdd((row.LeftBibId, row.RightBibId), row);
+            }
+        }
+
+        var decisions = new List<DecisionItem>(summaries.Count);
+
+        foreach (var summary in summaries)
+        {
+            if (rowsByPair.TryGetValue((summary.LeftBibId, summary.RightBibId), out var row))
+            {
+                decisions.Add(MapRow(row));
+            }
+            else
+            {
+                decisions.Add(new DecisionItem
+                {
+                    LeftBibId = summary.LeftBibId,
+                    RightBibId = summary.RightBibId,
+                    Action = summary.Action
+                });
+            }
+        }
+
+        return decisions;
     }
 
     public Task RemoveAsync(string userId, int leftBibId, int rightBibId) =>

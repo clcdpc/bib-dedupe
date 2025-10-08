@@ -2,13 +2,14 @@ using System;
 using Clc.BibDedupe.Web.Data;
 using Clc.BibDedupe.Web.Models;
 using Clc.BibDedupe.Web.Extensions;
+using Clc.BibDedupe.Web.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 
 namespace Clc.BibDedupe.Web.Controllers;
 
 [Authorize(Policy = "AuthorizedUser")]
-public class PairsController(IBibDupePairRepository repository) : Controller
+public class PairsController(IBibDupePairRepository repository, IPairFilterStore pairFilterStore) : Controller
 {
     private const int DefaultPageSize = 20;
 
@@ -16,7 +17,7 @@ public class PairsController(IBibDupePairRepository repository) : Controller
     {
         var email = User.GetEmail();
         var sanitizedTom = tom.HasValue && tom.Value > 0 ? tom : null;
-        var sanitizedMatchType = string.IsNullOrWhiteSpace(matchType) ? null : matchType;
+        var sanitizedMatchType = string.IsNullOrWhiteSpace(matchType) ? null : matchType.Trim();
         var sanitizedHasHolds = hasHolds switch
         {
             null or "" => (bool?)null,
@@ -24,6 +25,12 @@ public class PairsController(IBibDupePairRepository repository) : Controller
             var value when value.Equals("false", StringComparison.OrdinalIgnoreCase) => false,
             _ => (bool?)null
         };
+        await pairFilterStore.SetAsync(email, new PairFilterOptions
+        {
+            TomId = sanitizedTom,
+            MatchType = sanitizedMatchType,
+            HasHolds = sanitizedHasHolds
+        });
         var result = await repository.GetPagedAsync(page, DefaultPageSize, email, sanitizedTom, sanitizedMatchType, sanitizedHasHolds);
         var model = new PairsListViewModel
         {
