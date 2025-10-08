@@ -20,7 +20,8 @@ namespace Clc.BibDedupe.Web.Controllers
         IBibDupePairRepository repository,
         IDecisionStore decisionStore,
         ICurrentPairStore currentPairStore,
-        IPairAssignmentStore pairAssignmentStore) : Controller
+        IPairAssignmentStore pairAssignmentStore,
+        IPairFilterStore pairFilterStore) : Controller
     {
         [AllowAnonymous]
         public IActionResult Index()
@@ -48,12 +49,12 @@ namespace Clc.BibDedupe.Web.Controllers
             BibDupePair? pair;
             if (leftBibId is null || rightBibId is null)
             {
-                var decidedPairs = (await decisionStore.GetAllAsync(userEmail))
-                    .Select(d => (d.LeftBibId, d.RightBibId))
-                    .ToHashSet();
-
-                pair = (await repository.GetAsync(userEmail))
-                    .FirstOrDefault(p => !decidedPairs.Contains((p.LeftBibId, p.RightBibId)));
+                var filters = await pairFilterStore.GetAsync(userEmail);
+                pair = (await repository.GetAsync(
+                    userEmail,
+                    filters?.TomId,
+                    filters?.MatchType,
+                    filters?.HasHolds)).FirstOrDefault();
                 if (pair is null)
                 {
                     await currentPairStore.ClearAsync(userEmail);

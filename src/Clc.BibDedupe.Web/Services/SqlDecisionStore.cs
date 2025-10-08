@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Threading.Tasks;
 using Dapper;
 using Clc.BibDedupe.Web.Models;
 
@@ -48,16 +49,38 @@ public class SqlDecisionStore(IDbConnection db) : IDecisionStore
 
     public async Task<IEnumerable<DecisionItem>> GetAllAsync(string userId)
     {
-        var rows = await db.QueryAsync<DecisionRow>(
-            $@"SELECT d.LeftBibId, d.RightBibId, d.ActionId, p.PrimaryMARCTOMID AS PrimaryMarcTomId,
-                      p.LeftTitle, p.LeftAuthor, p.RightTitle, p.RightAuthor,
-                      p.TOM, p.MatchesJson
-               FROM {Table} d
-               JOIN BibDedupe.GetPairs(@Top, NULL) p ON d.LeftBibId = p.LeftBibId AND d.RightBibId = p.RightBibId
-               WHERE d.UserEmail = @UserEmail",
-            new { UserEmail = userId, Top = int.MaxValue });
+        const string query = @"SELECT LeftBibId, RightBibId, ActionId, PrimaryMarcTomId,
+                                         LeftTitle, LeftAuthor, RightTitle, RightAuthor,
+                                         TOM, MatchesJson
+                                  FROM BibDedupe.GetDecisionQueue(@UserEmail)";
 
-        return rows.Select(MapRow).ToList();
+        var rows = (await db.QueryAsync<DecisionRow>(
+            query,
+            new
+            {
+                UserEmail = userId
+            })).ToList();
+
+        var decisions = new List<DecisionItem>(rows.Count);
+
+        foreach (var row in rows)
+        {
+            if (row.PrimaryMarcTomId.HasValue)
+            {
+                decisions.Add(MapRow(row));
+            }
+            else
+            {
+                decisions.Add(new DecisionItem
+                {
+                    LeftBibId = row.LeftBibId,
+                    RightBibId = row.RightBibId,
+                    Action = (BibDupePairAction)row.ActionId
+                });
+            }
+        }
+
+        return decisions;
     }
 
     public Task RemoveAsync(string userId, int leftBibId, int rightBibId) =>
@@ -78,7 +101,7 @@ public class SqlDecisionStore(IDbConnection db) : IDecisionStore
         RightTitle = row.RightTitle,
         RightAuthor = row.RightAuthor,
         TOM = row.TOM,
-        PrimaryMarcTomId = row.PrimaryMarcTomId,
+        PrimaryMarcTomId = row.PrimaryMarcTomId!.Value,
         Action = (BibDupePairAction)row.ActionId,
         Matches = PairMatch.FromJson(row.MatchesJson)
     };
@@ -88,13 +111,13 @@ public class SqlDecisionStore(IDbConnection db) : IDecisionStore
         public int LeftBibId { get; init; }
         public int RightBibId { get; init; }
         public int ActionId { get; init; }
-        public int PrimaryMarcTomId { get; init; }
+        public int? PrimaryMarcTomId { get; init; }
         public string? LeftTitle { get; init; }
         public string? LeftAuthor { get; init; }
         public string? RightTitle { get; init; }
         public string? RightAuthor { get; init; }
         public string? TOM { get; init; }
-        public string MatchesJson { get; init; } = string.Empty;
+        public string? MatchesJson { get; init; }
     }
 
     private async Task<List<DecisionItem>> LoadDecisionSummariesAsync(string userId)

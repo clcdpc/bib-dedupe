@@ -65,8 +65,43 @@ public class TestFileBibDupePairRepository : IBibDupePairRepository
     private IEnumerable<BibDupePair> GeneratePairs(int count)
         => Enumerable.Range(0, count).Select(_ => CreatePair());
 
-    public Task<IEnumerable<BibDupePair>> GetAsync(string? userEmail = null)
-        => Task.FromResult<IEnumerable<BibDupePair>>(_pairs);
+    public Task<IEnumerable<BibDupePair>> GetAsync(
+        string? userEmail = null,
+        int? tomId = null,
+        string? matchType = null,
+        bool? hasHolds = null)
+    {
+        var filtered = ApplyFilters(_pairs, tomId, matchType, hasHolds);
+        return Task.FromResult<IEnumerable<BibDupePair>>(filtered.ToList());
+    }
+
+    private static IEnumerable<BibDupePair> ApplyFilters(
+        IEnumerable<BibDupePair> source,
+        int? tomId,
+        string? matchType,
+        bool? hasHolds)
+    {
+        var result = source;
+
+        if (tomId.HasValue)
+        {
+            result = result.Where(p => p.PrimaryMarcTomId == tomId.Value);
+        }
+
+        if (!string.IsNullOrWhiteSpace(matchType))
+        {
+            result = result.Where(p => p.Matches.Any(m => string.Equals(m.MatchType, matchType, StringComparison.OrdinalIgnoreCase)));
+        }
+
+        result = result.Where(p => hasHolds switch
+        {
+            true => p.LeftHoldCount > 0 || p.RightHoldCount > 0,
+            false => p.LeftHoldCount == 0 && p.RightHoldCount == 0,
+            _ => true
+        });
+
+        return result;
+    }
 
     public Task<PairsPageResult> GetPagedAsync(
         int page,
@@ -76,44 +111,19 @@ public class TestFileBibDupePairRepository : IBibDupePairRepository
         string? matchType = null,
         bool? hasHolds = null)
     {
-        var filtered = _pairs.AsEnumerable();
-
-        bool MatchesHoldFilter(BibDupePair pair) => hasHolds switch
-        {
-            true => pair.LeftHoldCount > 0 || pair.RightHoldCount > 0,
-            false => pair.LeftHoldCount == 0 && pair.RightHoldCount == 0,
-            _ => true
-        };
-
-        if (tomId.HasValue)
-        {
-            filtered = filtered.Where(p => p.PrimaryMarcTomId == tomId.Value);
-        }
-
-        if (!string.IsNullOrWhiteSpace(matchType))
-        {
-            filtered = filtered.Where(p => p.Matches.Any(m => string.Equals(m.MatchType, matchType, StringComparison.OrdinalIgnoreCase)));
-        }
-
-        filtered = filtered.Where(MatchesHoldFilter);
-
-        var filteredList = filtered.ToList();
+        var filteredList = ApplyFilters(_pairs, tomId, matchType, hasHolds).ToList();
         var total = filteredList.Count;
         var skip = (page - 1) * pageSize;
         var items = skip >= total ? new List<BibDupePair>() : filteredList.Skip(skip).Take(pageSize).ToList();
 
-        var tomOptions = _pairs
-            .Where(p => string.IsNullOrWhiteSpace(matchType) || p.Matches.Any(m => string.Equals(m.MatchType, matchType, StringComparison.OrdinalIgnoreCase)))
-            .Where(MatchesHoldFilter)
+        var tomOptions = ApplyFilters(_pairs, null, matchType, hasHolds)
             .GroupBy(p => new { p.PrimaryMarcTomId, p.TOM })
             .Where(g => g.Key.PrimaryMarcTomId != 0 && !string.IsNullOrWhiteSpace(g.Key.TOM))
             .OrderBy(g => g.Key.TOM, StringComparer.OrdinalIgnoreCase)
             .Select(g => new TomOption(g.Key.PrimaryMarcTomId, g.Key.TOM!))
             .ToList();
 
-        var matchTypeOptions = _pairs
-            .Where(p => !tomId.HasValue || p.PrimaryMarcTomId == tomId.Value)
-            .Where(MatchesHoldFilter)
+        var matchTypeOptions = ApplyFilters(_pairs, tomId, null, hasHolds)
             .SelectMany(p => p.Matches.Select(m => m.MatchType))
             .Where(mt => !string.IsNullOrWhiteSpace(mt))
             .Distinct(StringComparer.OrdinalIgnoreCase)
