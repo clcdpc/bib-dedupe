@@ -1,3 +1,4 @@
+@using System
 @using System.Linq
 @using Clc.BibDedupe.Web.Models
 @model PairsListViewModel
@@ -8,17 +9,45 @@
     var totalPages = System.Math.Max(Model.TotalPages, 1);
     var currentPage = System.Math.Min(System.Math.Max(Model.Page, 1), totalPages);
     var totalPairs = System.Math.Max(Model.TotalCount, 0);
+    var hasHoldsRouteValue = Model.SelectedHasHolds.HasValue
+        ? Model.SelectedHasHolds.Value.ToString().ToLowerInvariant()
+        : null;
 }
 
 <div class="pairs-toolbar mb-4">
-    <form class="row row-cols-lg-auto g-3 align-items-center" method="get">
-        <div class="col-auto">
-            <label for="pageSize" class="form-label fw-semibold text-uppercase small text-muted mb-0">Page Size</label>
+    <form class="row g-3 align-items-center" method="get">
+        <div class="col-12 col-lg">
+            <div class="d-flex flex-wrap align-items-center gap-3">
+                <div>
+                    <select class="form-select form-select-sm" id="tom" name="tom">
+                        <option value="" selected="@(Model.SelectedTomId is null ? "selected" : null)">All TOMs</option>
+                        @foreach (var tomOption in Model.TomOptions ?? Enumerable.Empty<TomOption>())
+                        {
+                            <option value="@tomOption.Id" selected="@(tomOption.Id == Model.SelectedTomId ? "selected" : null)">@tomOption.Description</option>
+                        }
+                    </select>
+                </div>
+                <div>
+                    <select class="form-select form-select-sm" id="matchType" name="matchType">
+                        <option value="" selected="@(string.IsNullOrWhiteSpace(Model.SelectedMatchType) ? "selected" : null)">All match types</option>
+                        @foreach (var matchTypeOption in Model.MatchTypeOptions ?? Enumerable.Empty<string>())
+                        {
+                            var isSelected = string.Equals(matchTypeOption, Model.SelectedMatchType, StringComparison.OrdinalIgnoreCase);
+                            <option value="@matchTypeOption" selected="@(isSelected ? "selected" : null)">@matchTypeOption</option>
+                        }
+                    </select>
+                </div>
+                <div>
+                    <select class="form-select form-select-sm" id="hasHolds" name="hasHolds">
+                        <option value="" selected="@(Model.SelectedHasHolds is null ? "selected" : null)">All pairs</option>
+                        <option value="true" selected="@(Model.SelectedHasHolds == true ? "selected" : null)">Has holds</option>
+                        <option value="false" selected="@(Model.SelectedHasHolds == false ? "selected" : null)">No holds</option>
+                    </select>
+                </div>
+            </div>
         </div>
-        <div class="col-auto">
-            <input type="number" class="form-control form-control-sm" id="pageSize" name="pageSize" value="@Model.PageSize" min="1" />
-        </div>
-        <div class="col-auto">
+        <div class="col-auto align-self-end">
+            <input type="hidden" name="page" value="1" />
             <button type="submit" class="btn btn-primary btn-sm px-3">Apply</button>
         </div>
         <div class="col-12 col-lg-auto ms-lg-auto">
@@ -69,7 +98,7 @@
                             @await Html.PartialAsync("_MatchPoints", p.Matches)
                         </td>
                         <td class="text-center">
-                            <a asp-controller="Home" asp-action="Review" asp-route-leftBibId="@p.LeftBibId" asp-route-rightBibId="@p.RightBibId" asp-route-returnUrl="@Url.Action("Index", new { page = currentPage, pageSize = Model.PageSize })" class="btn btn-sm review-btn">Review</a>
+                            <a asp-controller="Home" asp-action="Review" asp-route-leftBibId="@p.LeftBibId" asp-route-rightBibId="@p.RightBibId" asp-route-returnUrl="@Url.Action("Index", new { page = currentPage, tom = Model.SelectedTomId, matchType = Model.SelectedMatchType, hasHolds = hasHoldsRouteValue })" class="btn btn-sm review-btn">Review</a>
                         </td>
                     </tr>
                 }
@@ -89,11 +118,11 @@
     <div class="pager">
         @if (currentPage > 1)
         {
-            <a class="btn btn-sm" asp-action="Index" asp-route-page="@(currentPage - 1)" asp-route-pageSize="@Model.PageSize">Prev</a>
+            <a class="btn btn-sm" asp-action="Index" asp-route-page="@(currentPage - 1)" asp-route-tom="@Model.SelectedTomId" asp-route-matchType="@Model.SelectedMatchType" asp-route-hasHolds="@hasHoldsRouteValue">Prev</a>
         }
         @if (currentPage < totalPages)
         {
-            <a class="btn btn-sm" asp-action="Index" asp-route-page="@(currentPage + 1)" asp-route-pageSize="@Model.PageSize">Next</a>
+            <a class="btn btn-sm" asp-action="Index" asp-route-page="@(currentPage + 1)" asp-route-tom="@Model.SelectedTomId" asp-route-matchType="@Model.SelectedMatchType" asp-route-hasHolds="@hasHoldsRouteValue">Next</a>
         }
     </div>
 </div>
