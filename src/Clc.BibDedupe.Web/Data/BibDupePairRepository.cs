@@ -17,12 +17,24 @@ namespace Clc.BibDedupe.Web.Data
             _db = db;
         }
 
-        public async Task<IEnumerable<BibDupePair>> GetAsync(string? userEmail = null)
+        public async Task<IEnumerable<BibDupePair>> GetAsync(
+            string? userEmail = null,
+            int? tomId = null,
+            string? matchType = null,
+            bool? hasHolds = null)
         {
             const string sql = @"SELECT PairId, PrimaryMARCTOMID AS PrimaryMarcTomId, LeftBibId, RightBibId,
        LeftTitle, LeftAuthor, RightTitle, RightAuthor, TOM, MatchesJson
-FROM BibDedupe.GetPairs(DEFAULT, @UserEmail, NULL, NULL, NULL)";
-            var rows = await _db.QueryAsync<PairRow>(sql, new { UserEmail = userEmail });
+FROM BibDedupe.GetPairs(DEFAULT, @UserEmail, @TomId, @MatchType, @HasHolds)";
+            var rows = await _db.QueryAsync<PairRow>(
+                sql,
+                new
+                {
+                    UserEmail = userEmail,
+                    TomId = tomId,
+                    MatchType = matchType,
+                    HasHolds = hasHolds
+                });
             return rows.Select(MapRow).ToList();
         }
 
