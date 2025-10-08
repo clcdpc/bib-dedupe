@@ -19,7 +19,8 @@ namespace Clc.BibDedupe.Web.Controllers
         IRecordLoader loader,
         IBibDupePairRepository repository,
         IDecisionStore decisionStore,
-        ICurrentPairStore currentPairStore) : Controller
+        ICurrentPairStore currentPairStore,
+        IPairAssignmentStore pairAssignmentStore) : Controller
     {
         [AllowAnonymous]
         public IActionResult Index()
@@ -51,7 +52,7 @@ namespace Clc.BibDedupe.Web.Controllers
                     .Select(d => (d.LeftBibId, d.RightBibId))
                     .ToHashSet();
 
-                pair = (await repository.GetAsync())
+                pair = (await repository.GetAsync(userEmail))
                     .FirstOrDefault(p => !decidedPairs.Contains((p.LeftBibId, p.RightBibId)));
                 if (pair is null)
                 {
@@ -63,7 +64,7 @@ namespace Clc.BibDedupe.Web.Controllers
             }
             else
             {
-                pair = await repository.GetByBibIdsAsync(leftBibId.Value, rightBibId.Value);
+                pair = await repository.GetByBibIdsAsync(leftBibId.Value, rightBibId.Value, userEmail);
             }
 
             var (left, right) = await loader.LoadAsync(leftBibId.Value, rightBibId.Value);
@@ -95,6 +96,8 @@ namespace Clc.BibDedupe.Web.Controllers
                 RightBibId = model.RightBibId
             });
 
+            await pairAssignmentStore.AssignAsync(userEmail, model.LeftBibId, model.RightBibId);
+
             return View(model);
         }
 
@@ -118,12 +121,13 @@ namespace Clc.BibDedupe.Web.Controllers
                 return BadRequest();
             }
             var userEmail = User.GetEmail();
-            var pair = await repository.GetByBibIdsAsync(leftBibId, rightBibId)
-                ?? new BibDupePair
-                {
-                    LeftBibId = leftBibId,
-                    RightBibId = rightBibId
-                };
+            var pair = await repository.GetByBibIdsAsync(leftBibId, rightBibId, userEmail);
+            if (pair is null)
+            {
+                await pairAssignmentStore.ReleaseAsync(userEmail, leftBibId, rightBibId);
+                await currentPairStore.ClearAsync(userEmail);
+                return Conflict(new { error = "Pair is not available for this user." });
+            }
 
             var decision = new DecisionItem
             {
@@ -148,9 +152,12 @@ namespace Clc.BibDedupe.Web.Controllers
             }
             catch (DecisionConflictException ex)
             {
+                await pairAssignmentStore.ReleaseAsync(userEmail, leftBibId, rightBibId);
+                await currentPairStore.ClearAsync(userEmail);
                 return Conflict(new { error = ex.Message });
             }
 
+            await pairAssignmentStore.ReleaseAsync(userEmail, leftBibId, rightBibId);
             await currentPairStore.ClearAsync(userEmail);
             return Ok();
         }

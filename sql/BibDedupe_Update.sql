@@ -175,6 +175,43 @@ BEGIN
 END
 GO
 
+IF OBJECT_ID('BibDedupe.PairAssignments', 'U') IS NULL
+BEGIN
+    CREATE TABLE BibDedupe.PairAssignments (
+        LeftBibId INT NOT NULL,
+        RightBibId INT NOT NULL,
+        UserEmail NVARCHAR(256) NOT NULL,
+        AssignedAt DATETIMEOFFSET NOT NULL CONSTRAINT DF_PairAssignments_AssignedAt DEFAULT SYSDATETIMEOFFSET(),
+        CONSTRAINT PK_PairAssignments PRIMARY KEY (LeftBibId, RightBibId)
+    );
+END
+ELSE
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM sys.key_constraints WHERE name = 'PK_PairAssignments' AND parent_object_id = OBJECT_ID('BibDedupe.PairAssignments')
+    )
+        ALTER TABLE BibDedupe.PairAssignments ADD CONSTRAINT PK_PairAssignments PRIMARY KEY (LeftBibId, RightBibId);
+
+    IF NOT EXISTS (
+        SELECT 1
+        FROM sys.columns c
+        LEFT JOIN sys.default_constraints dc
+            ON c.default_object_id = dc.object_id
+        WHERE c.object_id = OBJECT_ID('BibDedupe.PairAssignments')
+          AND c.name = 'AssignedAt'
+          AND dc.object_id IS NOT NULL
+    )
+        ALTER TABLE BibDedupe.PairAssignments
+            ADD CONSTRAINT DF_PairAssignments_AssignedAt DEFAULT SYSDATETIMEOFFSET() FOR AssignedAt;
+END
+GO
+
+IF NOT EXISTS (
+    SELECT 1 FROM sys.indexes WHERE name = 'IX_PairAssignments_UserEmail' AND object_id = OBJECT_ID('BibDedupe.PairAssignments')
+)
+    CREATE NONCLUSTERED INDEX IX_PairAssignments_UserEmail ON BibDedupe.PairAssignments (UserEmail);
+GO
+
 CREATE OR ALTER FUNCTION BibDedupe.GetPairs (
     @Top INT = 1000,
     @UserEmail NVARCHAR(256) = NULL,
@@ -224,6 +261,16 @@ RETURN (
                 WHERE dq.UserEmail = @UserEmail
                   AND dq.LeftBibId = p.LeftBibId
                   AND dq.RightBibId = p.RightBibId
+            )
+        )
+        AND (
+            @UserEmail IS NULL
+            OR NOT EXISTS (
+                SELECT 1
+                FROM BibDedupe.PairAssignments pa
+                WHERE pa.LeftBibId = p.LeftBibId
+                  AND pa.RightBibId = p.RightBibId
+                  AND pa.UserEmail <> @UserEmail
             )
         )
         AND (@TomId IS NULL)

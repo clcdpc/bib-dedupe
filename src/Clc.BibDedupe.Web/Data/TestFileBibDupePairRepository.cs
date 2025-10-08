@@ -65,7 +65,7 @@ public class TestFileBibDupePairRepository : IBibDupePairRepository
     private IEnumerable<BibDupePair> GeneratePairs(int count)
         => Enumerable.Range(0, count).Select(_ => CreatePair());
 
-    public Task<IEnumerable<BibDupePair>> GetAsync()
+    public Task<IEnumerable<BibDupePair>> GetAsync(string? userEmail = null)
         => Task.FromResult<IEnumerable<BibDupePair>>(_pairs);
 
     public Task<PairsPageResult> GetPagedAsync(
@@ -129,7 +129,7 @@ public class TestFileBibDupePairRepository : IBibDupePairRepository
         });
     }
 
-    public Task<BibDupePair?> GetByBibIdsAsync(int leftBibId, int rightBibId)
+    public Task<BibDupePair?> GetByBibIdsAsync(int leftBibId, int rightBibId, string? userEmail = null)
         => Task.FromResult(_pairs.FirstOrDefault(p => p.LeftBibId == leftBibId && p.RightBibId == rightBibId));
 
     public Task MergeAsync(int keepBibId, int deleteBibId, string userEmail, BibDupePairAction action) => Task.CompletedTask;

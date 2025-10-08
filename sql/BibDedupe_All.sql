@@ -29,6 +29,9 @@ GO
 IF OBJECT_ID('BibDedupe.DecisionQueue','U') IS NOT NULL
     DROP TABLE BibDedupe.DecisionQueue;
 GO
+IF OBJECT_ID('BibDedupe.PairAssignments','U') IS NOT NULL
+    DROP TABLE BibDedupe.PairAssignments;
+GO
 IF OBJECT_ID('BibDedupe.DecisionBatches','U') IS NOT NULL
     DROP TABLE BibDedupe.DecisionBatches;
 GO
@@ -107,6 +110,17 @@ CREATE TABLE BibDedupe.DecisionQueue (
 );
 GO
 
+CREATE TABLE BibDedupe.PairAssignments (
+    LeftBibId INT NOT NULL,
+    RightBibId INT NOT NULL,
+    UserEmail NVARCHAR(256) NOT NULL,
+    AssignedAt DATETIMEOFFSET NOT NULL DEFAULT SYSDATETIMEOFFSET(),
+    CONSTRAINT PK_PairAssignments PRIMARY KEY (LeftBibId, RightBibId)
+);
+GO
+CREATE NONCLUSTERED INDEX IX_PairAssignments_UserEmail ON BibDedupe.PairAssignments (UserEmail);
+GO
+
 CREATE TABLE BibDedupe.DecisionBatches
 (
     BatchId INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
@@ -167,6 +181,16 @@ RETURN (
                 WHERE dq.UserEmail = @UserEmail
                   AND dq.LeftBibId = p.LeftBibId
                   AND dq.RightBibId = p.RightBibId
+            )
+        )
+        AND (
+            @UserEmail IS NULL
+            OR NOT EXISTS (
+                SELECT 1
+                FROM BibDedupe.PairAssignments pa
+                WHERE pa.LeftBibId = p.LeftBibId
+                  AND pa.RightBibId = p.RightBibId
+                  AND pa.UserEmail <> @UserEmail
             )
         )
         AND (@TomId IS NULL)
