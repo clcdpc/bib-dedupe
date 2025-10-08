@@ -51,19 +51,16 @@ public class SqlDecisionStore(IDbConnection db, IPairFilterStore pairFilterStore
     {
         var filters = await pairFilterStore.GetAsync(userId);
 
+        const string query = @"SELECT LeftBibId, RightBibId, ActionId, PrimaryMarcTomId,
+                                         LeftTitle, LeftAuthor, RightTitle, RightAuthor,
+                                         TOM, MatchesJson
+                                  FROM BibDedupe.GetDecisionQueue(@UserEmail, @TomId, @MatchType, @HasHolds)";
+
         var rows = (await db.QueryAsync<DecisionRow>(
-            $@"SELECT d.LeftBibId, d.RightBibId, d.ActionId,
-                       p.PrimaryMARCTOMID AS PrimaryMarcTomId,
-                       p.LeftTitle, p.LeftAuthor, p.RightTitle, p.RightAuthor,
-                       p.TOM, p.MatchesJson
-                FROM {Table} d
-                LEFT JOIN BibDedupe.GetPairs(@Top, NULL, @TomId, @MatchType, @HasHolds) p
-                    ON d.LeftBibId = p.LeftBibId AND d.RightBibId = p.RightBibId
-                WHERE d.UserEmail = @UserEmail",
+            query,
             new
             {
                 UserEmail = userId,
-                Top = int.MaxValue,
                 TomId = filters?.TomId,
                 MatchType = filters?.MatchType,
                 HasHolds = filters?.HasHolds
