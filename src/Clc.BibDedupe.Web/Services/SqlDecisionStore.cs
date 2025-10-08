@@ -50,19 +50,24 @@ public class SqlDecisionStore(IDbConnection db, IPairFilterStore pairFilterStore
     public async Task<IEnumerable<DecisionItem>> GetAllAsync(string userId)
     {
         var filters = await pairFilterStore.GetAsync(userId);
-        var hasFilters = filters is not null && !filters.IsEmpty;
 
-        var parameters = new
-        {
-            UserEmail = userId,
-            Top = int.MaxValue,
-            TomId = filters?.TomId,
-            MatchType = filters?.MatchType,
-            HasHolds = filters?.HasHolds
-        };
-
-        var sql = hasFilters ? FilteredDecisionsSql : UnfilteredDecisionsSql;
-        var rows = (await db.QueryAsync<DecisionRow>(sql, parameters)).ToList();
+        var rows = (await db.QueryAsync<DecisionRow>(
+            $@"SELECT d.LeftBibId, d.RightBibId, d.ActionId,
+                       p.PrimaryMARCTOMID AS PrimaryMarcTomId,
+                       p.LeftTitle, p.LeftAuthor, p.RightTitle, p.RightAuthor,
+                       p.TOM, p.MatchesJson
+                FROM {Table} d
+                LEFT JOIN BibDedupe.GetPairs(@Top, NULL, @TomId, @MatchType, @HasHolds) p
+                    ON d.LeftBibId = p.LeftBibId AND d.RightBibId = p.RightBibId
+                WHERE d.UserEmail = @UserEmail",
+            new
+            {
+                UserEmail = userId,
+                Top = int.MaxValue,
+                TomId = filters?.TomId,
+                MatchType = filters?.MatchType,
+                HasHolds = filters?.HasHolds
+            })).ToList();
 
         var decisions = new List<DecisionItem>(rows.Count);
 
@@ -122,53 +127,6 @@ public class SqlDecisionStore(IDbConnection db, IPairFilterStore pairFilterStore
         public string? TOM { get; init; }
         public string? MatchesJson { get; init; }
     }
-
-    private static readonly string UnfilteredDecisionsSql = $@"
-WITH UserDecisions AS (
-    SELECT LeftBibId, RightBibId, ActionId
-    FROM {Table}
-    WHERE UserEmail = @UserEmail
-)
-SELECT d.LeftBibId, d.RightBibId, d.ActionId,
-       p.PrimaryMARCTOMID AS PrimaryMarcTomId,
-       p.LeftTitle, p.LeftAuthor, p.RightTitle, p.RightAuthor,
-       p.TOM, p.MatchesJson
-FROM UserDecisions d
-LEFT JOIN BibDedupe.GetPairs(@Top, NULL, NULL, NULL, NULL) p
-    ON d.LeftBibId = p.LeftBibId AND d.RightBibId = p.RightBibId";
-
-    private static readonly string FilteredDecisionsSql = $@"
-WITH UserDecisions AS (
-    SELECT LeftBibId, RightBibId, ActionId
-    FROM {Table}
-    WHERE UserEmail = @UserEmail
-),
-FilteredPairs AS (
-    SELECT p.*
-    FROM BibDedupe.GetPairs(@Top, NULL, @TomId, @MatchType, @HasHolds) p
-    JOIN UserDecisions d ON d.LeftBibId = p.LeftBibId AND d.RightBibId = p.RightBibId
-),
-FallbackPairs AS (
-    SELECT p.*
-    FROM BibDedupe.GetPairs(@Top, NULL, NULL, NULL, NULL) p
-    JOIN UserDecisions d ON d.LeftBibId = p.LeftBibId AND d.RightBibId = p.RightBibId
-    WHERE NOT EXISTS (
-        SELECT 1
-        FROM FilteredPairs fp
-        WHERE fp.LeftBibId = d.LeftBibId AND fp.RightBibId = d.RightBibId
-    )
-)
-SELECT d.LeftBibId, d.RightBibId, d.ActionId,
-       COALESCE(fp.PrimaryMARCTOMID, fb.PrimaryMARCTOMID) AS PrimaryMarcTomId,
-       COALESCE(fp.LeftTitle, fb.LeftTitle) AS LeftTitle,
-       COALESCE(fp.LeftAuthor, fb.LeftAuthor) AS LeftAuthor,
-       COALESCE(fp.RightTitle, fb.RightTitle) AS RightTitle,
-       COALESCE(fp.RightAuthor, fb.RightAuthor) AS RightAuthor,
-       COALESCE(fp.TOM, fb.TOM) AS TOM,
-       COALESCE(fp.MatchesJson, fb.MatchesJson) AS MatchesJson
-FROM UserDecisions d
-LEFT JOIN FilteredPairs fp ON fp.LeftBibId = d.LeftBibId AND fp.RightBibId = d.RightBibId
-LEFT JOIN FallbackPairs fb ON fb.LeftBibId = d.LeftBibId AND fb.RightBibId = d.RightBibId";
 
     private async Task<List<DecisionItem>> LoadDecisionSummariesAsync(string userId)
     {
