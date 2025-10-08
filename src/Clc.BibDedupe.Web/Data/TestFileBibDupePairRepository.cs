@@ -76,9 +76,14 @@ public class TestFileBibDupePairRepository : IBibDupePairRepository
         string? matchType = null,
         bool? hasHolds = null)
     {
-        var requiresHold = hasHolds == true;
-
         var filtered = _pairs.AsEnumerable();
+
+        bool MatchesHoldFilter(BibDupePair pair) => hasHolds switch
+        {
+            true => pair.LeftHoldCount > 0 || pair.RightHoldCount > 0,
+            false => pair.LeftHoldCount == 0 && pair.RightHoldCount == 0,
+            _ => true
+        };
 
         if (tomId.HasValue)
         {
@@ -90,10 +95,7 @@ public class TestFileBibDupePairRepository : IBibDupePairRepository
             filtered = filtered.Where(p => p.Matches.Any(m => string.Equals(m.MatchType, matchType, StringComparison.OrdinalIgnoreCase)));
         }
 
-        if (requiresHold)
-        {
-            filtered = filtered.Where(p => p.LeftHoldCount > 0 || p.RightHoldCount > 0);
-        }
+        filtered = filtered.Where(MatchesHoldFilter);
 
         var filteredList = filtered.ToList();
         var total = filteredList.Count;
@@ -102,7 +104,7 @@ public class TestFileBibDupePairRepository : IBibDupePairRepository
 
         var tomOptions = _pairs
             .Where(p => string.IsNullOrWhiteSpace(matchType) || p.Matches.Any(m => string.Equals(m.MatchType, matchType, StringComparison.OrdinalIgnoreCase)))
-            .Where(p => !requiresHold || p.LeftHoldCount > 0 || p.RightHoldCount > 0)
+            .Where(MatchesHoldFilter)
             .GroupBy(p => new { p.PrimaryMarcTomId, p.TOM })
             .Where(g => g.Key.PrimaryMarcTomId != 0 && !string.IsNullOrWhiteSpace(g.Key.TOM))
             .OrderBy(g => g.Key.TOM, StringComparer.OrdinalIgnoreCase)
@@ -111,7 +113,7 @@ public class TestFileBibDupePairRepository : IBibDupePairRepository
 
         var matchTypeOptions = _pairs
             .Where(p => !tomId.HasValue || p.PrimaryMarcTomId == tomId.Value)
-            .Where(p => !requiresHold || p.LeftHoldCount > 0 || p.RightHoldCount > 0)
+            .Where(MatchesHoldFilter)
             .SelectMany(p => p.Matches.Select(m => m.MatchType))
             .Where(mt => !string.IsNullOrWhiteSpace(mt))
             .Distinct(StringComparer.OrdinalIgnoreCase)

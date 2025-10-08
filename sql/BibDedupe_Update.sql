@@ -236,7 +236,41 @@ RETURN (
                   AND mt.MatchType = @MatchType
             )
         )
-        AND (@HasHolds IS NULL);
+        AND (
+            @HasHolds IS NULL
+            OR (
+                @HasHolds = 1
+                AND (
+                    EXISTS (
+                        SELECT 1
+                        FROM polaris.polaris.SysHoldRequests shr
+                        WHERE shr.BibliographicRecordID = p.LeftBibId
+                          AND shr.SysHoldStatusID IN (1, 3, 4)
+                    )
+                    OR EXISTS (
+                        SELECT 1
+                        FROM polaris.polaris.SysHoldRequests shr
+                        WHERE shr.BibliographicRecordID = p.RightBibId
+                          AND shr.SysHoldStatusID IN (1, 3, 4)
+                    )
+                )
+            )
+            OR (
+                @HasHolds = 0
+                AND NOT EXISTS (
+                    SELECT 1
+                    FROM polaris.polaris.SysHoldRequests shr
+                    WHERE shr.BibliographicRecordID = p.LeftBibId
+                      AND shr.SysHoldStatusID IN (1, 3, 4)
+                )
+                AND NOT EXISTS (
+                    SELECT 1
+                    FROM polaris.polaris.SysHoldRequests shr
+                    WHERE shr.BibliographicRecordID = p.RightBibId
+                      AND shr.SysHoldStatusID IN (1, 3, 4)
+                )
+            )
+        );
 GO
 
 CREATE OR ALTER PROCEDURE BibDedupe.MergePair

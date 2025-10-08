@@ -86,8 +86,18 @@ RETURN (
         )
         AND (
             @HasHolds IS NULL
-            OR ISNULL(leftHolds.HoldCount, 0) > 0
-            OR ISNULL(rightHolds.HoldCount, 0) > 0
+            OR (
+                @HasHolds = 1
+                AND (
+                    ISNULL(leftHolds.HoldCount, 0) > 0
+                    OR ISNULL(rightHolds.HoldCount, 0) > 0
+                )
+            )
+            OR (
+                @HasHolds = 0
+                AND ISNULL(leftHolds.HoldCount, 0) = 0
+                AND ISNULL(rightHolds.HoldCount, 0) = 0
+            )
         )
         order by br_l.BrowseTitle, br_r.BrowseTitle
 );

@@ -16,8 +16,8 @@ public class PairsController(IBibDupePairRepository repository) : Controller
         var email = User.GetEmail();
         var sanitizedTom = tom.HasValue && tom.Value > 0 ? tom : null;
         var sanitizedMatchType = string.IsNullOrWhiteSpace(matchType) ? null : matchType;
-        var hasHoldFilter = hasHolds == true ? true : (bool?)null;
-        var result = await repository.GetPagedAsync(page, DefaultPageSize, email, sanitizedTom, sanitizedMatchType, hasHoldFilter);
+        var sanitizedHasHolds = hasHolds.HasValue ? hasHolds.Value : (bool?)null;
+        var result = await repository.GetPagedAsync(page, DefaultPageSize, email, sanitizedTom, sanitizedMatchType, sanitizedHasHolds);
         var model = new PairsListViewModel
         {
             Items = result.Items,
@@ -28,7 +28,7 @@ public class PairsController(IBibDupePairRepository repository) : Controller
             MatchTypeOptions = result.MatchTypeOptions,
             SelectedTomId = sanitizedTom,
             SelectedMatchType = sanitizedMatchType,
-            HasHoldsFilter = hasHolds == true
+            SelectedHasHolds = sanitizedHasHolds
         };
         return View(model);
     }

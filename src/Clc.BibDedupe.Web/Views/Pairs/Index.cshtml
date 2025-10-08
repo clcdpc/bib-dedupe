@@ -9,28 +9,29 @@
     var totalPages = System.Math.Max(Model.TotalPages, 1);
     var currentPage = System.Math.Min(System.Math.Max(Model.Page, 1), totalPages);
     var totalPairs = System.Math.Max(Model.TotalCount, 0);
-    var hasHoldsRouteValue = Model.HasHoldsFilter ? "true" : null;
+    var hasHoldsRouteValue = Model.SelectedHasHolds.HasValue
+        ? Model.SelectedHasHolds.Value.ToString().ToLowerInvariant()
+        : null;
 }
 
 <div class="pairs-toolbar mb-4">
     <form class="row g-3 align-items-center" method="get">
         <div class="col-12 col-lg">
-            <label class="form-label fw-semibold text-uppercase small text-muted mb-1">Filters</label>
-            <div class="d-flex flex-wrap align-items-center gap-2">
-                <div>
-                    <label class="visually-hidden" for="tom">Filter by TOM</label>
+            <div class="d-flex flex-wrap align-items-center gap-3">
+                <div class="d-flex align-items-center gap-2">
+                    <label class="form-label small mb-0 text-muted" for="tom">TOM</label>
                     <select class="form-select form-select-sm" id="tom" name="tom">
-                        <option value="">All TOMs</option>
+                        <option value="" selected="@(Model.SelectedTomId is null ? "selected" : null)">All TOMs</option>
                         @foreach (var tomOption in Model.TomOptions ?? Enumerable.Empty<TomOption>())
                         {
                             <option value="@tomOption.Id" selected="@(tomOption.Id == Model.SelectedTomId ? "selected" : null)">@tomOption.Description</option>
                         }
                     </select>
                 </div>
-                <div>
-                    <label class="visually-hidden" for="matchType">Filter by match type</label>
+                <div class="d-flex align-items-center gap-2">
+                    <label class="form-label small mb-0 text-muted" for="matchType">Match Type</label>
                     <select class="form-select form-select-sm" id="matchType" name="matchType">
-                        <option value="">All match types</option>
+                        <option value="" selected="@(string.IsNullOrWhiteSpace(Model.SelectedMatchType) ? "selected" : null)">All match types</option>
                         @foreach (var matchTypeOption in Model.MatchTypeOptions ?? Enumerable.Empty<string>())
                         {
                             var isSelected = string.Equals(matchTypeOption, Model.SelectedMatchType, StringComparison.OrdinalIgnoreCase);
@@ -38,9 +39,13 @@
                         }
                     </select>
                 </div>
-                <div class="form-check form-check-inline mb-0">
-                    <input class="form-check-input" type="checkbox" id="hasHolds" name="hasHolds" value="true" checked="@(Model.HasHoldsFilter ? "checked" : null)">
-                    <label class="form-check-label small" for="hasHolds">Has Holds</label>
+                <div class="d-flex align-items-center gap-2">
+                    <label class="form-label small mb-0 text-muted" for="hasHolds">Holds</label>
+                    <select class="form-select form-select-sm" id="hasHolds" name="hasHolds">
+                        <option value="" selected="@(Model.SelectedHasHolds is null ? "selected" : null)">All pairs</option>
+                        <option value="true" selected="@(Model.SelectedHasHolds == true ? "selected" : null)">Has holds</option>
+                        <option value="false" selected="@(Model.SelectedHasHolds == false ? "selected" : null)">No holds</option>
+                    </select>
                 </div>
             </div>
         </div>

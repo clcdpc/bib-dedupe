@@ -49,7 +49,6 @@ FROM BibDedupe.GetPairs(@CountTop, @UserEmail, @TomId, NULL, @HasHolds) gp
 JOIN BibDedupe.PairMatches pm ON pm.PairId = gp.PairId
 ORDER BY pm.MatchType;";
             var offset = (page - 1) * pageSize;
-            var hasHoldFilter = hasHolds == true ? true : (bool?)null;
             using var multi = await _db.QueryMultipleAsync(
                 sql,
                 new
@@ -60,7 +59,7 @@ ORDER BY pm.MatchType;";
                     UserEmail = userEmail,
                     TomId = tomId,
                     MatchType = matchType,
-                    HasHolds = hasHoldFilter
+                    HasHolds = hasHolds
                 });
             var rows = await multi.ReadAsync<PairRow>();
             var total = await multi.ReadFirstAsync<int>();

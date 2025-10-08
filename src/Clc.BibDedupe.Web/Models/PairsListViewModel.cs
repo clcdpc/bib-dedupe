@@ -16,5 +16,5 @@ public class PairsListViewModel
     public IEnumerable<string> MatchTypeOptions { get; set; } = new List<string>();
     public int? SelectedTomId { get; set; }
     public string? SelectedMatchType { get; set; }
-    public bool HasHoldsFilter { get; set; }
+    public bool? SelectedHasHolds { get; set; }
 }
