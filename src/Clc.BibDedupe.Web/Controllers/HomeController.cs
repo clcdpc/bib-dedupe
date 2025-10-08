@@ -127,30 +127,41 @@ namespace Clc.BibDedupe.Web.Controllers
             }
             var userEmail = User.GetEmail();
             var pair = await repository.GetByBibIdsAsync(leftBibId, rightBibId, userEmail);
-            if (pair is null)
-            {
-                await pairAssignmentStore.ReleaseAsync(userEmail, leftBibId, rightBibId);
-                await currentPairStore.ClearAsync(userEmail);
-                return Conflict(new { error = "Pair is not available for this user." });
-            }
 
-            var decision = new DecisionItem
+            DecisionItem decision;
+            if (pair is not null)
             {
-                LeftBibId = leftBibId,
-                RightBibId = rightBibId,
-                LeftTitle = pair.LeftTitle,
-                LeftAuthor = pair.LeftAuthor,
-                RightTitle = pair.RightTitle,
-                RightAuthor = pair.RightAuthor,
-                TOM = pair.TOM,
-                PrimaryMarcTomId = pair.PrimaryMarcTomId,
-                Matches = pair.Matches.Select(m => new PairMatch
+                decision = new DecisionItem
                 {
-                    MatchType = m.MatchType,
-                    MatchValue = m.MatchValue
-                }).ToList(),
-                Action = parsed
-            };
+                    LeftBibId = leftBibId,
+                    RightBibId = rightBibId,
+                    LeftTitle = pair.LeftTitle,
+                    LeftAuthor = pair.LeftAuthor,
+                    RightTitle = pair.RightTitle,
+                    RightAuthor = pair.RightAuthor,
+                    TOM = pair.TOM,
+                    PrimaryMarcTomId = pair.PrimaryMarcTomId,
+                    Matches = pair.Matches.Select(m => new PairMatch
+                    {
+                        MatchType = m.MatchType,
+                        MatchValue = m.MatchValue
+                    }).ToList(),
+                    Action = parsed
+                };
+            }
+            else
+            {
+                var existingDecision = (await decisionStore.GetAllAsync(userEmail))
+                    .FirstOrDefault(d => d.LeftBibId == leftBibId && d.RightBibId == rightBibId);
+                if (existingDecision is null)
+                {
+                    await pairAssignmentStore.ReleaseAsync(userEmail, leftBibId, rightBibId);
+                    await currentPairStore.ClearAsync(userEmail);
+                    return Conflict(new { error = "Pair is not available for this user." });
+                }
+
+                decision = existingDecision with { Action = parsed };
+            }
             try
             {
                 await decisionStore.AddAsync(userEmail, decision);
