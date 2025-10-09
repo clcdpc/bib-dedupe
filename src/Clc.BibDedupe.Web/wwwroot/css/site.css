@@ -202,6 +202,291 @@ body {
   box-shadow: 0 0.25rem 1rem rgba(33, 37, 41, 0.05);
 }
 
+.action-toast-container {
+  position: fixed;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.action-toast {
+  background: rgba(17, 24, 39, 0.95);
+  color: #f9fafb;
+  padding: 12px 16px;
+  border-radius: 8px;
+  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.25);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: min(90vw, 390px);
+  max-width: min(90vw, 780px);
+  pointer-events: auto;
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  font-size: 14px;
+}
+
+.action-toast.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.action-toast__message {
+  flex: 1 1 auto;
+  line-height: 1.35;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.action-toast__action {
+  font-weight: 700;
+  font-size: 0.95rem;
+  letter-spacing: 0.01em;
+}
+
+.action-toast__records {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.action-toast__record {
+  --action-toast-label-column-width: clamp(6rem, 18vw, 7.5rem);
+  display: grid;
+  grid-template-columns: var(--action-toast-label-column-width) minmax(0, 1fr) max-content;
+  column-gap: 12px;
+  row-gap: 4px;
+  align-items: start;
+}
+
+.action-toast__record-label {
+  text-transform: uppercase;
+  font-size: 0.65rem;
+  letter-spacing: 0.16em;
+  color: rgba(226, 232, 240, 0.75);
+  white-space: nowrap;
+  align-self: start;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 3px 8px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  min-height: 20px;
+}
+
+.action-toast__record-label--kept {
+  color: #020617;
+  background: #facc15;
+  font-weight: 700;
+  box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.15);
+  border-color: rgba(15, 23, 42, 0.15);
+}
+
+.action-toast__record-title {
+  font-weight: 600;
+  color: #f8fafc;
+  grid-column: 2;
+  align-self: start;
+}
+
+.action-toast__record-title--muted {
+  font-weight: 500;
+  color: rgba(226, 232, 240, 0.85);
+  font-style: italic;
+}
+
+.action-toast__record-bib {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--bs-font-monospace, 'SFMono-Regular', Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace);
+  font-size: 0.8rem;
+  font-weight: 600;
+  background: rgba(148, 163, 184, 0.28);
+  color: #e2e8f0;
+  padding: 3px 10px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, box-shadow 0.2s ease, transform 0.1s ease;
+  grid-column: 3;
+  justify-self: end;
+}
+
+@media (max-width: 520px) {
+  .action-toast__record {
+    --action-toast-label-column-width: clamp(5.75rem, 40vw, 7.25rem);
+    grid-template-columns: var(--action-toast-label-column-width) minmax(0, 1fr);
+  }
+
+  .action-toast__record-bib {
+    grid-column: 2;
+    grid-row: 2;
+    justify-self: start;
+  }
+}
+
+.action-toast__record-bib:hover,
+.action-toast__record-bib:focus-visible {
+  background: rgba(148, 163, 184, 0.45);
+  color: #f8fafc;
+}
+
+.action-toast__record-bib:focus-visible {
+  outline: 2px solid rgba(148, 197, 255, 0.6);
+  outline-offset: 2px;
+}
+
+.action-toast__record-bib:active {
+  transform: translateY(1px);
+}
+
+.action-toast__record-bib-icon {
+  width: 0.85rem;
+  height: 0.85rem;
+  display: inline-block;
+  fill: currentColor;
+  opacity: 0.85;
+  transition: opacity 0.2s ease;
+}
+
+.action-toast__record-bib-text {
+  display: inline-block;
+  line-height: 1.1;
+}
+
+.action-toast__record-bib--copied {
+  background: rgba(96, 165, 250, 0.5);
+  color: #0f172a;
+  box-shadow: 0 0 0 1px rgba(148, 197, 255, 0.7);
+}
+
+.action-toast__record-bib--copied .action-toast__record-bib-icon {
+  opacity: 1;
+}
+
+.action-toast__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
+.action-toast__button {
+  border: 1px solid #93c5fd;
+  background: #1d4ed8;
+  color: #ffffff;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font: inherit;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.action-toast__button:hover,
+.action-toast__button:focus-visible {
+  background: #2563eb;
+  border-color: #bfdbfe;
+  outline: none;
+}
+
+.action-toast__button:disabled,
+.action-toast__button:disabled:hover,
+.action-toast__button:disabled:focus-visible {
+  background: #9ca3af;
+  border-color: #d1d5db;
+  color: #1f2937;
+  cursor: not-allowed;
+  opacity: 0.8;
+}
+
+.action-toast__dismiss {
+  border: none;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
+  padding: 0 4px;
+}
+
+.action-toast__dismiss:hover,
+.action-toast__dismiss:focus-visible {
+  color: #bfdbfe;
+  outline: none;
+}
+
+@media (prefers-color-scheme: dark) {
+  .action-toast {
+    background: rgba(15, 23, 42, 0.92);
+    color: #f8fafc;
+  }
+
+  .action-toast__record-label {
+    color: rgba(148, 163, 184, 0.9);
+  }
+
+  .action-toast__record-label--kept {
+    color: #0b1120;
+  }
+
+  .action-toast__button {
+    border-color: #3b82f6;
+    background: #2563eb;
+    color: #f8fafc;
+  }
+
+  .action-toast__button:hover,
+  .action-toast__button:focus-visible {
+    background: #1d4ed8;
+    border-color: #60a5fa;
+  }
+
+  .action-toast__dismiss:hover,
+  .action-toast__dismiss:focus-visible {
+    color: #60a5fa;
+  }
+
+  .action-toast__button:disabled,
+  .action-toast__button:disabled:hover,
+  .action-toast__button:disabled:focus-visible {
+    background: #475569;
+    border-color: #64748b;
+    color: #cbd5f5;
+    opacity: 0.65;
+  }
+
+  .action-toast__record-bib {
+    background: rgba(148, 163, 184, 0.35);
+    color: #e2e8f0;
+  }
+
+  .action-toast__record-bib:hover,
+  .action-toast__record-bib:focus-visible {
+    background: rgba(148, 163, 184, 0.5);
+    color: #f8fafc;
+  }
+
+  .action-toast__record-bib:focus-visible {
+    outline-color: rgba(148, 197, 255, 0.75);
+  }
+
+  .action-toast__record-bib--copied {
+    background: rgba(96, 165, 250, 0.6);
+    color: #0b1120;
+    box-shadow: 0 0 0 1px rgba(148, 197, 255, 0.65);
+  }
+}
+
 .data-table-wrapper {
   background-color: #ffffff;
   border: 1px solid #dee2e6;

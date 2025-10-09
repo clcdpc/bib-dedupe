@@ -47,6 +47,7 @@ namespace Clc.BibDedupe.Web.Controllers
         {
             var userEmail = User.GetEmail();
             BibDupePair? pair;
+            DecisionItem? existingDecision = null;
             if (leftBibId is null || rightBibId is null)
             {
                 var filters = await pairFilterStore.GetAsync(userEmail);
@@ -66,6 +67,11 @@ namespace Clc.BibDedupe.Web.Controllers
             else
             {
                 pair = await repository.GetByBibIdsAsync(leftBibId.Value, rightBibId.Value, userEmail);
+                if (pair is null)
+                {
+                    existingDecision = (await decisionStore.GetAllAsync(userEmail))
+                        .FirstOrDefault(d => d.LeftBibId == leftBibId && d.RightBibId == rightBibId);
+                }
             }
 
             var (left, right) = await loader.LoadAsync(leftBibId.Value, rightBibId.Value);
@@ -74,8 +80,8 @@ namespace Clc.BibDedupe.Web.Controllers
             {
                 LeftBibId = leftBibId.Value,
                 RightBibId = rightBibId.Value,
-                LeftTitle = pair?.LeftTitle,
-                RightTitle = pair?.RightTitle,
+                LeftTitle = pair?.LeftTitle ?? existingDecision?.LeftTitle,
+                RightTitle = pair?.RightTitle ?? existingDecision?.RightTitle,
                 LeftBibXml = MarcXmlRenderer.TransformFile(left.BibXml, "marc-to-html.xslt"),
                 RightBibXml = MarcXmlRenderer.TransformFile(right.BibXml, "marc-to-html.xslt"),
                 LeftItems = left.Items,
@@ -86,7 +92,15 @@ namespace Clc.BibDedupe.Web.Controllers
                         MatchType = m.MatchType,
                         MatchValue = m.MatchValue
                     })
-                    .ToList() ?? new List<PairMatch>(),
+                    .ToList()
+                    ?? existingDecision?.Matches
+                        .Select(m => new PairMatch
+                        {
+                            MatchType = m.MatchType,
+                            MatchValue = m.MatchValue
+                        })
+                        .ToList()
+                    ?? new List<PairMatch>(),
                 LeftHoldCount = pair?.LeftHoldCount ?? 0,
                 RightHoldCount = pair?.RightHoldCount ?? 0,
                 TotalHoldCount = pair?.TotalHoldCount ?? 0
@@ -127,30 +141,43 @@ namespace Clc.BibDedupe.Web.Controllers
             }
             var userEmail = User.GetEmail();
             var pair = await repository.GetByBibIdsAsync(leftBibId, rightBibId, userEmail);
-            if (pair is null)
-            {
-                await pairAssignmentStore.ReleaseAsync(userEmail, leftBibId, rightBibId);
-                await currentPairStore.ClearAsync(userEmail);
-                return Conflict(new { error = "Pair is not available for this user." });
-            }
 
-            var decision = new DecisionItem
+            var isReReview = false;
+            DecisionItem decision;
+            if (pair is not null)
             {
-                LeftBibId = leftBibId,
-                RightBibId = rightBibId,
-                LeftTitle = pair.LeftTitle,
-                LeftAuthor = pair.LeftAuthor,
-                RightTitle = pair.RightTitle,
-                RightAuthor = pair.RightAuthor,
-                TOM = pair.TOM,
-                PrimaryMarcTomId = pair.PrimaryMarcTomId,
-                Matches = pair.Matches.Select(m => new PairMatch
+                decision = new DecisionItem
                 {
-                    MatchType = m.MatchType,
-                    MatchValue = m.MatchValue
-                }).ToList(),
-                Action = parsed
-            };
+                    LeftBibId = leftBibId,
+                    RightBibId = rightBibId,
+                    LeftTitle = pair.LeftTitle,
+                    LeftAuthor = pair.LeftAuthor,
+                    RightTitle = pair.RightTitle,
+                    RightAuthor = pair.RightAuthor,
+                    TOM = pair.TOM,
+                    PrimaryMarcTomId = pair.PrimaryMarcTomId,
+                    Matches = pair.Matches.Select(m => new PairMatch
+                    {
+                        MatchType = m.MatchType,
+                        MatchValue = m.MatchValue
+                    }).ToList(),
+                    Action = parsed
+                };
+            }
+            else
+            {
+                var existingDecision = (await decisionStore.GetAllAsync(userEmail))
+                    .FirstOrDefault(d => d.LeftBibId == leftBibId && d.RightBibId == rightBibId);
+                if (existingDecision is null)
+                {
+                    await pairAssignmentStore.ReleaseAsync(userEmail, leftBibId, rightBibId);
+                    await currentPairStore.ClearAsync(userEmail);
+                    return Conflict(new { error = "Pair is not available for this user." });
+                }
+
+                decision = existingDecision with { Action = parsed };
+                isReReview = true;
+            }
             try
             {
                 await decisionStore.AddAsync(userEmail, decision);
@@ -165,23 +192,35 @@ namespace Clc.BibDedupe.Web.Controllers
             await pairAssignmentStore.ReleaseAsync(userEmail, leftBibId, rightBibId);
             await currentPairStore.ClearAsync(userEmail);
 
-            var filters = await pairFilterStore.GetAsync(userEmail);
-            var nextPair = (await repository.GetAsync(
-                    userEmail,
-                    filters?.TomId,
-                    filters?.MatchType,
-                    filters?.HasHolds))
-                .FirstOrDefault(p => p.LeftBibId != leftBibId || p.RightBibId != rightBibId);
+            string? nextPairUrl = null;
+            bool hasNextPair = false;
 
-            var nextPairUrl = nextPair is not null
-                ? Url.Action(
-                    nameof(Review),
-                    new
-                    {
-                        leftBibId = nextPair.LeftBibId,
-                        rightBibId = nextPair.RightBibId
-                    })
-                : Url.Action(nameof(Review));
+            if (isReReview)
+            {
+                nextPairUrl = Url.Action("Index", "Decisions");
+            }
+            else
+            {
+                var filters = await pairFilterStore.GetAsync(userEmail);
+                var nextPair = (await repository.GetAsync(
+                        userEmail,
+                        filters?.TomId,
+                        filters?.MatchType,
+                        filters?.HasHolds))
+                    .FirstOrDefault(p => p.LeftBibId != leftBibId || p.RightBibId != rightBibId);
+
+                nextPairUrl = nextPair is not null
+                    ? Url.Action(
+                        nameof(Review),
+                        new
+                        {
+                            leftBibId = nextPair.LeftBibId,
+                            rightBibId = nextPair.RightBibId
+                        })
+                    : Url.Action(nameof(Review));
+
+                hasNextPair = nextPair is not null;
+            }
 
             nextPairUrl ??= Url.Action("Index", "Pairs");
             nextPairUrl ??= "/";
@@ -189,7 +228,8 @@ namespace Clc.BibDedupe.Web.Controllers
             return Ok(new
             {
                 nextPairUrl,
-                hasNextPair = nextPair is not null
+                hasNextPair,
+                reReview = isReReview
             });
         }
     }

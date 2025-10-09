@@ -139,35 +139,71 @@
         page.classList.add('initializing');
     }
 
-    function formatRecordLabel(title, bibIdValue) {
+    function formatBibLabel(bibIdValue) {
+        if (bibIdValue === null || bibIdValue === undefined) {
+            return '';
+        }
+        if (typeof bibIdValue === 'number' && !Number.isNaN(bibIdValue)) {
+            return `Bib ${bibIdValue}`;
+        }
+        if (typeof bibIdValue === 'string') {
+            const trimmed = bibIdValue.trim();
+            if (trimmed) {
+                return trimmed.toLowerCase().startsWith('bib ')
+                    ? trimmed
+                    : `Bib ${trimmed}`;
+            }
+        }
+        return '';
+    }
+
+    function formatSummaryRecord(title, bibIdValue) {
         const trimmedTitle = (title || '').trim();
-        if (trimmedTitle) {
-            return trimmedTitle.length > 70 ? `${trimmedTitle.slice(0, 67)}…` : trimmedTitle;
+        const summaryTitle = trimmedTitle
+            ? (trimmedTitle.length > 70 ? `${trimmedTitle.slice(0, 67)}…` : trimmedTitle)
+            : '';
+        const bibLabel = formatBibLabel(bibIdValue);
+
+        if (summaryTitle && bibLabel) {
+            return `${summaryTitle} (${bibLabel})`;
         }
-        const fallbackSource = bibIdValue ?? '';
-        const fallback = (typeof fallbackSource === 'string' ? fallbackSource : String(fallbackSource)).trim();
-        if (fallback) {
-            return `Bib ${fallback}`;
+
+        if (summaryTitle) {
+            return summaryTitle;
         }
+
+        if (bibLabel) {
+            return bibLabel;
+        }
+
         return 'this pair';
     }
 
     function buildSummary(action, data) {
         const actionLabel = ACTION_LABELS[action] || action;
-        const leftLabel = formatRecordLabel(data.leftTitle, data.leftBibId);
-        const rightLabel = formatRecordLabel(data.rightTitle, data.rightBibId);
+        const leftLabel = formatSummaryRecord(data.leftTitle, data.leftBibId);
+        const rightLabel = formatSummaryRecord(data.rightTitle, data.rightBibId);
         return `${actionLabel}: ${leftLabel} vs ${rightLabel}`;
     }
 
     function rememberLastAction(payload) {
         try {
+            const summary = payload.summary || buildSummary(payload.action, payload);
+            if (!summary) {
+                return;
+            }
+
+            const actionLabel = ACTION_LABELS[payload.action] || payload.action || '';
             const data = {
                 action: payload.action,
+                actionLabel,
                 leftBibId: payload.leftBibId,
                 rightBibId: payload.rightBibId,
                 leftTitle: payload.leftTitle || '',
                 rightTitle: payload.rightTitle || '',
                 reviewUrl: payload.reviewUrl || '',
+                summary,
+                target: payload.target || 'review',
                 timestamp: Date.now()
             };
             sessionStorage.setItem(STORAGE_KEY, JSON.stringify(data));
@@ -176,23 +212,32 @@
         }
     }
 
-    function loadLastAction() {
+    function loadLastAction(expectedTarget) {
         try {
             const raw = sessionStorage.getItem(STORAGE_KEY);
             if (!raw) {
                 return null;
             }
-            sessionStorage.removeItem(STORAGE_KEY);
             const data = JSON.parse(raw);
             if (!data || !data.action) {
+                sessionStorage.removeItem(STORAGE_KEY);
                 return null;
             }
             if (typeof data.timestamp === 'number' && Date.now() - data.timestamp > TOAST_MAX_AGE) {
+                sessionStorage.removeItem(STORAGE_KEY);
                 return null;
             }
+            if (expectedTarget) {
+                const target = data.target || 'review';
+                if (target !== expectedTarget) {
+                    return null;
+                }
+            }
+            sessionStorage.removeItem(STORAGE_KEY);
             return data;
         } catch (err) {
             console.warn('Unable to load last action toast payload.', err);
+            sessionStorage.removeItem(STORAGE_KEY);
             return null;
         }
     }
@@ -201,18 +246,27 @@
         if (!toastContainer) {
             return;
         }
-        const summary = buildSummary(data.action, data);
+        const summary = data.summary || buildSummary(data.action, data);
         if (!summary) {
             return;
         }
         const toast = document.createElement('div');
         toast.className = 'action-toast';
         toast.setAttribute('role', 'status');
+        toast.setAttribute('aria-label', summary);
 
-        const message = document.createElement('div');
-        message.className = 'action-toast__message';
-        message.textContent = summary;
-        toast.appendChild(message);
+        const buildMessage = typeof window.buildActionToastMessage === 'function'
+            ? window.buildActionToastMessage
+            : null;
+        const message = buildMessage ? buildMessage(data, summary) : null;
+        if (message) {
+            toast.appendChild(message);
+        } else {
+            const fallback = document.createElement('div');
+            fallback.className = 'action-toast__message';
+            fallback.textContent = summary;
+            toast.appendChild(fallback);
+        }
 
         const actions = document.createElement('div');
         actions.className = 'action-toast__actions';
@@ -256,7 +310,7 @@
         requestAnimationFrame(() => toast.classList.add('show'));
     }
 
-    const storedAction = loadLastAction();
+    const storedAction = loadLastAction('review');
     if (storedAction) {
         showToast(storedAction);
     }
@@ -333,7 +387,7 @@
                     return;
                 }
                 const badge = document.querySelector('.menu .badge');
-                if (badge) {
+                if (badge && !data.reReview) {
                     badge.textContent = (parseInt(badge.textContent || '0', 10) + 1).toString();
                 }
                 const currentPairControl = document.querySelector('.menu [data-current-pair]');
@@ -351,7 +405,8 @@
                     rightBibId: Number.isNaN(rightBibId) ? rightBibIdValue : rightBibId,
                     leftTitle,
                     rightTitle,
-                    reviewUrl: currentPairUrl
+                    reviewUrl: currentPairUrl,
+                    target: data.reReview ? 'list' : 'review'
                 });
                 const nextUrl = data.nextPairUrl || reviewUrl || window.location.href;
                 window.location.href = nextUrl;

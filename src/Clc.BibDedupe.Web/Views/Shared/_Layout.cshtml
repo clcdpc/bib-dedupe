@@ -9,9 +9,10 @@
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
 </head>
 <body>
-@{
+@{ 
     var containerClass = ViewBag.ContainerClass as string ?? "container";
 }
+<div class="action-toast-container" aria-live="polite" aria-atomic="true"></div>
 @await Html.PartialAsync("_Menu")
 <div class="@containerClass">
     <main role="main" class="pb-3">
