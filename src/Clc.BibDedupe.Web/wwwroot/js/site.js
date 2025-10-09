@@ -338,12 +338,29 @@ function showActionToast(data) {
         setTimeout(() => toast.remove(), 200);
     };
 
-    let hideTimer = setTimeout(hideToast, 6000);
+    const hideDelay = 6000;
+    let hideTimer = null;
+
+    const startHideTimer = () => {
+        clearTimeout(hideTimer);
+        hideTimer = setTimeout(hideToast, hideDelay);
+    };
 
     dismissButton.addEventListener('click', () => {
         clearTimeout(hideTimer);
         hideToast();
     });
+
+    toast.addEventListener('mouseenter', () => {
+        clearTimeout(hideTimer);
+        hideTimer = null;
+    });
+
+    toast.addEventListener('mouseleave', () => {
+        startHideTimer();
+    });
+
+    startHideTimer();
 
     requestAnimationFrame(() => toast.classList.add('show'));
 }
