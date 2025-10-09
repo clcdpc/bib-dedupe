@@ -47,7 +47,28 @@ function formatRecordTitle(title) {
     return trimmed.length > 90 ? `${trimmed.slice(0, 87)}…` : trimmed;
 }
 
-function createToastRecordRow(position, title, bibId) {
+function getKeptPosition(action) {
+    if (!action) {
+        return null;
+    }
+
+    const normalized = String(action).trim().toLowerCase();
+    if (!normalized) {
+        return null;
+    }
+
+    if (normalized === 'keepleft') {
+        return 'left';
+    }
+
+    if (normalized === 'keepright') {
+        return 'right';
+    }
+
+    return null;
+}
+
+function createToastRecordRow(position, title, bibId, isKept) {
     const bibLabel = formatBibLabel(bibId);
     const formattedTitle = formatRecordTitle(title);
     const hasTitle = Boolean(formattedTitle);
@@ -58,6 +79,9 @@ function createToastRecordRow(position, title, bibId) {
 
     const label = document.createElement('span');
     label.className = 'action-toast__record-label';
+    if (isKept) {
+        label.classList.add('action-toast__record-label--kept');
+    }
     label.textContent = `${position} record`;
     row.appendChild(label);
 
@@ -95,6 +119,8 @@ function buildActionToastMessage(data, summaryText) {
     const message = document.createElement('div');
     message.className = 'action-toast__message';
 
+    const keptPosition = getKeptPosition(data.action);
+
     const fallbackActionLabel = (typeof summaryText === 'string' && summaryText.includes(':'))
         ? summaryText.split(':')[0].trim()
         : '';
@@ -110,12 +136,12 @@ function buildActionToastMessage(data, summaryText) {
     const recordsWrapper = document.createElement('div');
     recordsWrapper.className = 'action-toast__records';
 
-    const leftRow = createToastRecordRow('Left', data.leftTitle, data.leftBibId);
+    const leftRow = createToastRecordRow('Left', data.leftTitle, data.leftBibId, keptPosition === 'left');
     if (leftRow) {
         recordsWrapper.appendChild(leftRow);
     }
 
-    const rightRow = createToastRecordRow('Right', data.rightTitle, data.rightBibId);
+    const rightRow = createToastRecordRow('Right', data.rightTitle, data.rightBibId, keptPosition === 'right');
     if (rightRow) {
         recordsWrapper.appendChild(rightRow);
     }
