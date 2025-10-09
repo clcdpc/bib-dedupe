@@ -23,6 +23,7 @@ public class ReviewController(
     IPairFilterStore pairFilterStore) : Controller
 {
     [HttpGet]
+    [HttpGet("{leftBibId:int}/{rightBibId:int}")]
     public async Task<IActionResult> Index(int? leftBibId, int? rightBibId)
     {
         var userEmail = User.GetEmail();
