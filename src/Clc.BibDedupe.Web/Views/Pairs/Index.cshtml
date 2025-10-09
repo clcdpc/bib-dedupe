@@ -98,7 +98,7 @@
                             @await Html.PartialAsync("_MatchPoints", p.Matches)
                         </td>
                         <td class="text-center">
-                            <a asp-controller="Home" asp-action="Review" asp-route-leftBibId="@p.LeftBibId" asp-route-rightBibId="@p.RightBibId" class="btn btn-sm review-btn">Review</a>
+                            <a asp-controller="Review" asp-action="Index" asp-route-leftBibId="@p.LeftBibId" asp-route-rightBibId="@p.RightBibId" class="btn btn-sm review-btn">Review</a>
                         </td>
                     </tr>
                 }

@@ -29,7 +29,7 @@ public class DecisionsController(
 
     public IActionResult Review(int leftBibId, int rightBibId)
     {
-        return RedirectToAction("Review", "Home", new { leftBibId, rightBibId });
+        return RedirectToAction("Index", "Review", new { leftBibId, rightBibId });
     }
 
     [HttpPost]
