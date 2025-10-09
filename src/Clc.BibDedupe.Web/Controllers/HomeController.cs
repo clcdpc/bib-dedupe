@@ -47,6 +47,7 @@ namespace Clc.BibDedupe.Web.Controllers
         {
             var userEmail = User.GetEmail();
             BibDupePair? pair;
+            DecisionItem? existingDecision = null;
             if (leftBibId is null || rightBibId is null)
             {
                 var filters = await pairFilterStore.GetAsync(userEmail);
@@ -66,6 +67,11 @@ namespace Clc.BibDedupe.Web.Controllers
             else
             {
                 pair = await repository.GetByBibIdsAsync(leftBibId.Value, rightBibId.Value, userEmail);
+                if (pair is null)
+                {
+                    existingDecision = (await decisionStore.GetAllAsync(userEmail))
+                        .FirstOrDefault(d => d.LeftBibId == leftBibId && d.RightBibId == rightBibId);
+                }
             }
 
             var (left, right) = await loader.LoadAsync(leftBibId.Value, rightBibId.Value);
@@ -74,8 +80,8 @@ namespace Clc.BibDedupe.Web.Controllers
             {
                 LeftBibId = leftBibId.Value,
                 RightBibId = rightBibId.Value,
-                LeftTitle = pair?.LeftTitle,
-                RightTitle = pair?.RightTitle,
+                LeftTitle = pair?.LeftTitle ?? existingDecision?.LeftTitle,
+                RightTitle = pair?.RightTitle ?? existingDecision?.RightTitle,
                 LeftBibXml = MarcXmlRenderer.TransformFile(left.BibXml, "marc-to-html.xslt"),
                 RightBibXml = MarcXmlRenderer.TransformFile(right.BibXml, "marc-to-html.xslt"),
                 LeftItems = left.Items,
@@ -86,7 +92,15 @@ namespace Clc.BibDedupe.Web.Controllers
                         MatchType = m.MatchType,
                         MatchValue = m.MatchValue
                     })
-                    .ToList() ?? new List<PairMatch>(),
+                    .ToList()
+                    ?? existingDecision?.Matches
+                        .Select(m => new PairMatch
+                        {
+                            MatchType = m.MatchType,
+                            MatchValue = m.MatchValue
+                        })
+                        .ToList()
+                    ?? new List<PairMatch>(),
                 LeftHoldCount = pair?.LeftHoldCount ?? 0,
                 RightHoldCount = pair?.RightHoldCount ?? 0,
                 TotalHoldCount = pair?.TotalHoldCount ?? 0
