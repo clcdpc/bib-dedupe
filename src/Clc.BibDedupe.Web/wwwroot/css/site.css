@@ -273,8 +273,8 @@ body {
 }
 
 .action-toast__record-label--kept {
-  color: #facc15;
-  background: rgba(250, 204, 21, 0.18);
+  color: #fde047;
+  background: rgba(253, 224, 71, 0.28);
   padding: 2px 6px;
   border-radius: 999px;
   font-weight: 700;
