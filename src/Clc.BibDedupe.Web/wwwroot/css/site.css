@@ -259,7 +259,7 @@ body {
 }
 
 .action-toast__record {
-  --action-toast-label-column-width: clamp(7.25rem, 22vw, 9.25rem);
+  --action-toast-label-column-width: clamp(6rem, 18vw, 7.5rem);
   display: grid;
   grid-template-columns: var(--action-toast-label-column-width) minmax(0, 1fr) max-content;
   column-gap: 12px;
@@ -324,7 +324,7 @@ body {
 
 @media (max-width: 520px) {
   .action-toast__record {
-    --action-toast-label-column-width: clamp(6.5rem, 45vw, 9rem);
+    --action-toast-label-column-width: clamp(5.75rem, 40vw, 7.25rem);
     grid-template-columns: var(--action-toast-label-column-width) minmax(0, 1fr);
   }
 
