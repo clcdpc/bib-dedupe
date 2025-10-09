@@ -3,7 +3,109 @@
 
 // Write your JavaScript code.
 
+const ACTION_TOAST_STORAGE_KEY = 'bibDedupe:lastAction';
+const ACTION_TOAST_MAX_AGE = 5 * 60 * 1000;
+
+function loadActionToast(expectedTarget) {
+    try {
+        const raw = sessionStorage.getItem(ACTION_TOAST_STORAGE_KEY);
+        if (!raw) {
+            return null;
+        }
+
+        const data = JSON.parse(raw);
+        if (!data || !data.action) {
+            sessionStorage.removeItem(ACTION_TOAST_STORAGE_KEY);
+            return null;
+        }
+
+        if (typeof data.timestamp === 'number' && Date.now() - data.timestamp > ACTION_TOAST_MAX_AGE) {
+            sessionStorage.removeItem(ACTION_TOAST_STORAGE_KEY);
+            return null;
+        }
+
+        const target = data.target || 'review';
+        if (expectedTarget && target !== expectedTarget) {
+            return null;
+        }
+
+        sessionStorage.removeItem(ACTION_TOAST_STORAGE_KEY);
+        return data;
+    } catch (error) {
+        console.warn('Unable to load last action toast payload.', error);
+        sessionStorage.removeItem(ACTION_TOAST_STORAGE_KEY);
+        return null;
+    }
+}
+
+function showActionToast(data) {
+    const container = document.querySelector('.action-toast-container');
+    if (!container) {
+        return;
+    }
+
+    const summary = data.summary;
+    if (!summary) {
+        return;
+    }
+
+    const toast = document.createElement('div');
+    toast.className = 'action-toast';
+    toast.setAttribute('role', 'status');
+
+    const message = document.createElement('div');
+    message.className = 'action-toast__message';
+    message.textContent = summary;
+    toast.appendChild(message);
+
+    const actions = document.createElement('div');
+    actions.className = 'action-toast__actions';
+
+    const reviewButton = document.createElement('button');
+    reviewButton.type = 'button';
+    reviewButton.className = 'action-toast__button';
+    reviewButton.textContent = 'Review again';
+    if (data.reviewUrl) {
+        reviewButton.addEventListener('click', () => {
+            clearTimeout(hideTimer);
+            window.location.href = data.reviewUrl;
+        });
+    } else {
+        reviewButton.disabled = true;
+    }
+    actions.appendChild(reviewButton);
+
+    const dismissButton = document.createElement('button');
+    dismissButton.type = 'button';
+    dismissButton.className = 'action-toast__dismiss';
+    dismissButton.setAttribute('aria-label', 'Dismiss notification');
+    dismissButton.textContent = '×';
+    actions.appendChild(dismissButton);
+
+    toast.appendChild(actions);
+    container.appendChild(toast);
+
+    const hideToast = () => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 200);
+    };
+
+    let hideTimer = setTimeout(hideToast, 6000);
+
+    dismissButton.addEventListener('click', () => {
+        clearTimeout(hideTimer);
+        hideToast();
+    });
+
+    requestAnimationFrame(() => toast.classList.add('show'));
+}
+
 document.addEventListener('DOMContentLoaded', () => {
+    const storedAction = loadActionToast('list');
+    if (storedAction) {
+        showActionToast(storedAction);
+    }
+
     if (typeof bootstrap !== 'undefined' && bootstrap.Tooltip) {
         const tooltipTriggerList = Array.prototype.slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
         tooltipTriggerList.forEach(triggerEl => {

@@ -161,6 +161,11 @@
 
     function rememberLastAction(payload) {
         try {
+            const summary = payload.summary || buildSummary(payload.action, payload);
+            if (!summary) {
+                return;
+            }
+
             const data = {
                 action: payload.action,
                 leftBibId: payload.leftBibId,
@@ -168,6 +173,8 @@
                 leftTitle: payload.leftTitle || '',
                 rightTitle: payload.rightTitle || '',
                 reviewUrl: payload.reviewUrl || '',
+                summary,
+                target: payload.target || 'review',
                 timestamp: Date.now()
             };
             sessionStorage.setItem(STORAGE_KEY, JSON.stringify(data));
@@ -176,23 +183,32 @@
         }
     }
 
-    function loadLastAction() {
+    function loadLastAction(expectedTarget) {
         try {
             const raw = sessionStorage.getItem(STORAGE_KEY);
             if (!raw) {
                 return null;
             }
-            sessionStorage.removeItem(STORAGE_KEY);
             const data = JSON.parse(raw);
             if (!data || !data.action) {
+                sessionStorage.removeItem(STORAGE_KEY);
                 return null;
             }
             if (typeof data.timestamp === 'number' && Date.now() - data.timestamp > TOAST_MAX_AGE) {
+                sessionStorage.removeItem(STORAGE_KEY);
                 return null;
             }
+            if (expectedTarget) {
+                const target = data.target || 'review';
+                if (target !== expectedTarget) {
+                    return null;
+                }
+            }
+            sessionStorage.removeItem(STORAGE_KEY);
             return data;
         } catch (err) {
             console.warn('Unable to load last action toast payload.', err);
+            sessionStorage.removeItem(STORAGE_KEY);
             return null;
         }
     }
@@ -201,7 +217,7 @@
         if (!toastContainer) {
             return;
         }
-        const summary = buildSummary(data.action, data);
+        const summary = data.summary || buildSummary(data.action, data);
         if (!summary) {
             return;
         }
@@ -256,7 +272,7 @@
         requestAnimationFrame(() => toast.classList.add('show'));
     }
 
-    const storedAction = loadLastAction();
+    const storedAction = loadLastAction('review');
     if (storedAction) {
         showToast(storedAction);
     }
@@ -351,7 +367,8 @@
                     rightBibId: Number.isNaN(rightBibId) ? rightBibIdValue : rightBibId,
                     leftTitle,
                     rightTitle,
-                    reviewUrl: currentPairUrl
+                    reviewUrl: currentPairUrl,
+                    target: data.reReview ? 'list' : 'review'
                 });
                 const nextUrl = data.nextPairUrl || reviewUrl || window.location.href;
                 window.location.href = nextUrl;
