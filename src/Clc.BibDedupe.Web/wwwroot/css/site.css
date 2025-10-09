@@ -293,12 +293,58 @@ body {
 }
 
 .action-toast__record-bib {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   font-family: var(--bs-font-monospace, 'SFMono-Regular', Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace);
   font-size: 0.8rem;
-  background: rgba(148, 163, 184, 0.3);
+  font-weight: 600;
+  background: rgba(148, 163, 184, 0.28);
   color: #e2e8f0;
-  padding: 2px 8px;
-  border-radius: 999px;
+  padding: 3px 10px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, box-shadow 0.2s ease, transform 0.1s ease;
+}
+
+.action-toast__record-bib:hover,
+.action-toast__record-bib:focus-visible {
+  background: rgba(148, 163, 184, 0.45);
+  color: #f8fafc;
+}
+
+.action-toast__record-bib:focus-visible {
+  outline: 2px solid rgba(148, 197, 255, 0.6);
+  outline-offset: 2px;
+}
+
+.action-toast__record-bib:active {
+  transform: translateY(1px);
+}
+
+.action-toast__record-bib-icon {
+  width: 0.85rem;
+  height: 0.85rem;
+  display: inline-block;
+  fill: currentColor;
+  opacity: 0.85;
+  transition: opacity 0.2s ease;
+}
+
+.action-toast__record-bib-text {
+  display: inline-block;
+  line-height: 1.1;
+}
+
+.action-toast__record-bib--copied {
+  background: rgba(96, 165, 250, 0.5);
+  color: #0f172a;
+  box-shadow: 0 0 0 1px rgba(148, 197, 255, 0.7);
+}
+
+.action-toast__record-bib--copied .action-toast__record-bib-icon {
+  opacity: 1;
 }
 
 .action-toast__actions {
@@ -395,6 +441,22 @@ body {
   .action-toast__record-bib {
     background: rgba(148, 163, 184, 0.35);
     color: #e2e8f0;
+  }
+
+  .action-toast__record-bib:hover,
+  .action-toast__record-bib:focus-visible {
+    background: rgba(148, 163, 184, 0.5);
+    color: #f8fafc;
+  }
+
+  .action-toast__record-bib:focus-visible {
+    outline-color: rgba(148, 197, 255, 0.75);
+  }
+
+  .action-toast__record-bib--copied {
+    background: rgba(96, 165, 250, 0.6);
+    color: #0b1120;
+    box-shadow: 0 0 0 1px rgba(148, 197, 255, 0.65);
   }
 }
 

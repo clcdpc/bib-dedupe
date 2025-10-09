@@ -34,6 +34,53 @@ function formatBibLabel(value) {
         : `Bib ${normalized}`;
 }
 
+async function copyToClipboard(text) {
+    if (!text) {
+        return false;
+    }
+
+    if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+        try {
+            await navigator.clipboard.writeText(text);
+            return true;
+        } catch (error) {
+            // Fallback to manual copy below
+        }
+    }
+
+    const textArea = document.createElement('textarea');
+    textArea.value = text;
+    textArea.setAttribute('readonly', '');
+    textArea.style.position = 'absolute';
+    textArea.style.left = '-9999px';
+    document.body.appendChild(textArea);
+
+    let selection = null;
+    if (window.getSelection) {
+        selection = window.getSelection();
+    }
+
+    const selectedRange = selection && selection.rangeCount > 0 ? selection.getRangeAt(0) : null;
+
+    textArea.select();
+
+    let succeeded = false;
+    try {
+        succeeded = document.execCommand('copy');
+    } catch (error) {
+        succeeded = false;
+    }
+
+    document.body.removeChild(textArea);
+
+    if (selectedRange && selection) {
+        selection.removeAllRanges();
+        selection.addRange(selectedRange);
+    }
+
+    return succeeded;
+}
+
 function trimmedTitle(title) {
     return (title || '').trim();
 }
@@ -102,10 +149,48 @@ function createToastRecordRow(position, title, bibId, isKept) {
     row.appendChild(titleEl);
 
     if (bibLabel) {
-        const bibEl = document.createElement('span');
-        bibEl.className = 'action-toast__record-bib';
-        bibEl.textContent = bibLabel;
-        row.appendChild(bibEl);
+        const copyValue = normalizeBibId(bibId) || bibLabel;
+        const copyLabel = bibLabel;
+
+        const bibButton = document.createElement('button');
+        bibButton.type = 'button';
+        bibButton.className = 'action-toast__record-bib';
+        bibButton.setAttribute('aria-label', `Copy ${copyLabel} to clipboard`);
+        bibButton.title = `Copy ${copyLabel} to clipboard`;
+
+        const icon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        icon.setAttribute('class', 'action-toast__record-bib-icon');
+        icon.setAttribute('viewBox', '0 0 16 16');
+        icon.setAttribute('aria-hidden', 'true');
+        icon.setAttribute('focusable', 'false');
+
+        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        path.setAttribute('d', 'M10 1.5H9.5a1.5 1.5 0 0 0-3 0H6A1.5 1.5 0 0 0 4.5 3v1A1.5 1.5 0 0 0 3 5.5v7A1.5 1.5 0 0 0 4.5 14h7a1.5 1.5 0 0 0 1.5-1.5v-7A1.5 1.5 0 0 0 11.5 4V3A1.5 1.5 0 0 0 10 1.5Zm-2-.5a.5.5 0 0 1 .5.5V3h-2V1.5a.5.5 0 0 1 .5-.5ZM11.5 5a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-.5.5h-7a.5.5 0 0 1-.5-.5v-7a.5.5 0 0 1 .5-.5h7Z');
+        icon.appendChild(path);
+
+        const textSpan = document.createElement('span');
+        textSpan.className = 'action-toast__record-bib-text';
+        textSpan.textContent = bibLabel;
+
+        bibButton.appendChild(icon);
+        bibButton.appendChild(textSpan);
+
+        bibButton.addEventListener('click', async (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+
+            const successful = await copyToClipboard(copyValue);
+            if (successful) {
+                bibButton.classList.add('action-toast__record-bib--copied');
+                setTimeout(() => bibButton.classList.remove('action-toast__record-bib--copied'), 1200);
+
+                if (typeof window.showCopyFeedback === 'function') {
+                    window.showCopyFeedback(copyLabel);
+                }
+            }
+        });
+
+        row.appendChild(bibButton);
     }
 
     return row;
@@ -280,11 +365,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    const matchBadges = document.querySelectorAll('.match-point-badge[data-match-values]');
-    if (!matchBadges.length) {
-        return;
-    }
-
     const toastElement = document.getElementById('match-copy-toast');
     let toastInstance = null;
 
@@ -292,7 +372,7 @@ document.addEventListener('DOMContentLoaded', () => {
         toastInstance = bootstrap.Toast.getOrCreateInstance(toastElement, { delay: 2000 });
     }
 
-    const showToast = (label) => {
+    const showCopyFeedback = (label) => {
         if (!toastElement) {
             return;
         }
@@ -314,52 +394,12 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => toastElement.classList.remove('show'), 2000);
     };
 
-    const copyText = async (text) => {
-        if (!text) {
-            return false;
-        }
+    window.showCopyFeedback = showCopyFeedback;
 
-        if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
-            try {
-                await navigator.clipboard.writeText(text);
-                return true;
-            } catch (error) {
-                // Fallback to manual copy below
-            }
-        }
-
-        const textArea = document.createElement('textarea');
-        textArea.value = text;
-        textArea.setAttribute('readonly', '');
-        textArea.style.position = 'absolute';
-        textArea.style.left = '-9999px';
-        document.body.appendChild(textArea);
-
-        let selection = null;
-        if (window.getSelection) {
-            selection = window.getSelection();
-        }
-
-        const selectedRange = selection && selection.rangeCount > 0 ? selection.getRangeAt(0) : null;
-
-        textArea.select();
-
-        let succeeded = false;
-        try {
-            succeeded = document.execCommand('copy');
-        } catch (error) {
-            succeeded = false;
-        }
-
-        document.body.removeChild(textArea);
-
-        if (selectedRange && selection) {
-            selection.removeAllRanges();
-            selection.addRange(selectedRange);
-        }
-
-        return succeeded;
-    };
+    const matchBadges = document.querySelectorAll('.match-point-badge[data-match-values]');
+    if (!matchBadges.length) {
+        return;
+    }
 
     const handleBadgeAction = async (event) => {
         const badge = event.currentTarget;
@@ -371,9 +411,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const label = badge.dataset.matchLabel || badge.textContent?.trim();
 
-        const copied = await copyText(values);
+        const copied = await copyToClipboard(values);
         if (copied) {
-            showToast(label);
+            showCopyFeedback(label);
         }
     };
 
