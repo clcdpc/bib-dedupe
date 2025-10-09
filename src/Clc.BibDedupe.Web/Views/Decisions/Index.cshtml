@@ -1,3 +1,4 @@
+@using Clc.BibDedupe.Web.Controllers
 @using Clc.BibDedupe.Web.Models
 @model DecisionIndexViewModel
 @{ 
@@ -84,7 +85,7 @@ else
                         </td>
                         <td class="decision-action" data-action-label="@d.Action">@d.Action</td>
                         <td>
-                            <a asp-action="Review" asp-route-leftBibId="@d.LeftBibId" asp-route-rightBibId="@d.RightBibId" class="btn btn-sm review-btn">Review</a>
+                            <a asp-controller="Review" asp-action="Index" asp-route-leftBibId="@d.LeftBibId" asp-route-rightBibId="@d.RightBibId" class="btn btn-sm review-btn">Review</a>
                         </td>
                         <td>
                             <form asp-action="Remove" method="post" class="remove-form">
