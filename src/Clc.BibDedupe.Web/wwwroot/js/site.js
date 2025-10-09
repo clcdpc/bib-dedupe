@@ -341,26 +341,59 @@ function showActionToast(data) {
     const hideDelay = 6000;
     let hideTimer = null;
 
-    const startHideTimer = () => {
+    const pauseHideTimer = () => {
         clearTimeout(hideTimer);
-        hideTimer = setTimeout(hideToast, hideDelay);
+        hideTimer = null;
+    };
+
+    const resumeHideTimer = (event) => {
+        if (event && event.type === 'focusout') {
+            const nextFocused = event.relatedTarget || document.activeElement;
+            if (nextFocused && toast.contains(nextFocused)) {
+                return;
+            }
+        }
+
+        if (document.activeElement && toast.contains(document.activeElement)) {
+            return;
+        }
+
+        if (hideTimer === null) {
+            hideTimer = setTimeout(hideToast, hideDelay);
+        }
     };
 
     dismissButton.addEventListener('click', () => {
-        clearTimeout(hideTimer);
+        pauseHideTimer();
         hideToast();
     });
 
-    toast.addEventListener('mouseenter', () => {
-        clearTimeout(hideTimer);
-        hideTimer = null;
+    const pauseEvents = ['mouseenter', 'pointerenter', 'focusin'];
+    const resumeEvents = ['mouseleave', 'pointerleave', 'focusout'];
+
+    pauseEvents.forEach((eventName) => {
+        toast.addEventListener(eventName, pauseHideTimer);
     });
 
-    toast.addEventListener('mouseleave', () => {
-        startHideTimer();
+    resumeEvents.forEach((eventName) => {
+        toast.addEventListener(eventName, resumeHideTimer);
     });
 
-    startHideTimer();
+    const handlePointerOut = (event) => {
+        const nextTarget = event.relatedTarget;
+        if (nextTarget && toast.contains(nextTarget)) {
+            return;
+        }
+
+        resumeHideTimer(event);
+    };
+
+    toast.addEventListener('mouseover', pauseHideTimer);
+    toast.addEventListener('mouseout', handlePointerOut);
+    toast.addEventListener('pointerover', pauseHideTimer);
+    toast.addEventListener('pointerout', handlePointerOut);
+
+    resumeHideTimer();
 
     requestAnimationFrame(() => toast.classList.add('show'));
 }
