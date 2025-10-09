@@ -6,6 +6,137 @@
 const ACTION_TOAST_STORAGE_KEY = 'bibDedupe:lastAction';
 const ACTION_TOAST_MAX_AGE = 5 * 60 * 1000;
 
+function normalizeBibId(value) {
+    if (value === null || value === undefined) {
+        return '';
+    }
+
+    if (typeof value === 'number' && !Number.isNaN(value)) {
+        return String(value);
+    }
+
+    if (typeof value === 'string') {
+        const trimmed = value.trim();
+        return trimmed;
+    }
+
+    return '';
+}
+
+function formatBibLabel(value) {
+    const normalized = normalizeBibId(value);
+    if (!normalized) {
+        return '';
+    }
+
+    return normalized.toLowerCase().startsWith('bib ')
+        ? normalized
+        : `Bib ${normalized}`;
+}
+
+function trimmedTitle(title) {
+    return (title || '').trim();
+}
+
+function formatRecordTitle(title) {
+    const trimmed = trimmedTitle(title);
+    if (!trimmed) {
+        return '';
+    }
+
+    return trimmed.length > 90 ? `${trimmed.slice(0, 87)}…` : trimmed;
+}
+
+function createToastRecordRow(position, title, bibId) {
+    const bibLabel = formatBibLabel(bibId);
+    const formattedTitle = formatRecordTitle(title);
+    const hasTitle = Boolean(formattedTitle);
+    const displayTitle = hasTitle ? formattedTitle : 'Title unavailable';
+
+    const row = document.createElement('div');
+    row.className = 'action-toast__record';
+
+    const label = document.createElement('span');
+    label.className = 'action-toast__record-label';
+    label.textContent = `${position} record`;
+    row.appendChild(label);
+
+    const titleEl = document.createElement('span');
+    titleEl.className = 'action-toast__record-title';
+    if (!hasTitle) {
+        titleEl.classList.add('action-toast__record-title--muted');
+    }
+    titleEl.textContent = displayTitle;
+    const rawTitle = trimmedTitle(title);
+    if (hasTitle && formattedTitle !== rawTitle) {
+        titleEl.title = rawTitle;
+    } else if (!hasTitle && bibLabel) {
+        titleEl.title = bibLabel;
+    } else if (!hasTitle) {
+        titleEl.title = 'Title unavailable';
+    }
+    row.appendChild(titleEl);
+
+    if (bibLabel) {
+        const bibEl = document.createElement('span');
+        bibEl.className = 'action-toast__record-bib';
+        bibEl.textContent = bibLabel;
+        row.appendChild(bibEl);
+    }
+
+    return row;
+}
+
+function buildActionToastMessage(data, summaryText) {
+    if (!data) {
+        return null;
+    }
+
+    const message = document.createElement('div');
+    message.className = 'action-toast__message';
+
+    const fallbackActionLabel = (typeof summaryText === 'string' && summaryText.includes(':'))
+        ? summaryText.split(':')[0].trim()
+        : '';
+    const actionLabel = (data.actionLabel && data.actionLabel.trim()) || fallbackActionLabel;
+
+    if (actionLabel) {
+        const actionEl = document.createElement('div');
+        actionEl.className = 'action-toast__action';
+        actionEl.textContent = actionLabel;
+        message.appendChild(actionEl);
+    }
+
+    const recordsWrapper = document.createElement('div');
+    recordsWrapper.className = 'action-toast__records';
+
+    const leftRow = createToastRecordRow('Left', data.leftTitle, data.leftBibId);
+    if (leftRow) {
+        recordsWrapper.appendChild(leftRow);
+    }
+
+    const rightRow = createToastRecordRow('Right', data.rightTitle, data.rightBibId);
+    if (rightRow) {
+        recordsWrapper.appendChild(rightRow);
+    }
+
+    if (recordsWrapper.childElementCount > 0) {
+        message.appendChild(recordsWrapper);
+    }
+
+    if (!message.childElementCount) {
+        return null;
+    }
+
+    if (summaryText) {
+        message.setAttribute('data-summary', summaryText);
+    }
+
+    return message;
+}
+
+window.buildActionToastMessage = buildActionToastMessage;
+
 function loadActionToast(expectedTarget) {
     try {
         const raw = sessionStorage.getItem(ACTION_TOAST_STORAGE_KEY);
@@ -52,11 +183,17 @@ function showActionToast(data) {
     const toast = document.createElement('div');
     toast.className = 'action-toast';
     toast.setAttribute('role', 'status');
+    toast.setAttribute('aria-label', summary);
 
-    const message = document.createElement('div');
-    message.className = 'action-toast__message';
-    message.textContent = summary;
-    toast.appendChild(message);
+    const message = buildActionToastMessage(data, summary);
+    if (message) {
+        toast.appendChild(message);
+    } else {
+        const fallback = document.createElement('div');
+        fallback.className = 'action-toast__message';
+        fallback.textContent = summary;
+        toast.appendChild(fallback);
+    }
 
     const actions = document.createElement('div');
     actions.className = 'action-toast__actions';

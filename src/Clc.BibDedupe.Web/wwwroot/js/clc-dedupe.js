@@ -139,23 +139,50 @@
         page.classList.add('initializing');
     }
 
-    function formatRecordLabel(title, bibIdValue) {
+    function formatBibLabel(bibIdValue) {
+        if (bibIdValue === null || bibIdValue === undefined) {
+            return '';
+        }
+        if (typeof bibIdValue === 'number' && !Number.isNaN(bibIdValue)) {
+            return `Bib ${bibIdValue}`;
+        }
+        if (typeof bibIdValue === 'string') {
+            const trimmed = bibIdValue.trim();
+            if (trimmed) {
+                return trimmed.toLowerCase().startsWith('bib ')
+                    ? trimmed
+                    : `Bib ${trimmed}`;
+            }
+        }
+        return '';
+    }
+
+    function formatSummaryRecord(title, bibIdValue) {
         const trimmedTitle = (title || '').trim();
-        if (trimmedTitle) {
-            return trimmedTitle.length > 70 ? `${trimmedTitle.slice(0, 67)}…` : trimmedTitle;
+        const summaryTitle = trimmedTitle
+            ? (trimmedTitle.length > 70 ? `${trimmedTitle.slice(0, 67)}…` : trimmedTitle)
+            : '';
+        const bibLabel = formatBibLabel(bibIdValue);
+
+        if (summaryTitle && bibLabel) {
+            return `${summaryTitle} (${bibLabel})`;
         }
-        const fallbackSource = bibIdValue ?? '';
-        const fallback = (typeof fallbackSource === 'string' ? fallbackSource : String(fallbackSource)).trim();
-        if (fallback) {
-            return `Bib ${fallback}`;
+
+        if (summaryTitle) {
+            return summaryTitle;
         }
+
+        if (bibLabel) {
+            return bibLabel;
+        }
+
         return 'this pair';
     }
 
     function buildSummary(action, data) {
         const actionLabel = ACTION_LABELS[action] || action;
-        const leftLabel = formatRecordLabel(data.leftTitle, data.leftBibId);
-        const rightLabel = formatRecordLabel(data.rightTitle, data.rightBibId);
+        const leftLabel = formatSummaryRecord(data.leftTitle, data.leftBibId);
+        const rightLabel = formatSummaryRecord(data.rightTitle, data.rightBibId);
         return `${actionLabel}: ${leftLabel} vs ${rightLabel}`;
     }
 
@@ -166,8 +193,10 @@
                 return;
             }
 
+            const actionLabel = ACTION_LABELS[payload.action] || payload.action || '';
             const data = {
                 action: payload.action,
+                actionLabel,
                 leftBibId: payload.leftBibId,
                 rightBibId: payload.rightBibId,
                 leftTitle: payload.leftTitle || '',
@@ -224,11 +253,20 @@
         const toast = document.createElement('div');
         toast.className = 'action-toast';
         toast.setAttribute('role', 'status');
+        toast.setAttribute('aria-label', summary);
 
-        const message = document.createElement('div');
-        message.className = 'action-toast__message';
-        message.textContent = summary;
-        toast.appendChild(message);
+        const buildMessage = typeof window.buildActionToastMessage === 'function'
+            ? window.buildActionToastMessage
+            : null;
+        const message = buildMessage ? buildMessage(data, summary) : null;
+        if (message) {
+            toast.appendChild(message);
+        } else {
+            const fallback = document.createElement('div');
+            fallback.className = 'action-toast__message';
+            fallback.textContent = summary;
+            toast.appendChild(fallback);
+        }
 
         const actions = document.createElement('div');
         actions.className = 'action-toast__actions';
