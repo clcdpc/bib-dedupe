@@ -14,7 +14,7 @@
 </head>
 <body>
 <div class="action-toast-container" aria-live="polite" aria-atomic="true"></div>
-<div class="page" data-resolve-url="@Url.Action("Resolve")" data-review-url="@Url.Action("Review")" data-left-bib-id="@Model.LeftBibId" data-right-bib-id="@Model.RightBibId" data-left-title="@Model.LeftTitle" data-right-title="@Model.RightTitle">
+<div class="page" data-resolve-url="@Url.Action("Resolve")" data-review-url="@Url.Action("Index")" data-left-bib-id="@Model.LeftBibId" data-right-bib-id="@Model.RightBibId" data-left-title="@Model.LeftTitle" data-right-title="@Model.RightTitle">
     @{ 
         ViewData["MatchPoints"] = Model.Matches;
         ViewData["MatchSummaryTitle"] = "Match Types";

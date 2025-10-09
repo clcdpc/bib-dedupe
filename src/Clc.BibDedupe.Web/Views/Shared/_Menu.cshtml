@@ -24,7 +24,7 @@
         }
         else
         {
-            <a asp-controller="Home" asp-action="Review" asp-route-leftBibId="@currentPair.LeftBibId" asp-route-rightBibId="@currentPair.RightBibId" data-current-pair="true">Current Pair</a>
+            <a asp-controller="Review" asp-action="Index" asp-route-leftBibId="@currentPair.LeftBibId" asp-route-rightBibId="@currentPair.RightBibId" data-current-pair="true">Current Pair</a>
         }
     </div>
     @if (showSummary)
