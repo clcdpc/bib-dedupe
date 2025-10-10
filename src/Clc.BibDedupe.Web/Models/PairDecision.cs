@@ -1,6 +1,6 @@
 namespace Clc.BibDedupe.Web.Models;
 
-public record DecisionItem
+public class PairDecision
 {
     private BibDupePair _pair = new();
 
@@ -9,9 +9,12 @@ public record DecisionItem
         get => _pair;
         set => _pair = value ?? new BibDupePair();
     }
+
     public BibDupePairAction Action { get; set; }
 
-    public int LeftBibId => Pair.LeftBibId;
-    public int RightBibId => Pair.RightBibId;
-    public string MatchSummary => Pair.MatchSummary;
+    public PairDecision Clone() => new()
+    {
+        Pair = Pair.Clone(),
+        Action = Action
+    };
 }

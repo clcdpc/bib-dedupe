@@ -11,9 +11,9 @@ public record DecisionSummary
     public int NotDuplicate { get; init; }
     public int Skip { get; init; }
 
-    public static DecisionSummary From(IEnumerable<DecisionItem> decisions)
+    public static DecisionSummary From(IEnumerable<PairDecision> decisions)
     {
-        var items = decisions?.ToList() ?? new List<DecisionItem>();
+        var items = decisions?.ToList() ?? new List<PairDecision>();
 
         if (items.Count == 0)
         {

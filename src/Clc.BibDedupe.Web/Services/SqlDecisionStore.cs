@@ -11,7 +11,7 @@ public class SqlDecisionStore(IDbConnection db) : IDecisionStore
 {
     private const string Table = "BibDedupe.DecisionQueue";
 
-    public async Task AddAsync(string userId, DecisionItem decision)
+    public async Task AddAsync(string userId, PairDecision decision)
     {
         var decisions = await LoadDecisionSummariesAsync(userId);
         var existing = decisions.FirstOrDefault(d =>
@@ -23,7 +23,7 @@ public class SqlDecisionStore(IDbConnection db) : IDecisionStore
         }
         else
         {
-            decisions.Add(new DecisionItem
+            decisions.Add(new PairDecision
             {
                 Pair = new BibDupePair
                 {
@@ -52,7 +52,7 @@ public class SqlDecisionStore(IDbConnection db) : IDecisionStore
         }
     }
 
-    public async Task<IEnumerable<DecisionItem>> GetAllAsync(string userId)
+    public async Task<IEnumerable<PairDecision>> GetAllAsync(string userId)
     {
         const string query = @"SELECT LeftBibId, RightBibId, ActionId, PrimaryMarcTomId,
                                          LeftTitle, LeftAuthor, RightTitle, RightAuthor,
@@ -66,7 +66,7 @@ public class SqlDecisionStore(IDbConnection db) : IDecisionStore
                 UserEmail = userId
             })).ToList();
 
-        var decisions = new List<DecisionItem>(rows.Count);
+        var decisions = new List<PairDecision>(rows.Count);
 
         foreach (var row in rows)
         {
@@ -76,7 +76,7 @@ public class SqlDecisionStore(IDbConnection db) : IDecisionStore
             }
             else
             {
-                decisions.Add(new DecisionItem
+                decisions.Add(new PairDecision
                 {
                     Pair = new BibDupePair
                     {
@@ -91,7 +91,7 @@ public class SqlDecisionStore(IDbConnection db) : IDecisionStore
         return decisions;
     }
 
-    public async Task<DecisionItem?> GetAsync(string userId, int leftBibId, int rightBibId)
+    public async Task<PairDecision?> GetAsync(string userId, int leftBibId, int rightBibId)
     {
         const string query = @"SELECT LeftBibId, RightBibId, ActionId, PrimaryMarcTomId,
                                          LeftTitle, LeftAuthor, RightTitle, RightAuthor,
@@ -115,7 +115,7 @@ public class SqlDecisionStore(IDbConnection db) : IDecisionStore
 
         return row.PrimaryMarcTomId.HasValue
             ? MapRow(row)
-            : new DecisionItem
+            : new PairDecision
             {
                 Pair = new BibDupePair
                 {
@@ -130,12 +130,12 @@ public class SqlDecisionStore(IDbConnection db) : IDecisionStore
         db.ExecuteAsync($"DELETE FROM {Table} WHERE UserEmail = @UserEmail AND LeftBibId = @LeftBibId AND RightBibId = @RightBibId",
             new { UserEmail = userId, LeftBibId = leftBibId, RightBibId = rightBibId });
 
-    public Task UpdateAsync(string userId, DecisionItem decision) => AddAsync(userId, decision);
+    public Task UpdateAsync(string userId, PairDecision decision) => AddAsync(userId, decision);
 
     public async Task<int> CountAsync(string userId) =>
         await db.ExecuteScalarAsync<int>($"SELECT COUNT(*) FROM {Table} WHERE UserEmail = @UserEmail", new { UserEmail = userId });
 
-    private static DecisionItem MapRow(DecisionRow row) => new()
+    private static PairDecision MapRow(DecisionRow row) => new()
     {
         Pair = new BibDupePair
         {
@@ -166,13 +166,13 @@ public class SqlDecisionStore(IDbConnection db) : IDecisionStore
         public string? MatchesJson { get; init; }
     }
 
-    private async Task<List<DecisionItem>> LoadDecisionSummariesAsync(string userId)
+    private async Task<List<PairDecision>> LoadDecisionSummariesAsync(string userId)
     {
         var rows = await db.QueryAsync<DecisionSummaryRow>(
             $"SELECT LeftBibId, RightBibId, ActionId FROM {Table} WHERE UserEmail = @UserEmail",
             new { UserEmail = userId });
 
-        return rows.Select(r => new DecisionItem
+        return rows.Select(r => new PairDecision
         {
             Pair = new BibDupePair
             {

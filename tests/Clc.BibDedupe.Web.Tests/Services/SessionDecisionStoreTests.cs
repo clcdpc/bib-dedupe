@@ -108,7 +108,7 @@ public class SessionDecisionStoreTests
         return new SessionDecisionStore(TestHttpContextAccessor.WithSession(session));
     }
 
-    private static DecisionItem CreateDecision(int leftBibId, int rightBibId, BibDupePairAction action) => new()
+    private static PairDecision CreateDecision(int leftBibId, int rightBibId, BibDupePairAction action) => new()
     {
         Pair = new BibDupePair
         {

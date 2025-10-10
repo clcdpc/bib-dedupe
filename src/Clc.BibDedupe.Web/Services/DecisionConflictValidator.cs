@@ -5,7 +5,7 @@ namespace Clc.BibDedupe.Web.Services;
 
 public static class DecisionConflictValidator
 {
-    public static void EnsureNoMergeConflicts(IEnumerable<DecisionItem> items)
+    public static void EnsureNoMergeConflicts(IEnumerable<PairDecision> items)
     {
         var mergedBibIds = new HashSet<int>();
         var keptBibIds = new HashSet<int>();

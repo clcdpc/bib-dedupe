@@ -11,7 +11,7 @@ public class DecisionConflictValidatorTests
     [TestMethod]
     public void Allowing_Distinct_Merges_Does_Not_Throw()
     {
-        var items = new List<DecisionItem>
+        var items = new List<PairDecision>
         {
             CreateDecision(1, 2, BibDupePairAction.KeepLeft),
             CreateDecision(3, 4, BibDupePairAction.KeepRight),
@@ -26,7 +26,7 @@ public class DecisionConflictValidatorTests
     [TestMethod]
     public void Merging_The_Same_Bib_Twice_Throws_A_Conflict_Exception()
     {
-        var items = new List<DecisionItem>
+        var items = new List<PairDecision>
         {
             CreateDecision(1, 2, BibDupePairAction.KeepLeft),
             CreateDecision(3, 2, BibDupePairAction.KeepLeft)
@@ -41,7 +41,7 @@ public class DecisionConflictValidatorTests
     [TestMethod]
     public void Keeping_A_Bib_That_Was_Merged_Elsewhere_Throws()
     {
-        var items = new List<DecisionItem>
+        var items = new List<PairDecision>
         {
             CreateDecision(1, 2, BibDupePairAction.KeepLeft),
             CreateDecision(1, 3, BibDupePairAction.KeepRight)
@@ -56,7 +56,7 @@ public class DecisionConflictValidatorTests
     [TestMethod]
     public void Merging_A_Bib_That_Was_Already_Kept_Throws()
     {
-        var items = new List<DecisionItem>
+        var items = new List<PairDecision>
         {
             CreateDecision(1, 2, BibDupePairAction.KeepLeft),
             CreateDecision(2, 3, BibDupePairAction.KeepLeft)
@@ -68,7 +68,7 @@ public class DecisionConflictValidatorTests
             .Which.Message.Should().Contain("Bib 2 has already been merged into a different record");
     }
 
-    private static DecisionItem CreateDecision(int leftBibId, int rightBibId, BibDupePairAction action) => new()
+    private static PairDecision CreateDecision(int leftBibId, int rightBibId, BibDupePairAction action) => new()
     {
         Pair = new BibDupePair
         {

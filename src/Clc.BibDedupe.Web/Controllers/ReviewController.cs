@@ -91,13 +91,10 @@ public class ReviewController(
 
         if (pair is null)
         {
-            decision = decision with { Action = parsed };
             isReReview = true;
         }
-        else
-        {
-            decision.Action = parsed;
-        }
+
+        decision.Action = parsed;
         try
         {
             await decisionStore.AddAsync(userEmail, decision);
@@ -182,7 +179,7 @@ public class ReviewController(
             : new ReviewPair(leftBibId.Value, rightBibId.Value, null, existingDecision);
     }
 
-    private static DecisionItem CreateDecisionFromPair(BibDupePair pair, BibDupePairAction action) => new()
+    private static PairDecision CreateDecisionFromPair(BibDupePair pair, BibDupePairAction action) => new()
     {
         Pair = pair.Clone(),
         Action = action
@@ -192,5 +189,5 @@ public class ReviewController(
         int LeftBibId,
         int RightBibId,
         BibDupePair? Pair,
-        DecisionItem? ExistingDecision);
+        PairDecision? ExistingDecision);
 }

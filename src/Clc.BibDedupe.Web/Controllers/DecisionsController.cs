@@ -20,7 +20,7 @@ public class DecisionsController(
         var batch = await submissionService.GetCurrentBatchAsync(email);
         var items = batch is null
             ? await store.GetAllAsync(email)
-            : Enumerable.Empty<DecisionItem>();
+            : Enumerable.Empty<PairDecision>();
 
         var model = DecisionIndexViewModel.Create(items, batch);
 
