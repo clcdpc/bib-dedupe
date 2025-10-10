@@ -40,16 +40,16 @@ public class ReviewController(
         {
             LeftBibId = reviewPair.LeftBibId,
             RightBibId = reviewPair.RightBibId,
-            LeftTitle = reviewPair.Pair?.LeftTitle ?? reviewPair.ExistingDecision?.Pair.LeftTitle,
-            RightTitle = reviewPair.Pair?.RightTitle ?? reviewPair.ExistingDecision?.Pair.RightTitle,
+            LeftTitle = reviewPair.Pair.LeftTitle,
+            RightTitle = reviewPair.Pair.RightTitle,
             LeftBibXml = MarcXmlRenderer.TransformFile(leftRecord.BibXml, "marc-to-html.xslt"),
             RightBibXml = MarcXmlRenderer.TransformFile(rightRecord.BibXml, "marc-to-html.xslt"),
             LeftItems = leftRecord.Items,
             RightItems = rightRecord.Items,
-            Matches = PairMatch.CloneList(reviewPair.Pair?.Matches ?? reviewPair.ExistingDecision?.Pair.Matches),
-            LeftHoldCount = reviewPair.Pair?.LeftHoldCount ?? 0,
-            RightHoldCount = reviewPair.Pair?.RightHoldCount ?? 0,
-            TotalHoldCount = reviewPair.Pair?.TotalHoldCount ?? 0
+            Matches = PairMatch.CloneList(reviewPair.Pair.Matches),
+            LeftHoldCount = reviewPair.Pair.LeftHoldCount,
+            RightHoldCount = reviewPair.Pair.RightHoldCount,
+            TotalHoldCount = reviewPair.Pair.TotalHoldCount
         };
 
         await currentPairStore.SetAsync(userEmail, new CurrentPair
@@ -164,19 +164,27 @@ public class ReviewController(
 
             return nextPair is null
                 ? null
-                : new ReviewPair(nextPair.LeftBibId, nextPair.RightBibId, nextPair, null);
+                : new ReviewPair(
+                    nextPair.LeftBibId,
+                    nextPair.RightBibId,
+                    nextPair.Clone(),
+                    null);
         }
 
         var pair = await repository.GetByBibIdsAsync(leftBibId.Value, rightBibId.Value, userEmail);
         if (pair is not null)
         {
-            return new ReviewPair(leftBibId.Value, rightBibId.Value, pair, null);
+            return new ReviewPair(leftBibId.Value, rightBibId.Value, pair.Clone(), null);
         }
 
         var existingDecision = await decisionStore.GetAsync(userEmail, leftBibId.Value, rightBibId.Value);
         return existingDecision is null
             ? null
-            : new ReviewPair(leftBibId.Value, rightBibId.Value, null, existingDecision);
+            : new ReviewPair(
+                leftBibId.Value,
+                rightBibId.Value,
+                existingDecision.Pair.Clone(),
+                new ReviewDecision(existingDecision.Action));
     }
 
     private static PairDecision CreateDecisionFromPair(BibDupePair pair, BibDupePairAction action) => new()
@@ -188,6 +196,8 @@ public class ReviewController(
     private sealed record ReviewPair(
         int LeftBibId,
         int RightBibId,
-        BibDupePair? Pair,
-        PairDecision? ExistingDecision);
+        BibDupePair Pair,
+        ReviewDecision? ExistingDecision);
+
+    private sealed record ReviewDecision(BibDupePairAction Action);
 }
