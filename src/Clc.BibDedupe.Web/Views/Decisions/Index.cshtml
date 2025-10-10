@@ -9,7 +9,10 @@
     var batch = Model.BatchStatus;
 }
 
-<h1>Decisions</h1>
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <h1 class="mb-0">Decisions</h1>
+    <a class="btn btn-outline-primary" asp-action="Batches">View Batch History</a>
+</div>
 
 @if (TempData["Error"] is string errorMessage && !string.IsNullOrWhiteSpace(errorMessage))
 {

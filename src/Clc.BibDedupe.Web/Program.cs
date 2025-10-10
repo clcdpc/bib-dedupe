@@ -62,6 +62,7 @@ namespace Clc.BibDedupe.Web
                     .AddSingleton<IDecisionStore, SessionDecisionStore>()
                     .AddSingleton<IPairAssignmentStore, InMemoryPairAssignmentStore>()
                     .AddSingleton<IDecisionBatchTracker, InMemoryDecisionBatchTracker>()
+                    .AddSingleton<IDecisionBatchHistoryService, InMemoryDecisionBatchHistoryService>()
                     .AddSingleton<IDecisionProcessingExecutor, NoOpDecisionProcessingExecutor>();
 
                 builder.Services.AddHangfire(configuration => configuration
@@ -81,6 +82,7 @@ namespace Clc.BibDedupe.Web
                     .AddScoped<IDecisionStore, SqlDecisionStore>()
                     .AddScoped<IPairAssignmentStore, SqlPairAssignmentStore>()
                     .AddScoped<IDecisionBatchTracker, SqlDecisionBatchTracker>()
+                    .AddScoped<IDecisionBatchHistoryService, SqlDecisionBatchHistoryService>()
                     .AddScoped<IDecisionProcessingExecutor, SqlDecisionProcessingExecutor>();
 
                 builder.Services.AddHangfire(configuration => configuration
