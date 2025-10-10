@@ -203,13 +203,27 @@ body {
 }
 
 .pairs-toolbar .pairs-filter-select {
-  min-width: var(--pairs-filter-min-width, 16rem);
   width: max-content;
   max-width: 100%;
 }
 
+.pairs-toolbar .pairs-filter-select--tom {
+  min-width: 19rem;
+}
+
+.pairs-toolbar .pairs-filter-select--match-type {
+  min-width: 17rem;
+}
+
+.pairs-toolbar .pairs-filter-select--holds {
+  min-width: 13rem;
+}
+
 @media (max-width: 575.98px) {
-  .pairs-toolbar .pairs-filter-select {
+  .pairs-toolbar .pairs-filter-select,
+  .pairs-toolbar .pairs-filter-select--tom,
+  .pairs-toolbar .pairs-filter-select--match-type,
+  .pairs-toolbar .pairs-filter-select--holds {
     min-width: 0;
     width: 100%;
   }
