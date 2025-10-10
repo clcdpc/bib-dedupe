@@ -83,6 +83,38 @@ public class SqlDecisionStore(IDbConnection db) : IDecisionStore
         return decisions;
     }
 
+    public async Task<DecisionItem?> GetAsync(string userId, int leftBibId, int rightBibId)
+    {
+        const string query = @"SELECT LeftBibId, RightBibId, ActionId, PrimaryMarcTomId,
+                                         LeftTitle, LeftAuthor, RightTitle, RightAuthor,
+                                         TOM, MatchesJson
+                                  FROM BibDedupe.GetDecisionQueue(@UserEmail)
+                                  WHERE LeftBibId = @LeftBibId AND RightBibId = @RightBibId";
+
+        var row = await db.QueryFirstOrDefaultAsync<DecisionRow>(
+            query,
+            new
+            {
+                UserEmail = userId,
+                LeftBibId = leftBibId,
+                RightBibId = rightBibId
+            });
+
+        if (row is null)
+        {
+            return null;
+        }
+
+        return row.PrimaryMarcTomId.HasValue
+            ? MapRow(row)
+            : new DecisionItem
+            {
+                LeftBibId = row.LeftBibId,
+                RightBibId = row.RightBibId,
+                Action = (BibDupePairAction)row.ActionId
+            };
+    }
+
     public Task RemoveAsync(string userId, int leftBibId, int rightBibId) =>
         db.ExecuteAsync($"DELETE FROM {Table} WHERE UserEmail = @UserEmail AND LeftBibId = @LeftBibId AND RightBibId = @RightBibId",
             new { UserEmail = userId, LeftBibId = leftBibId, RightBibId = rightBibId });

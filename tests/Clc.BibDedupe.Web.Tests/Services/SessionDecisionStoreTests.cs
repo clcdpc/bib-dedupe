@@ -76,6 +76,32 @@ public class SessionDecisionStoreTests
         (await store.GetAllAsync(UserId)).Should().BeEmpty();
     }
 
+    [TestMethod]
+    public async Task GetAsync_Returns_A_Clone_When_A_Decision_Exists()
+    {
+        var store = CreateStore(out _);
+        var decision = CreateDecision(1, 2, BibDupePairAction.KeepLeft);
+
+        await store.AddAsync(UserId, decision);
+
+        var stored = await store.GetAsync(UserId, 1, 2);
+
+        stored.Should().NotBeNull();
+        stored!.Should().NotBeSameAs(decision);
+        stored.Matches.Should().NotBeSameAs(decision.Matches);
+        stored.Action.Should().Be(BibDupePairAction.KeepLeft);
+    }
+
+    [TestMethod]
+    public async Task GetAsync_Returns_Null_When_No_Decision_Exists()
+    {
+        var store = CreateStore(out _);
+
+        var stored = await store.GetAsync(UserId, 1, 2);
+
+        stored.Should().BeNull();
+    }
+
     private static SessionDecisionStore CreateStore(out TestSession session)
     {
         session = new TestSession();

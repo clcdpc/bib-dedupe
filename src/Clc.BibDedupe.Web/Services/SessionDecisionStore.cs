@@ -30,7 +30,7 @@ public class SessionDecisionStore(IHttpContextAccessor accessor) : IDecisionStor
         {
             existing.Action = decision.Action;
             existing.PrimaryMarcTomId = decision.PrimaryMarcTomId;
-            existing.Matches = CloneMatches(decision.Matches);
+            existing.Matches = PairMatch.CloneList(decision.Matches);
             existing.LeftTitle = decision.LeftTitle;
             existing.LeftAuthor = decision.LeftAuthor;
             existing.RightTitle = decision.RightTitle;
@@ -63,6 +63,13 @@ public class SessionDecisionStore(IHttpContextAccessor accessor) : IDecisionStor
 
     public Task<int> CountAsync(string userId) => Task.FromResult(Load().Count);
 
+    public Task<DecisionItem?> GetAsync(string userId, int leftBibId, int rightBibId)
+    {
+        var items = Load();
+        var decision = items.FirstOrDefault(d => d.LeftBibId == leftBibId && d.RightBibId == rightBibId);
+        return Task.FromResult(decision is null ? null : CloneDecision(decision));
+    }
+
     private static DecisionItem CloneDecision(DecisionItem decision) => new()
     {
         LeftBibId = decision.LeftBibId,
@@ -72,15 +79,8 @@ public class SessionDecisionStore(IHttpContextAccessor accessor) : IDecisionStor
         RightTitle = decision.RightTitle,
         RightAuthor = decision.RightAuthor,
         TOM = decision.TOM,
-        Matches = CloneMatches(decision.Matches),
+        Matches = PairMatch.CloneList(decision.Matches),
         PrimaryMarcTomId = decision.PrimaryMarcTomId,
         Action = decision.Action
     };
-
-    private static List<PairMatch> CloneMatches(IEnumerable<PairMatch> matches) =>
-        matches.Select(m => new PairMatch
-        {
-            MatchType = m.MatchType,
-            MatchValue = m.MatchValue
-        }).ToList();
 }

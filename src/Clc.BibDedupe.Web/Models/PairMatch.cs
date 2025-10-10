@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Text.Json;
 
 namespace Clc.BibDedupe.Web.Models;
@@ -21,5 +22,21 @@ public class PairMatch
         }
 
         return JsonSerializer.Deserialize<List<PairMatch>>(json, JsonOptions) ?? new List<PairMatch>();
+    }
+
+    public static List<PairMatch> CloneList(IEnumerable<PairMatch>? matches)
+    {
+        if (matches is null)
+        {
+            return new List<PairMatch>();
+        }
+
+        return matches
+            .Select(m => new PairMatch
+            {
+                MatchType = m.MatchType,
+                MatchValue = m.MatchValue
+            })
+            .ToList();
     }
 }

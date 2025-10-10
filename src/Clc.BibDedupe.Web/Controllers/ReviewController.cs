@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Clc.BibDedupe.Web;
@@ -27,64 +26,30 @@ public class ReviewController(
     public async Task<IActionResult> Index(int? leftBibId, int? rightBibId)
     {
         var userEmail = User.GetEmail();
-        BibDupePair? pair;
-        DecisionItem? existingDecision = null;
-        if (leftBibId is null || rightBibId is null)
+        var reviewPair = await GetReviewPairAsync(userEmail, leftBibId, rightBibId);
+
+        if (reviewPair is null)
         {
-            var filters = await pairFilterStore.GetAsync(userEmail);
-            pair = (await repository.GetAsync(
-                userEmail,
-                filters?.TomId,
-                filters?.MatchType,
-                filters?.HasHolds)).FirstOrDefault();
-            if (pair is null)
-            {
-                await currentPairStore.ClearAsync(userEmail);
-                return View(new IndexViewModel());
-            }
-            leftBibId = pair.LeftBibId;
-            rightBibId = pair.RightBibId;
-        }
-        else
-        {
-            pair = await repository.GetByBibIdsAsync(leftBibId.Value, rightBibId.Value, userEmail);
-            if (pair is null)
-            {
-                existingDecision = (await decisionStore.GetAllAsync(userEmail))
-                    .FirstOrDefault(d => d.LeftBibId == leftBibId && d.RightBibId == rightBibId);
-            }
+            await currentPairStore.ClearAsync(userEmail);
+            return View(new IndexViewModel());
         }
 
-        var (left, right) = await loader.LoadAsync(leftBibId.Value, rightBibId.Value);
+        var (leftRecord, rightRecord) = await loader.LoadAsync(reviewPair.LeftBibId, reviewPair.RightBibId);
 
         var model = new IndexViewModel
         {
-            LeftBibId = leftBibId.Value,
-            RightBibId = rightBibId.Value,
-            LeftTitle = pair?.LeftTitle ?? existingDecision?.LeftTitle,
-            RightTitle = pair?.RightTitle ?? existingDecision?.RightTitle,
-            LeftBibXml = MarcXmlRenderer.TransformFile(left.BibXml, "marc-to-html.xslt"),
-            RightBibXml = MarcXmlRenderer.TransformFile(right.BibXml, "marc-to-html.xslt"),
-            LeftItems = left.Items,
-            RightItems = right.Items,
-            Matches = pair?.Matches
-                .Select(m => new PairMatch
-                {
-                    MatchType = m.MatchType,
-                    MatchValue = m.MatchValue
-                })
-                .ToList()
-                ?? existingDecision?.Matches
-                    .Select(m => new PairMatch
-                    {
-                        MatchType = m.MatchType,
-                        MatchValue = m.MatchValue
-                    })
-                    .ToList()
-                ?? new List<PairMatch>(),
-            LeftHoldCount = pair?.LeftHoldCount ?? 0,
-            RightHoldCount = pair?.RightHoldCount ?? 0,
-            TotalHoldCount = pair?.TotalHoldCount ?? 0
+            LeftBibId = reviewPair.LeftBibId,
+            RightBibId = reviewPair.RightBibId,
+            LeftTitle = reviewPair.Pair?.LeftTitle ?? reviewPair.ExistingDecision?.LeftTitle,
+            RightTitle = reviewPair.Pair?.RightTitle ?? reviewPair.ExistingDecision?.RightTitle,
+            LeftBibXml = MarcXmlRenderer.TransformFile(leftRecord.BibXml, "marc-to-html.xslt"),
+            RightBibXml = MarcXmlRenderer.TransformFile(rightRecord.BibXml, "marc-to-html.xslt"),
+            LeftItems = leftRecord.Items,
+            RightItems = rightRecord.Items,
+            Matches = PairMatch.CloneList(reviewPair.Pair?.Matches ?? reviewPair.ExistingDecision?.Matches),
+            LeftHoldCount = reviewPair.Pair?.LeftHoldCount ?? 0,
+            RightHoldCount = reviewPair.Pair?.RightHoldCount ?? 0,
+            TotalHoldCount = reviewPair.Pair?.TotalHoldCount ?? 0
         };
 
         await currentPairStore.SetAsync(userEmail, new CurrentPair
@@ -113,40 +78,25 @@ public class ReviewController(
         var pair = await repository.GetByBibIdsAsync(leftBibId, rightBibId, userEmail);
 
         var isReReview = false;
-        DecisionItem decision;
-        if (pair is not null)
+        var decision = pair is not null
+            ? CreateDecisionFromPair(pair, parsed)
+            : await decisionStore.GetAsync(userEmail, leftBibId, rightBibId);
+
+        if (decision is null)
         {
-            decision = new DecisionItem
-            {
-                LeftBibId = leftBibId,
-                RightBibId = rightBibId,
-                LeftTitle = pair.LeftTitle,
-                LeftAuthor = pair.LeftAuthor,
-                RightTitle = pair.RightTitle,
-                RightAuthor = pair.RightAuthor,
-                TOM = pair.TOM,
-                PrimaryMarcTomId = pair.PrimaryMarcTomId,
-                Matches = pair.Matches.Select(m => new PairMatch
-                {
-                    MatchType = m.MatchType,
-                    MatchValue = m.MatchValue
-                }).ToList(),
-                Action = parsed
-            };
+            await pairAssignmentStore.ReleaseAsync(userEmail, leftBibId, rightBibId);
+            await currentPairStore.ClearAsync(userEmail);
+            return Conflict(new { error = "Pair is not available for this user." });
+        }
+
+        if (pair is null)
+        {
+            decision = decision with { Action = parsed };
+            isReReview = true;
         }
         else
         {
-            var existingDecision = (await decisionStore.GetAllAsync(userEmail))
-                .FirstOrDefault(d => d.LeftBibId == leftBibId && d.RightBibId == rightBibId);
-            if (existingDecision is null)
-            {
-                await pairAssignmentStore.ReleaseAsync(userEmail, leftBibId, rightBibId);
-                await currentPairStore.ClearAsync(userEmail);
-                return Conflict(new { error = "Pair is not available for this user." });
-            }
-
-            decision = existingDecision with { Action = parsed };
-            isReReview = true;
+            decision.Action = parsed;
         }
         try
         {
@@ -202,4 +152,53 @@ public class ReviewController(
             reReview = isReReview
         });
     }
+
+    private async Task<ReviewPair?> GetReviewPairAsync(string userEmail, int? leftBibId, int? rightBibId)
+    {
+        if (leftBibId is null || rightBibId is null)
+        {
+            var filters = await pairFilterStore.GetAsync(userEmail);
+            var nextPair = (await repository.GetAsync(
+                    userEmail,
+                    filters?.TomId,
+                    filters?.MatchType,
+                    filters?.HasHolds))
+                .FirstOrDefault();
+
+            return nextPair is null
+                ? null
+                : new ReviewPair(nextPair.LeftBibId, nextPair.RightBibId, nextPair, null);
+        }
+
+        var pair = await repository.GetByBibIdsAsync(leftBibId.Value, rightBibId.Value, userEmail);
+        if (pair is not null)
+        {
+            return new ReviewPair(leftBibId.Value, rightBibId.Value, pair, null);
+        }
+
+        var existingDecision = await decisionStore.GetAsync(userEmail, leftBibId.Value, rightBibId.Value);
+        return existingDecision is null
+            ? null
+            : new ReviewPair(leftBibId.Value, rightBibId.Value, null, existingDecision);
+    }
+
+    private static DecisionItem CreateDecisionFromPair(BibDupePair pair, BibDupePairAction action) => new()
+    {
+        LeftBibId = pair.LeftBibId,
+        RightBibId = pair.RightBibId,
+        LeftTitle = pair.LeftTitle,
+        LeftAuthor = pair.LeftAuthor,
+        RightTitle = pair.RightTitle,
+        RightAuthor = pair.RightAuthor,
+        TOM = pair.TOM,
+        PrimaryMarcTomId = pair.PrimaryMarcTomId,
+        Matches = PairMatch.CloneList(pair.Matches),
+        Action = action
+    };
+
+    private sealed record ReviewPair(
+        int LeftBibId,
+        int RightBibId,
+        BibDupePair? Pair,
+        DecisionItem? ExistingDecision);
 }
