@@ -7,6 +7,7 @@ using Hangfire.Common;
 using Hangfire.States;
 using Microsoft.Extensions.Logging;
 using Moq;
+using Clc.BibDedupe.Web.Tests.TestUtilities;
 
 namespace Clc.BibDedupe.Web.Tests.Services;
 
@@ -16,13 +17,42 @@ public class DecisionSubmissionServiceTests
     private const string UserEmail = "user@example.com";
 
     [TestMethod]
+    public async Task Getting_The_Current_Batch_Returns_Tracker_Result()
+    {
+        var storeMock = new Mock<IDecisionStore>(MockBehavior.Strict);
+        var trackerMock = new Mock<IDecisionBatchTracker>(MockBehavior.Strict);
+        var executorMock = new Mock<IDecisionProcessingExecutor>(MockBehavior.Strict);
+        var backgroundJobsMock = new Mock<IBackgroundJobClient>(MockBehavior.Strict);
+        var logger = new TestLogger<DecisionSubmissionService>();
+
+        var expected = new DecisionBatchStatus { JobId = "job-7", StartedAt = DateTimeOffset.UtcNow };
+        trackerMock.Setup(t => t.GetCurrentAsync(UserEmail)).ReturnsAsync(expected);
+
+        var service = new DecisionSubmissionService(
+            storeMock.Object,
+            trackerMock.Object,
+            executorMock.Object,
+            backgroundJobsMock.Object,
+            logger);
+
+        var result = await service.GetCurrentBatchAsync(UserEmail);
+
+        result.Should().BeSameAs(expected);
+
+        trackerMock.Verify(t => t.GetCurrentAsync(UserEmail), Times.Once);
+        storeMock.VerifyNoOtherCalls();
+        executorMock.VerifyNoOtherCalls();
+        backgroundJobsMock.VerifyNoOtherCalls();
+    }
+
+    [TestMethod]
     public async Task Submitting_When_A_Batch_Is_Already_In_Progress_Returns_That_Status()
     {
         var storeMock = new Mock<IDecisionStore>(MockBehavior.Strict);
         var trackerMock = new Mock<IDecisionBatchTracker>();
         var executorMock = new Mock<IDecisionProcessingExecutor>(MockBehavior.Strict);
         var backgroundJobsMock = new Mock<IBackgroundJobClient>(MockBehavior.Strict);
-        var loggerMock = new Mock<ILogger<DecisionSubmissionService>>();
+        var logger = new TestLogger<DecisionSubmissionService>();
 
         var status = new DecisionBatchStatus { JobId = "existing", StartedAt = DateTimeOffset.UtcNow };
         trackerMock.Setup(t => t.GetCurrentAsync(UserEmail)).ReturnsAsync(status);
@@ -32,7 +62,7 @@ public class DecisionSubmissionServiceTests
             trackerMock.Object,
             executorMock.Object,
             backgroundJobsMock.Object,
-            loggerMock.Object);
+            logger);
 
         var result = await service.SubmitAsync(UserEmail);
 
@@ -47,13 +77,13 @@ public class DecisionSubmissionServiceTests
     }
 
     [TestMethod]
-    public async Task Submitting_When_Processing_Is_Unavailable_Returns_An_Error()
+    public async Task Submitting_When_Processing_Is_Unavailable_Returns_An_Error_And_Logs_A_Warning()
     {
         var storeMock = new Mock<IDecisionStore>(MockBehavior.Strict);
         var trackerMock = new Mock<IDecisionBatchTracker>();
         var executorMock = new Mock<IDecisionProcessingExecutor>();
         var backgroundJobsMock = new Mock<IBackgroundJobClient>(MockBehavior.Strict);
-        var loggerMock = new Mock<ILogger<DecisionSubmissionService>>();
+        var logger = new TestLogger<DecisionSubmissionService>();
 
         trackerMock.Setup(t => t.GetCurrentAsync(UserEmail)).ReturnsAsync((DecisionBatchStatus?)null);
         executorMock.Setup(e => e.CanProcessAsync()).ReturnsAsync(false);
@@ -63,13 +93,17 @@ public class DecisionSubmissionServiceTests
             trackerMock.Object,
             executorMock.Object,
             backgroundJobsMock.Object,
-            loggerMock.Object);
+            logger);
 
         var result = await service.SubmitAsync(UserEmail);
 
         result.Success.Should().BeFalse();
         result.ErrorMessage.Should().Be("Decision processing is not available.");
         result.BatchStatus.Should().BeNull();
+
+        logger.Entries.Should().ContainSingle(entry =>
+            entry.Level == LogLevel.Warning &&
+            entry.Message.Contains("Decision processing is not available for user@example.com", StringComparison.Ordinal));
 
         trackerMock.Verify(t => t.GetCurrentAsync(UserEmail), Times.Once);
         executorMock.Verify(e => e.CanProcessAsync(), Times.Once);
@@ -84,7 +118,7 @@ public class DecisionSubmissionServiceTests
         var trackerMock = new Mock<IDecisionBatchTracker>();
         var executorMock = new Mock<IDecisionProcessingExecutor>();
         var backgroundJobsMock = new Mock<IBackgroundJobClient>(MockBehavior.Strict);
-        var loggerMock = new Mock<ILogger<DecisionSubmissionService>>();
+        var logger = new TestLogger<DecisionSubmissionService>();
 
         trackerMock.Setup(t => t.GetCurrentAsync(UserEmail)).ReturnsAsync((DecisionBatchStatus?)null);
         executorMock.Setup(e => e.CanProcessAsync()).ReturnsAsync(true);
@@ -95,7 +129,7 @@ public class DecisionSubmissionServiceTests
             trackerMock.Object,
             executorMock.Object,
             backgroundJobsMock.Object,
-            loggerMock.Object);
+            logger);
 
         var result = await service.SubmitAsync(UserEmail);
 
@@ -111,13 +145,13 @@ public class DecisionSubmissionServiceTests
     }
 
     [TestMethod]
-    public async Task Submitting_When_Ready_Starts_Background_Processing()
+    public async Task Submitting_When_Ready_Starts_Background_Processing_And_Logs_Information()
     {
         var storeMock = new Mock<IDecisionStore>();
         var trackerMock = new Mock<IDecisionBatchTracker>();
         var executorMock = new Mock<IDecisionProcessingExecutor>();
         var backgroundJobsMock = new Mock<IBackgroundJobClient>();
-        var loggerMock = new Mock<ILogger<DecisionSubmissionService>>();
+        var logger = new TestLogger<DecisionSubmissionService>();
 
         trackerMock.Setup(t => t.GetCurrentAsync(UserEmail)).ReturnsAsync((DecisionBatchStatus?)null);
         executorMock.Setup(e => e.CanProcessAsync()).ReturnsAsync(true);
@@ -142,7 +176,7 @@ public class DecisionSubmissionServiceTests
             trackerMock.Object,
             executorMock.Object,
             backgroundJobsMock.Object,
-            loggerMock.Object);
+            logger);
 
         var result = await service.SubmitAsync(UserEmail);
 
@@ -151,6 +185,10 @@ public class DecisionSubmissionServiceTests
         result.BatchStatus.Should().NotBeNull();
         result.BatchStatus!.JobId.Should().Be("job-123");
         result.BatchStatus.StartedAt.Should().BeCloseTo(DateTimeOffset.UtcNow, TimeSpan.FromSeconds(5));
+
+        logger.Entries.Should().ContainSingle(entry =>
+            entry.Level == LogLevel.Information &&
+            entry.Message.Contains("Queued decision processing job job-123 for user@example.com", StringComparison.Ordinal));
 
         capturedJob.Should().NotBeNull();
         capturedJob!.Type.Should().Be(typeof(DecisionProcessingJob));
