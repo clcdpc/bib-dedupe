@@ -203,8 +203,7 @@ body {
 }
 
 .pairs-toolbar .form-select {
-  padding-right: 0 !important;
-  padding-inline-end: 0 !important;
+  padding-right: 0;
 }
 
 .pairs-toolbar .pairs-filter-select {
