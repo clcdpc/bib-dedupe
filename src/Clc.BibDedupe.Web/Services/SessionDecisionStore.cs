@@ -25,17 +25,13 @@ public class SessionDecisionStore(IHttpContextAccessor accessor) : IDecisionStor
     public Task AddAsync(string userId, DecisionItem decision)
     {
         var items = Load();
-        var existing = items.FirstOrDefault(d => d.LeftBibId == decision.LeftBibId && d.RightBibId == decision.RightBibId);
+        var existing = items.FirstOrDefault(d =>
+            d.Pair.LeftBibId == decision.Pair.LeftBibId &&
+            d.Pair.RightBibId == decision.Pair.RightBibId);
         if (existing is not null)
         {
             existing.Action = decision.Action;
-            existing.PrimaryMarcTomId = decision.PrimaryMarcTomId;
-            existing.Matches = PairMatch.CloneList(decision.Matches);
-            existing.LeftTitle = decision.LeftTitle;
-            existing.LeftAuthor = decision.LeftAuthor;
-            existing.RightTitle = decision.RightTitle;
-            existing.RightAuthor = decision.RightAuthor;
-            existing.TOM = decision.TOM;
+            existing.Pair = decision.Pair.Clone();
         }
         else
         {
@@ -54,7 +50,7 @@ public class SessionDecisionStore(IHttpContextAccessor accessor) : IDecisionStor
     public Task RemoveAsync(string userId, int leftBibId, int rightBibId)
     {
         var items = Load();
-        items.RemoveAll(d => d.LeftBibId == leftBibId && d.RightBibId == rightBibId);
+        items.RemoveAll(d => d.Pair.LeftBibId == leftBibId && d.Pair.RightBibId == rightBibId);
         Save(items);
         return Task.CompletedTask;
     }
@@ -66,21 +62,13 @@ public class SessionDecisionStore(IHttpContextAccessor accessor) : IDecisionStor
     public Task<DecisionItem?> GetAsync(string userId, int leftBibId, int rightBibId)
     {
         var items = Load();
-        var decision = items.FirstOrDefault(d => d.LeftBibId == leftBibId && d.RightBibId == rightBibId);
+        var decision = items.FirstOrDefault(d => d.Pair.LeftBibId == leftBibId && d.Pair.RightBibId == rightBibId);
         return Task.FromResult(decision is null ? null : CloneDecision(decision));
     }
 
     private static DecisionItem CloneDecision(DecisionItem decision) => new()
     {
-        LeftBibId = decision.LeftBibId,
-        RightBibId = decision.RightBibId,
-        LeftTitle = decision.LeftTitle,
-        LeftAuthor = decision.LeftAuthor,
-        RightTitle = decision.RightTitle,
-        RightAuthor = decision.RightAuthor,
-        TOM = decision.TOM,
-        Matches = PairMatch.CloneList(decision.Matches),
-        PrimaryMarcTomId = decision.PrimaryMarcTomId,
+        Pair = decision.Pair.Clone(),
         Action = decision.Action
     };
 }

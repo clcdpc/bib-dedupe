@@ -22,5 +22,22 @@ namespace Clc.BibDedupe.Web.Models
         public string MatchSummary => Matches.Count == 0
             ? string.Empty
             : string.Join(", ", Matches.Select(m => $"{m.MatchType}: {m.MatchValue}"));
+
+        public BibDupePair Clone() => new()
+        {
+            PairId = PairId,
+            PrimaryMarcTomId = PrimaryMarcTomId,
+            LeftBibId = LeftBibId,
+            RightBibId = RightBibId,
+            LeftTitle = LeftTitle,
+            LeftAuthor = LeftAuthor,
+            RightTitle = RightTitle,
+            RightAuthor = RightAuthor,
+            TOM = TOM,
+            LeftHoldCount = LeftHoldCount,
+            RightHoldCount = RightHoldCount,
+            TotalHoldCount = TotalHoldCount,
+            Matches = PairMatch.CloneList(Matches)
+        };
     }
 }

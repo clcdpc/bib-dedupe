@@ -70,8 +70,11 @@ public class DecisionConflictValidatorTests
 
     private static DecisionItem CreateDecision(int leftBibId, int rightBibId, BibDupePairAction action) => new()
     {
-        LeftBibId = leftBibId,
-        RightBibId = rightBibId,
+        Pair = new BibDupePair
+        {
+            LeftBibId = leftBibId,
+            RightBibId = rightBibId
+        },
         Action = action
     };
 }

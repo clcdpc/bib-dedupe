@@ -40,13 +40,13 @@ public class ReviewController(
         {
             LeftBibId = reviewPair.LeftBibId,
             RightBibId = reviewPair.RightBibId,
-            LeftTitle = reviewPair.Pair?.LeftTitle ?? reviewPair.ExistingDecision?.LeftTitle,
-            RightTitle = reviewPair.Pair?.RightTitle ?? reviewPair.ExistingDecision?.RightTitle,
+            LeftTitle = reviewPair.Pair?.LeftTitle ?? reviewPair.ExistingDecision?.Pair.LeftTitle,
+            RightTitle = reviewPair.Pair?.RightTitle ?? reviewPair.ExistingDecision?.Pair.RightTitle,
             LeftBibXml = MarcXmlRenderer.TransformFile(leftRecord.BibXml, "marc-to-html.xslt"),
             RightBibXml = MarcXmlRenderer.TransformFile(rightRecord.BibXml, "marc-to-html.xslt"),
             LeftItems = leftRecord.Items,
             RightItems = rightRecord.Items,
-            Matches = PairMatch.CloneList(reviewPair.Pair?.Matches ?? reviewPair.ExistingDecision?.Matches),
+            Matches = PairMatch.CloneList(reviewPair.Pair?.Matches ?? reviewPair.ExistingDecision?.Pair.Matches),
             LeftHoldCount = reviewPair.Pair?.LeftHoldCount ?? 0,
             RightHoldCount = reviewPair.Pair?.RightHoldCount ?? 0,
             TotalHoldCount = reviewPair.Pair?.TotalHoldCount ?? 0
@@ -184,15 +184,7 @@ public class ReviewController(
 
     private static DecisionItem CreateDecisionFromPair(BibDupePair pair, BibDupePairAction action) => new()
     {
-        LeftBibId = pair.LeftBibId,
-        RightBibId = pair.RightBibId,
-        LeftTitle = pair.LeftTitle,
-        LeftAuthor = pair.LeftAuthor,
-        RightTitle = pair.RightTitle,
-        RightAuthor = pair.RightAuthor,
-        TOM = pair.TOM,
-        PrimaryMarcTomId = pair.PrimaryMarcTomId,
-        Matches = PairMatch.CloneList(pair.Matches),
+        Pair = pair.Clone(),
         Action = action
     };
 

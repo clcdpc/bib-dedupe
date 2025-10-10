@@ -18,8 +18,8 @@ public static class DecisionConflictValidator
             }
 
             var keepLeft = item.Action == BibDupePairAction.KeepLeft;
-            var keptBibId = keepLeft ? item.LeftBibId : item.RightBibId;
-            var mergedBibId = keepLeft ? item.RightBibId : item.LeftBibId;
+            var keptBibId = keepLeft ? item.Pair.LeftBibId : item.Pair.RightBibId;
+            var mergedBibId = keepLeft ? item.Pair.RightBibId : item.Pair.LeftBibId;
 
             if (mergedBibIds.Contains(mergedBibId))
             {

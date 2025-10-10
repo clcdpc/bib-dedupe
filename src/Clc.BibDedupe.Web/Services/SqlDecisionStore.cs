@@ -14,7 +14,9 @@ public class SqlDecisionStore(IDbConnection db) : IDecisionStore
     public async Task AddAsync(string userId, DecisionItem decision)
     {
         var decisions = await LoadDecisionSummariesAsync(userId);
-        var existing = decisions.FirstOrDefault(d => d.LeftBibId == decision.LeftBibId && d.RightBibId == decision.RightBibId);
+        var existing = decisions.FirstOrDefault(d =>
+            d.Pair.LeftBibId == decision.Pair.LeftBibId &&
+            d.Pair.RightBibId == decision.Pair.RightBibId);
         if (existing is not null)
         {
             existing.Action = decision.Action;
@@ -23,8 +25,11 @@ public class SqlDecisionStore(IDbConnection db) : IDecisionStore
         {
             decisions.Add(new DecisionItem
             {
-                LeftBibId = decision.LeftBibId,
-                RightBibId = decision.RightBibId,
+                Pair = new BibDupePair
+                {
+                    LeftBibId = decision.Pair.LeftBibId,
+                    RightBibId = decision.Pair.RightBibId
+                },
                 Action = decision.Action
             });
         }
@@ -34,8 +39,8 @@ public class SqlDecisionStore(IDbConnection db) : IDecisionStore
         var parameters = new
         {
             UserEmail = userId,
-            decision.LeftBibId,
-            decision.RightBibId,
+            LeftBibId = decision.Pair.LeftBibId,
+            RightBibId = decision.Pair.RightBibId,
             ActionId = (int)decision.Action
         };
 
@@ -73,8 +78,11 @@ public class SqlDecisionStore(IDbConnection db) : IDecisionStore
             {
                 decisions.Add(new DecisionItem
                 {
-                    LeftBibId = row.LeftBibId,
-                    RightBibId = row.RightBibId,
+                    Pair = new BibDupePair
+                    {
+                        LeftBibId = row.LeftBibId,
+                        RightBibId = row.RightBibId
+                    },
                     Action = (BibDupePairAction)row.ActionId
                 });
             }
@@ -109,8 +117,11 @@ public class SqlDecisionStore(IDbConnection db) : IDecisionStore
             ? MapRow(row)
             : new DecisionItem
             {
-                LeftBibId = row.LeftBibId,
-                RightBibId = row.RightBibId,
+                Pair = new BibDupePair
+                {
+                    LeftBibId = row.LeftBibId,
+                    RightBibId = row.RightBibId
+                },
                 Action = (BibDupePairAction)row.ActionId
             };
     }
@@ -126,16 +137,19 @@ public class SqlDecisionStore(IDbConnection db) : IDecisionStore
 
     private static DecisionItem MapRow(DecisionRow row) => new()
     {
-        LeftBibId = row.LeftBibId,
-        RightBibId = row.RightBibId,
-        LeftTitle = row.LeftTitle,
-        LeftAuthor = row.LeftAuthor,
-        RightTitle = row.RightTitle,
-        RightAuthor = row.RightAuthor,
-        TOM = row.TOM,
-        PrimaryMarcTomId = row.PrimaryMarcTomId!.Value,
-        Action = (BibDupePairAction)row.ActionId,
-        Matches = PairMatch.FromJson(row.MatchesJson)
+        Pair = new BibDupePair
+        {
+            LeftBibId = row.LeftBibId,
+            RightBibId = row.RightBibId,
+            LeftTitle = row.LeftTitle,
+            LeftAuthor = row.LeftAuthor,
+            RightTitle = row.RightTitle,
+            RightAuthor = row.RightAuthor,
+            TOM = row.TOM,
+            PrimaryMarcTomId = row.PrimaryMarcTomId!.Value,
+            Matches = PairMatch.FromJson(row.MatchesJson)
+        },
+        Action = (BibDupePairAction)row.ActionId
     };
 
     private sealed class DecisionRow
@@ -160,8 +174,11 @@ public class SqlDecisionStore(IDbConnection db) : IDecisionStore
 
         return rows.Select(r => new DecisionItem
         {
-            LeftBibId = r.LeftBibId,
-            RightBibId = r.RightBibId,
+            Pair = new BibDupePair
+            {
+                LeftBibId = r.LeftBibId,
+                RightBibId = r.RightBibId
+            },
             Action = (BibDupePairAction)r.ActionId
         }).ToList();
     }
