@@ -1,10 +1,15 @@
-IF OBJECT_ID('BibDedupe.GetPairs','IF') IS NOT NULL
-    DROP FUNCTION BibDedupe.GetPairs;
+USE [clcdb]
+GO
+/****** Object:  UserDefinedFunction [BibDedupe].[GetPairs]    Script Date: 10/10/2025 6:52:03 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
 GO
 
-CREATE FUNCTION [BibDedupe].[GetPairs] (
+ALTER FUNCTION [BibDedupe].[GetPairs] (
     @Top INT = 1000,
     @UserEmail NVARCHAR(256) = NULL,
+	@HideDecided bit = NULL,
     @TomId INT = NULL,
     @MatchType NVARCHAR(50) = NULL,
     @HasHolds BIT = NULL
@@ -52,15 +57,11 @@ RETURN (
         ORDER BY m.MatchType, m.MatchValue
         FOR JSON PATH
     ) pm(MatchesJson)
-    WHERE NOT EXISTS (
+    WHERE (@HideDecided is null or @HideDecided = 0 or NOT EXISTS (
             SELECT 1
             FROM BibDedupe.PairDecisions pd
-            WHERE (
-                (pd.KeptBibId = p.LeftBibId AND pd.DeletedBibId = p.RightBibId)
-                OR (pd.KeptBibId = p.RightBibId AND pd.DeletedBibId = p.LeftBibId)
-            )
-              AND (@UserEmail IS NULL OR pd.UserEmail = @UserEmail)
-        )
+            WHERE (pd.KeptBibId = p.LeftBibId AND pd.DeletedBibId = p.RightBibId) OR (pd.KeptBibId = p.RightBibId AND pd.DeletedBibId = p.LeftBibId)
+        ))
         AND (
             @UserEmail IS NULL
             OR NOT EXISTS (
@@ -111,4 +112,3 @@ RETURN (
         )
         order by br_l.BrowseTitle, br_r.BrowseTitle
 );
-GO
