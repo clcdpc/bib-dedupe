@@ -11,31 +11,27 @@ public class SessionDecisionStore(IHttpContextAccessor accessor) : IDecisionStor
     private const string SessionKey = "DecisionCart";
     private ISession Session => accessor.HttpContext!.Session;
 
-    private List<DecisionItem> Load()
+    private List<PairDecision> Load()
     {
         var json = Session.GetString(SessionKey);
         return string.IsNullOrEmpty(json)
-            ? new List<DecisionItem>()
-            : JsonSerializer.Deserialize<List<DecisionItem>>(json) ?? new List<DecisionItem>();
+            ? new List<PairDecision>()
+            : JsonSerializer.Deserialize<List<PairDecision>>(json) ?? new List<PairDecision>();
     }
 
-    private void Save(List<DecisionItem> items) =>
+    private void Save(List<PairDecision> items) =>
         Session.SetString(SessionKey, JsonSerializer.Serialize(items));
 
-    public Task AddAsync(string userId, DecisionItem decision)
+    public Task AddAsync(string userId, PairDecision decision)
     {
         var items = Load();
-        var existing = items.FirstOrDefault(d => d.LeftBibId == decision.LeftBibId && d.RightBibId == decision.RightBibId);
+        var existing = items.FirstOrDefault(d =>
+            d.Pair.LeftBibId == decision.Pair.LeftBibId &&
+            d.Pair.RightBibId == decision.Pair.RightBibId);
         if (existing is not null)
         {
             existing.Action = decision.Action;
-            existing.PrimaryMarcTomId = decision.PrimaryMarcTomId;
-            existing.Matches = CloneMatches(decision.Matches);
-            existing.LeftTitle = decision.LeftTitle;
-            existing.LeftAuthor = decision.LeftAuthor;
-            existing.RightTitle = decision.RightTitle;
-            existing.RightAuthor = decision.RightAuthor;
-            existing.TOM = decision.TOM;
+            existing.Pair = decision.Pair.Clone();
         }
         else
         {
@@ -48,39 +44,27 @@ public class SessionDecisionStore(IHttpContextAccessor accessor) : IDecisionStor
         return Task.CompletedTask;
     }
 
-    public Task<IEnumerable<DecisionItem>> GetAllAsync(string userId) =>
-        Task.FromResult<IEnumerable<DecisionItem>>(Load());
+    public Task<IEnumerable<PairDecision>> GetAllAsync(string userId) =>
+        Task.FromResult<IEnumerable<PairDecision>>(Load());
 
     public Task RemoveAsync(string userId, int leftBibId, int rightBibId)
     {
         var items = Load();
-        items.RemoveAll(d => d.LeftBibId == leftBibId && d.RightBibId == rightBibId);
+        items.RemoveAll(d => d.Pair.LeftBibId == leftBibId && d.Pair.RightBibId == rightBibId);
         Save(items);
         return Task.CompletedTask;
     }
 
-    public Task UpdateAsync(string userId, DecisionItem decision) => AddAsync(userId, decision);
+    public Task UpdateAsync(string userId, PairDecision decision) => AddAsync(userId, decision);
 
     public Task<int> CountAsync(string userId) => Task.FromResult(Load().Count);
 
-    private static DecisionItem CloneDecision(DecisionItem decision) => new()
+    public Task<PairDecision?> GetAsync(string userId, int leftBibId, int rightBibId)
     {
-        LeftBibId = decision.LeftBibId,
-        RightBibId = decision.RightBibId,
-        LeftTitle = decision.LeftTitle,
-        LeftAuthor = decision.LeftAuthor,
-        RightTitle = decision.RightTitle,
-        RightAuthor = decision.RightAuthor,
-        TOM = decision.TOM,
-        Matches = CloneMatches(decision.Matches),
-        PrimaryMarcTomId = decision.PrimaryMarcTomId,
-        Action = decision.Action
-    };
+        var items = Load();
+        var decision = items.FirstOrDefault(d => d.Pair.LeftBibId == leftBibId && d.Pair.RightBibId == rightBibId);
+        return Task.FromResult(decision is null ? null : CloneDecision(decision));
+    }
 
-    private static List<PairMatch> CloneMatches(IEnumerable<PairMatch> matches) =>
-        matches.Select(m => new PairMatch
-        {
-            MatchType = m.MatchType,
-            MatchValue = m.MatchValue
-        }).ToList();
+    private static PairDecision CloneDecision(PairDecision decision) => decision.Clone();
 }

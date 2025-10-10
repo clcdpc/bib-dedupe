@@ -20,13 +20,13 @@ public class SessionDecisionStoreTests
 
         await store.AddAsync(UserId, decision);
 
-        decision.LeftTitle = "Updated";
-        decision.Matches[0].MatchType = "Changed";
+        decision.Pair.LeftTitle = "Updated";
+        decision.Pair.Matches[0].MatchType = "Changed";
 
         var stored = (await store.GetAllAsync(UserId)).Single();
-        stored.LeftTitle.Should().Be("Left Title");
-        stored.Matches.Should().NotBeSameAs(decision.Matches);
-        stored.Matches.Single().MatchType.Should().Be("Title");
+        stored.Pair.LeftTitle.Should().Be("Left Title");
+        stored.Pair.Matches.Should().NotBeSameAs(decision.Pair.Matches);
+        stored.Pair.Matches.Single().MatchType.Should().Be("Title");
     }
 
     [TestMethod]
@@ -36,16 +36,16 @@ public class SessionDecisionStoreTests
         await store.AddAsync(UserId, CreateDecision(1, 2, BibDupePairAction.KeepLeft));
 
         var updated = CreateDecision(1, 2, BibDupePairAction.KeepRight);
-        updated.LeftTitle = "New Left";
-        updated.Matches.Add(new PairMatch { MatchType = "ISBN", MatchValue = "123" });
+        updated.Pair.LeftTitle = "New Left";
+        updated.Pair.Matches.Add(new PairMatch { MatchType = "ISBN", MatchValue = "123" });
 
         await store.AddAsync(UserId, updated);
 
         var stored = (await store.GetAllAsync(UserId)).Single();
         stored.Action.Should().Be(BibDupePairAction.KeepRight);
-        stored.LeftTitle.Should().Be("New Left");
-        stored.Matches.Should().HaveCount(2);
-        stored.Matches.Last().MatchType.Should().Be("ISBN");
+        stored.Pair.LeftTitle.Should().Be("New Left");
+        stored.Pair.Matches.Should().HaveCount(2);
+        stored.Pair.Matches.Last().MatchType.Should().Be("ISBN");
     }
 
     [TestMethod]
@@ -60,8 +60,8 @@ public class SessionDecisionStoreTests
 
         var stored = (await store.GetAllAsync(UserId)).ToList();
         stored.Should().HaveCount(1);
-        stored[0].LeftBibId.Should().Be(1);
-        stored[0].RightBibId.Should().Be(2);
+        stored[0].Pair.LeftBibId.Should().Be(1);
+        stored[0].Pair.RightBibId.Should().Be(2);
     }
 
     [TestMethod]
@@ -76,28 +76,57 @@ public class SessionDecisionStoreTests
         (await store.GetAllAsync(UserId)).Should().BeEmpty();
     }
 
+    [TestMethod]
+    public async Task GetAsync_Returns_A_Clone_When_A_Decision_Exists()
+    {
+        var store = CreateStore(out _);
+        var decision = CreateDecision(1, 2, BibDupePairAction.KeepLeft);
+
+        await store.AddAsync(UserId, decision);
+
+        var stored = await store.GetAsync(UserId, 1, 2);
+
+        stored.Should().NotBeNull();
+        stored!.Should().NotBeSameAs(decision);
+        stored.Pair.Matches.Should().NotBeSameAs(decision.Pair.Matches);
+        stored.Action.Should().Be(BibDupePairAction.KeepLeft);
+    }
+
+    [TestMethod]
+    public async Task GetAsync_Returns_Null_When_No_Decision_Exists()
+    {
+        var store = CreateStore(out _);
+
+        var stored = await store.GetAsync(UserId, 1, 2);
+
+        stored.Should().BeNull();
+    }
+
     private static SessionDecisionStore CreateStore(out TestSession session)
     {
         session = new TestSession();
         return new SessionDecisionStore(TestHttpContextAccessor.WithSession(session));
     }
 
-    private static DecisionItem CreateDecision(int leftBibId, int rightBibId, BibDupePairAction action) => new()
+    private static PairDecision CreateDecision(int leftBibId, int rightBibId, BibDupePairAction action) => new()
     {
-        LeftBibId = leftBibId,
-        RightBibId = rightBibId,
-        LeftTitle = "Left Title",
-        LeftAuthor = "Left Author",
-        RightTitle = "Right Title",
-        RightAuthor = "Right Author",
-        TOM = "TOM",
-        PrimaryMarcTomId = 42,
-        Matches = new List<PairMatch>
+        Pair = new BibDupePair
         {
-            new()
+            LeftBibId = leftBibId,
+            RightBibId = rightBibId,
+            LeftTitle = "Left Title",
+            LeftAuthor = "Left Author",
+            RightTitle = "Right Title",
+            RightAuthor = "Right Author",
+            TOM = "TOM",
+            PrimaryMarcTomId = 42,
+            Matches = new List<PairMatch>
             {
-                MatchType = "Title",
-                MatchValue = "Match"
+                new()
+                {
+                    MatchType = "Title",
+                    MatchValue = "Match"
+                }
             }
         },
         Action = action

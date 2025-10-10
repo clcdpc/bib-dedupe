@@ -5,7 +5,7 @@ namespace Clc.BibDedupe.Web.Services;
 
 public static class DecisionConflictValidator
 {
-    public static void EnsureNoMergeConflicts(IEnumerable<DecisionItem> items)
+    public static void EnsureNoMergeConflicts(IEnumerable<PairDecision> items)
     {
         var mergedBibIds = new HashSet<int>();
         var keptBibIds = new HashSet<int>();
@@ -18,8 +18,8 @@ public static class DecisionConflictValidator
             }
 
             var keepLeft = item.Action == BibDupePairAction.KeepLeft;
-            var keptBibId = keepLeft ? item.LeftBibId : item.RightBibId;
-            var mergedBibId = keepLeft ? item.RightBibId : item.LeftBibId;
+            var keptBibId = keepLeft ? item.Pair.LeftBibId : item.Pair.RightBibId;
+            var mergedBibId = keepLeft ? item.Pair.RightBibId : item.Pair.LeftBibId;
 
             if (mergedBibIds.Contains(mergedBibId))
             {
