@@ -212,11 +212,11 @@ body {
 }
 
 .pairs-toolbar .pairs-filter-select--match-type {
-  min-width: 17rem;
+  min-width: 15rem;
 }
 
 .pairs-toolbar .pairs-filter-select--holds {
-  min-width: 13rem;
+  min-width: 11rem;
 }
 
 @media (max-width: 575.98px) {

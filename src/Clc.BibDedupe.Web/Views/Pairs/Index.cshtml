@@ -25,7 +25,7 @@
     <form id="pairsFilters" class="row g-3 align-items-center" method="get">
         <input type="hidden" name="page" value="1" />
         <div class="col-12 col-lg">
-            <div class="d-flex flex-wrap align-items-center gap-3">
+            <div class="d-flex flex-wrap align-items-center gap-2">
                 <div>
                     <select class="form-select form-select-sm pairs-filter-select pairs-filter-select--tom" id="tom" name="tom">
                         <option value="" selected="@(Model.SelectedTomId is null ? "selected" : null)">All TOMs</option>
@@ -52,7 +52,7 @@
                         <option value="false" selected="@(Model.SelectedHasHolds == false ? "selected" : null)">No holds</option>
                     </select>
                 </div>
-                <div class="ms-lg-2">
+                <div>
                     <button type="submit" name="clearFilters" value="true" class="@clearFiltersButtonClass" @(hasActiveFilters ? null : "disabled")>Clear filters</button>
                 </div>
             </div>
