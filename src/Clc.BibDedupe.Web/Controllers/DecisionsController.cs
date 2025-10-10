@@ -1,4 +1,5 @@
 using System.Linq;
+using System.Threading.Tasks;
 using Clc.BibDedupe.Web.Models;
 using Clc.BibDedupe.Web.Services;
 using Clc.BibDedupe.Web.Extensions;
@@ -12,7 +13,8 @@ namespace Clc.BibDedupe.Web.Controllers;
 public class DecisionsController(
     IDecisionStore store,
     IDecisionSubmissionService submissionService,
-    IDecisionBatchTracker batchTracker) : Controller
+    IDecisionBatchTracker batchTracker,
+    IDecisionBatchHistoryService historyService) : Controller
 {
     public async Task<IActionResult> Index()
     {
@@ -23,6 +25,19 @@ public class DecisionsController(
             : Enumerable.Empty<PairDecision>();
 
         var model = DecisionIndexViewModel.Create(items, batch);
+
+        return View(model);
+    }
+
+    public async Task<IActionResult> Batches()
+    {
+        var email = User.GetEmail();
+        var history = await historyService.GetHistoryAsync(email);
+
+        var model = new DecisionBatchHistoryViewModel
+        {
+            Batches = history
+        };
 
         return View(model);
     }

@@ -1,0 +1,101 @@
+@model DecisionBatchHistoryViewModel
+@{
+    ViewData["Title"] = "Batch History";
+    ViewBag.ContainerClass = "container-fluid";
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <h1 class="mb-0">Batch History</h1>
+    <a class="btn btn-outline-secondary" asp-action="Index">Back to Decisions</a>
+</div>
+
+@if (!Model.HasBatches)
+{
+    <div class="alert alert-info" role="status">
+        No batches have been submitted yet. Submit a decision batch to see its progress and results here.
+    </div>
+}
+else
+{
+    foreach (var batch in Model.Batches)
+    {
+        <section class="card mb-4" aria-labelledby="batch-@batch.BatchId">
+            <div class="card-header d-flex flex-wrap justify-content-between align-items-start gap-2">
+                <div>
+                    <h2 class="h5 mb-1" id="batch-@batch.BatchId">Batch #@batch.BatchId</h2>
+                    <div class="text-muted small">
+                        Started @batch.StartedAt.ToLocalTime().ToString("f")
+                        @if (batch.CompletedAt is not null)
+                        {
+                            <text>| Completed @batch.CompletedAt.Value.ToLocalTime().ToString("f")</text>
+                        }
+                        else
+                        {
+                            <text>| In progress</text>
+                        }
+                    </div>
+                </div>
+                <div class="d-flex flex-wrap gap-2">
+                    <span class="badge bg-secondary">Total: @batch.TotalResults</span>
+                    <span class="badge bg-success">Succeeded: @batch.SuccessCount</span>
+                    <span class="badge bg-danger">Failed: @batch.FailureCount</span>
+                </div>
+            </div>
+            <div class="card-body">
+                @if (!batch.HasResults)
+                {
+                    <p class="text-muted mb-0">Results will appear here once processing begins.</p>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th scope="col">Processed</th>
+                                    <th scope="col">Left Bib</th>
+                                    <th scope="col">Right Bib</th>
+                                    <th scope="col">Action</th>
+                                    <th scope="col">Status</th>
+                                    <th scope="col">Details</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            @foreach (var result in batch.Results)
+                            {
+                                var rowClass = result.Succeeded ? string.Empty : "table-danger";
+                                <tr class="@rowClass">
+                                    <td class="text-nowrap">@result.ProcessedAt.ToLocalTime().ToString("g")</td>
+                                    <td>@result.LeftBibId</td>
+                                    <td>@result.RightBibId</td>
+                                    <td>@result.Action</td>
+                                    <td>
+                                        @if (result.Succeeded)
+                                        {
+                                            <span class="badge bg-success">Succeeded</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-danger">Failed</span>
+                                        }
+                                    </td>
+                                    <td class="text-break">
+                                        @if (result.Succeeded || string.IsNullOrWhiteSpace(result.ErrorMessage))
+                                        {
+                                            <span class="text-muted">&mdash;</span>
+                                        }
+                                        else
+                                        {
+                                            @result.ErrorMessage
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+        </section>
+    }
+}

@@ -19,6 +19,7 @@
     <div class="menu-links">
         <a asp-controller="Pairs" asp-action="Index">Pair List</a>
         <a asp-controller="Decisions" asp-action="Index">Decisions <span class="badge">@decisionCount</span></a>
+        <a asp-controller="Decisions" asp-action="Batches">Batch History</a>
         @if (currentPair is null)
         {
             <span class="disabled" data-current-pair="true" aria-disabled="true">Current Pair</span>

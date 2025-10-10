@@ -175,6 +175,62 @@ BEGIN
 END
 GO
 
+IF OBJECT_ID('BibDedupe.DecisionBatchResults', 'U') IS NULL
+BEGIN
+    CREATE TABLE BibDedupe.DecisionBatchResults (
+        ResultId INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
+        BatchId INT NOT NULL,
+        LeftBibId INT NOT NULL,
+        RightBibId INT NOT NULL,
+        ActionId INT NOT NULL,
+        Succeeded BIT NOT NULL,
+        ErrorMessage NVARCHAR(1024) NULL,
+        ProcessedAt DATETIME2 NOT NULL CONSTRAINT DF_DecisionBatchResults_ProcessedAt DEFAULT SYSUTCDATETIME(),
+        CONSTRAINT FK_DecisionBatchResults_Batch FOREIGN KEY (BatchId)
+            REFERENCES BibDedupe.DecisionBatches (BatchId),
+        CONSTRAINT FK_DecisionBatchResults_Action FOREIGN KEY (ActionId)
+            REFERENCES BibDedupe.Actions (ActionId)
+    );
+END
+ELSE
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM sys.foreign_keys WHERE name = 'FK_DecisionBatchResults_Batch' AND parent_object_id = OBJECT_ID('BibDedupe.DecisionBatchResults')
+    )
+        ALTER TABLE BibDedupe.DecisionBatchResults
+            ADD CONSTRAINT FK_DecisionBatchResults_Batch FOREIGN KEY (BatchId)
+            REFERENCES BibDedupe.DecisionBatches (BatchId);
+
+    IF NOT EXISTS (
+        SELECT 1 FROM sys.foreign_keys WHERE name = 'FK_DecisionBatchResults_Action' AND parent_object_id = OBJECT_ID('BibDedupe.DecisionBatchResults')
+    )
+        ALTER TABLE BibDedupe.DecisionBatchResults
+            ADD CONSTRAINT FK_DecisionBatchResults_Action FOREIGN KEY (ActionId)
+            REFERENCES BibDedupe.Actions (ActionId);
+
+    IF NOT EXISTS (
+        SELECT 1
+        FROM sys.default_constraints dc
+        INNER JOIN sys.columns c
+            ON c.object_id = dc.parent_object_id
+           AND c.column_id = dc.parent_column_id
+        WHERE dc.parent_object_id = OBJECT_ID('BibDedupe.DecisionBatchResults')
+          AND c.name = 'ProcessedAt'
+    )
+    BEGIN
+        ALTER TABLE BibDedupe.DecisionBatchResults
+            ADD CONSTRAINT DF_DecisionBatchResults_ProcessedAt DEFAULT SYSUTCDATETIME() FOR ProcessedAt;
+    END
+END
+GO
+
+IF NOT EXISTS (
+    SELECT 1 FROM sys.indexes WHERE name = 'IX_DecisionBatchResults_BatchId' AND object_id = OBJECT_ID('BibDedupe.DecisionBatchResults')
+)
+    CREATE NONCLUSTERED INDEX IX_DecisionBatchResults_BatchId
+        ON BibDedupe.DecisionBatchResults (BatchId, ProcessedAt);
+GO
+
 IF OBJECT_ID('BibDedupe.PairAssignments', 'U') IS NULL
 BEGIN
     CREATE TABLE BibDedupe.PairAssignments (
