@@ -13,18 +13,40 @@ public class PairsController(IBibDupePairRepository repository, IPairFilterStore
 {
     private const int DefaultPageSize = 20;
 
-    public async Task<IActionResult> Index(int page = 1, int? tom = null, string? matchType = null, string? hasHolds = null)
+    public async Task<IActionResult> Index(
+        int page = 1,
+        int? tom = null,
+        string? matchType = null,
+        string? hasHolds = null,
+        bool clearFilters = false)
     {
         var email = User.GetEmail();
-        var sanitizedTom = tom.HasValue && tom.Value > 0 ? tom : null;
-        var sanitizedMatchType = string.IsNullOrWhiteSpace(matchType) ? null : matchType.Trim();
-        var sanitizedHasHolds = hasHolds switch
+        if (clearFilters)
         {
-            null or "" => (bool?)null,
-            var value when value.Equals("true", StringComparison.OrdinalIgnoreCase) => true,
-            var value when value.Equals("false", StringComparison.OrdinalIgnoreCase) => false,
-            _ => (bool?)null
-        };
+            await pairFilterStore.SetAsync(email, null);
+            return RedirectToAction(nameof(Index));
+        }
+
+        var storedFilters = await pairFilterStore.GetAsync(email);
+
+        var sanitizedTom = Request.Query.ContainsKey("tom")
+            ? tom is > 0 ? tom : null
+            : storedFilters?.TomId;
+
+        var sanitizedMatchType = Request.Query.ContainsKey("matchType")
+            ? string.IsNullOrWhiteSpace(matchType) ? null : matchType.Trim()
+            : storedFilters?.MatchType;
+
+        var sanitizedHasHolds = Request.Query.ContainsKey("hasHolds")
+            ? hasHolds switch
+            {
+                null or "" => (bool?)null,
+                var value when value.Equals("true", StringComparison.OrdinalIgnoreCase) => true,
+                var value when value.Equals("false", StringComparison.OrdinalIgnoreCase) => false,
+                _ => (bool?)null
+            }
+            : storedFilters?.HasHolds;
+
         await pairFilterStore.SetAsync(email, new PairFilterOptions
         {
             TomId = sanitizedTom,

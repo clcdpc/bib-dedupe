@@ -16,7 +16,8 @@
 }
 
 <div class="pairs-toolbar mb-4">
-    <form class="row g-3 align-items-center" method="get">
+    <form id="pairsFilters" class="row g-3 align-items-center" method="get">
+        <input type="hidden" name="page" value="1" />
         <div class="col-12 col-lg">
             <div class="d-flex flex-wrap align-items-center gap-3">
                 <div>
@@ -47,9 +48,8 @@
                 </div>
             </div>
         </div>
-        <div class="col-auto align-self-end">
-            <input type="hidden" name="page" value="1" />
-            <button type="submit" class="btn btn-primary btn-sm px-3">Apply</button>
+        <div class="col-12 col-lg-auto align-self-end">
+            <a asp-action="Index" asp-route-clearFilters="true" class="btn btn-outline-secondary btn-sm px-3">Clear filters</a>
         </div>
         <div class="col-12 col-lg-auto ms-lg-auto">
             <div class="text-muted small text-lg-end">
@@ -127,3 +127,25 @@
         }
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const filterForm = document.getElementById('pairsFilters');
+            if (!filterForm) {
+                return;
+            }
+
+            const filterInputs = filterForm.querySelectorAll('select');
+            filterInputs.forEach(function (select) {
+                select.addEventListener('change', function () {
+                    if (typeof filterForm.requestSubmit === 'function') {
+                        filterForm.requestSubmit();
+                    } else {
+                        filterForm.submit();
+                    }
+                });
+            });
+        });
+    </script>
+}
