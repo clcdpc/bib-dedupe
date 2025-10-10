@@ -46,10 +46,10 @@
                         <option value="false" selected="@(Model.SelectedHasHolds == false ? "selected" : null)">No holds</option>
                     </select>
                 </div>
+                <div class="ms-lg-2">
+                    <a asp-action="Index" asp-route-clearFilters="true" class="btn btn-secondary btn-sm px-3">Clear filters</a>
+                </div>
             </div>
-        </div>
-        <div class="col-12 col-lg-auto align-self-end">
-            <a asp-action="Index" asp-route-clearFilters="true" class="btn btn-outline-secondary btn-sm px-3">Clear filters</a>
         </div>
         <div class="col-12 col-lg-auto ms-lg-auto">
             <div class="text-muted small text-lg-end">
