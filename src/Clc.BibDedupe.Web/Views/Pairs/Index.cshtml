@@ -19,6 +19,29 @@
     var clearFiltersButtonClass = hasActiveFilters
         ? "btn btn-primary btn-sm px-3"
         : "btn btn-secondary btn-sm px-3";
+    const int defaultFilterWidthCh = 22;
+
+    string BuildFilterMinWidth(IEnumerable<string?>? options, int fallbackCh)
+    {
+        var longestLength = options?.Select(option => option?.Length ?? 0).DefaultIfEmpty(0).Max() ?? 0;
+        var widthCh = Math.Max(longestLength + 4, fallbackCh);
+        return $"{widthCh}ch";
+    }
+
+    var tomFilterMinWidth = BuildFilterMinWidth(
+        (Model.TomOptions ?? Enumerable.Empty<TomOption>())
+            .Select(option => option.Description)
+            .Append("All TOMs"),
+        defaultFilterWidthCh);
+
+    var matchTypeFilterMinWidth = BuildFilterMinWidth(
+        (Model.MatchTypeOptions ?? Enumerable.Empty<string>()).Cast<string?>()
+            .Append("All match types"),
+        defaultFilterWidthCh);
+
+    var holdsFilterMinWidth = BuildFilterMinWidth(
+        new[] { "All pairs", "Has holds", "No holds" },
+        defaultFilterWidthCh);
 }
 
 <div class="pairs-toolbar mb-4">
@@ -27,7 +50,7 @@
         <div class="col-12 col-lg">
             <div class="d-flex flex-wrap align-items-center gap-3">
                 <div>
-                    <select class="form-select form-select-sm" id="tom" name="tom">
+                    <select class="form-select form-select-sm pairs-filter-select" id="tom" name="tom" style="--pairs-filter-min-width: @tomFilterMinWidth;">
                         <option value="" selected="@(Model.SelectedTomId is null ? "selected" : null)">All TOMs</option>
                         @foreach (var tomOption in Model.TomOptions ?? Enumerable.Empty<TomOption>())
                         {
@@ -36,7 +59,7 @@
                     </select>
                 </div>
                 <div>
-                    <select class="form-select form-select-sm" id="matchType" name="matchType">
+                    <select class="form-select form-select-sm pairs-filter-select" id="matchType" name="matchType" style="--pairs-filter-min-width: @matchTypeFilterMinWidth;">
                         <option value="" selected="@(string.IsNullOrWhiteSpace(Model.SelectedMatchType) ? "selected" : null)">All match types</option>
                         @foreach (var matchTypeOption in Model.MatchTypeOptions ?? Enumerable.Empty<string>())
                         {
@@ -46,7 +69,7 @@
                     </select>
                 </div>
                 <div>
-                    <select class="form-select form-select-sm" id="hasHolds" name="hasHolds">
+                    <select class="form-select form-select-sm pairs-filter-select" id="hasHolds" name="hasHolds" style="--pairs-filter-min-width: @holdsFilterMinWidth;">
                         <option value="" selected="@(Model.SelectedHasHolds is null ? "selected" : null)">All pairs</option>
                         <option value="true" selected="@(Model.SelectedHasHolds == true ? "selected" : null)">Has holds</option>
                         <option value="false" selected="@(Model.SelectedHasHolds == false ? "selected" : null)">No holds</option>

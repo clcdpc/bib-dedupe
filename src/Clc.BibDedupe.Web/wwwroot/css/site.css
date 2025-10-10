@@ -202,6 +202,19 @@ body {
   box-shadow: 0 0.25rem 1rem rgba(33, 37, 41, 0.05);
 }
 
+.pairs-toolbar .pairs-filter-select {
+  min-width: var(--pairs-filter-min-width, 16rem);
+  width: max-content;
+  max-width: 100%;
+}
+
+@media (max-width: 575.98px) {
+  .pairs-toolbar .pairs-filter-select {
+    min-width: 0;
+    width: 100%;
+  }
+}
+
 .action-toast-container {
   position: fixed;
   top: 16px;
