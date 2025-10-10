@@ -101,13 +101,13 @@ public class ReviewController(
         }
         catch (DecisionConflictException ex)
         {
-            await pairAssignmentStore.ReleaseAsync(userEmail, leftBibId, rightBibId);
-            await currentPairStore.ClearAsync(userEmail);
             return Conflict(new { error = ex.Message });
         }
-
-        await pairAssignmentStore.ReleaseAsync(userEmail, leftBibId, rightBibId);
-        await currentPairStore.ClearAsync(userEmail);
+        finally
+        {
+            await pairAssignmentStore.ReleaseAsync(userEmail, leftBibId, rightBibId);
+            await currentPairStore.ClearAsync(userEmail);
+        }
 
         string? nextPairUrl = null;
         bool hasNextPair = false;
