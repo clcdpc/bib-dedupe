@@ -1,0 +1,70 @@
+@using Clc.BibDedupe.Web.Models
+@model DecisionBatchDetail
+@{
+    ViewData["Title"] ??= $"Batch {Model.Summary.BatchId}";
+}
+
+<h1>Batch @Model.Summary.BatchId</h1>
+
+<div class="mb-3">
+    <a asp-action="Index" class="btn btn-link">&larr; Back to batches</a>
+</div>
+
+<dl class="row">
+    <dt class="col-sm-3">Job ID</dt>
+    <dd class="col-sm-9">@Model.Summary.JobId</dd>
+    <dt class="col-sm-3">Started</dt>
+    <dd class="col-sm-9">@Model.Summary.StartedAt.ToLocalTime().ToString("F")</dd>
+    <dt class="col-sm-3">Completed</dt>
+    <dd class="col-sm-9">@(Model.Summary.CompletedAt?.ToLocalTime().ToString("F") ?? "In progress")</dd>
+    <dt class="col-sm-3">Decisions</dt>
+    <dd class="col-sm-9">@Model.Summary.TotalCount</dd>
+    <dt class="col-sm-3">Successes</dt>
+    <dd class="col-sm-9">@Model.Summary.SuccessCount</dd>
+    <dt class="col-sm-3">Failures</dt>
+    <dd class="col-sm-9">@Model.Summary.FailureCount</dd>
+</dl>
+
+@if (Model.HasFailures)
+{
+    <div class="alert alert-danger" role="alert">
+        Some decisions failed to process. Review the details below for more information.
+    </div>
+}
+
+@if (!Model.HasResults)
+{
+    <p>No decisions have been processed for this batch yet.</p>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-striped align-middle">
+            <thead>
+                <tr>
+                    <th scope="col">Left Bib</th>
+                    <th scope="col">Right Bib</th>
+                    <th scope="col">Action</th>
+                    <th scope="col">Processed</th>
+                    <th scope="col">Status</th>
+                    <th scope="col">Error</th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var result in Model.Results)
+            {
+                var statusClass = result.Succeeded ? "badge bg-success" : "badge bg-danger";
+                var statusText = result.Succeeded ? "Success" : "Failed";
+                <tr>
+                    <td>@result.LeftBibId</td>
+                    <td>@result.RightBibId</td>
+                    <td>@result.Action</td>
+                    <td>@result.ProcessedAt.ToLocalTime().ToString("g")</td>
+                    <td><span class="@statusClass">@statusText</span></td>
+                    <td>@(string.IsNullOrWhiteSpace(result.ErrorMessage) ? "—" : result.ErrorMessage)</td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+}

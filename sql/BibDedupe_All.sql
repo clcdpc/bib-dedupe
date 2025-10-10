@@ -36,6 +36,9 @@ GO
 IF OBJECT_ID('BibDedupe.PairAssignments','U') IS NOT NULL
     DROP TABLE BibDedupe.PairAssignments;
 GO
+IF OBJECT_ID('BibDedupe.DecisionBatchResults','U') IS NOT NULL
+    DROP TABLE BibDedupe.DecisionBatchResults;
+GO
 IF OBJECT_ID('BibDedupe.DecisionBatches','U') IS NOT NULL
     DROP TABLE BibDedupe.DecisionBatches;
 GO
@@ -132,6 +135,24 @@ CREATE TABLE BibDedupe.DecisionBatches
     JobId NVARCHAR(128) NOT NULL,
     StartedAt DATETIME2 NOT NULL,
     CompletedAt DATETIME2 NULL
+);
+GO
+
+CREATE TABLE BibDedupe.DecisionBatchResults
+(
+    ResultId INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
+    BatchId INT NOT NULL,
+    LeftBibId INT NOT NULL,
+    RightBibId INT NOT NULL,
+    ActionId INT NOT NULL,
+    ProcessedAt DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
+    Succeeded BIT NOT NULL,
+    ErrorMessage NVARCHAR(2000) NULL,
+    CONSTRAINT FK_DecisionBatchResults_Batch FOREIGN KEY (BatchId)
+        REFERENCES BibDedupe.DecisionBatches (BatchId)
+        ON DELETE CASCADE,
+    CONSTRAINT FK_DecisionBatchResults_Action FOREIGN KEY (ActionId)
+        REFERENCES BibDedupe.Actions (ActionId)
 );
 GO
 
@@ -329,6 +350,21 @@ BEGIN
     DECLARE @LeftBibId INT;
     DECLARE @RightBibId INT;
     DECLARE @ActionId INT;
+    DECLARE @BatchId INT;
+    DECLARE @Succeeded BIT;
+    DECLARE @ErrorMessage NVARCHAR(2000);
+
+    SELECT TOP 1 @BatchId = BatchId
+    FROM BibDedupe.DecisionBatches
+    WHERE UserEmail = @UserEmail
+      AND CompletedAt IS NULL
+    ORDER BY StartedAt DESC;
+
+    IF @BatchId IS NULL
+    BEGIN
+        RAISERROR('No pending decision batch found for %s.', 16, 1, @UserEmail);
+        RETURN;
+    END;
 
     DECLARE decision_cursor CURSOR LOCAL FAST_FORWARD FOR
         SELECT LeftBibId, RightBibId, ActionId
@@ -341,22 +377,36 @@ BEGIN
 
     WHILE @@FETCH_STATUS = 0
     BEGIN
-        IF (@ActionId = 1)
-        BEGIN
-            EXEC BibDedupe.MergePair @KeepBibId = @LeftBibId, @DeleteBibId = @RightBibId, @UserEmail = @UserEmail, @ActionId = @ActionId;
-        END
-        ELSE IF (@ActionId = 2)
-        BEGIN
-            EXEC BibDedupe.MarkNotDuplicate @LeftBibId = @LeftBibId, @RightBibId = @RightBibId, @UserEmail = @UserEmail;
-        END
-        ELSE IF (@ActionId = 3)
-        BEGIN
-            EXEC BibDedupe.Skip @LeftBibId = @LeftBibId, @RightBibId = @RightBibId, @UserEmail = @UserEmail;
-        END
-        ELSE IF (@ActionId = 4)
-        BEGIN
-            EXEC BibDedupe.MergePair @KeepBibId = @RightBibId, @DeleteBibId = @LeftBibId, @UserEmail = @UserEmail, @ActionId = @ActionId;
-        END
+        SET @Succeeded = 0;
+        SET @ErrorMessage = NULL;
+
+        BEGIN TRY
+            IF (@ActionId = 1)
+            BEGIN
+                EXEC BibDedupe.MergePair @KeepBibId = @LeftBibId, @DeleteBibId = @RightBibId, @UserEmail = @UserEmail, @ActionId = @ActionId;
+            END
+            ELSE IF (@ActionId = 2)
+            BEGIN
+                EXEC BibDedupe.MarkNotDuplicate @LeftBibId = @LeftBibId, @RightBibId = @RightBibId, @UserEmail = @UserEmail;
+            END
+            ELSE IF (@ActionId = 3)
+            BEGIN
+                EXEC BibDedupe.Skip @LeftBibId = @LeftBibId, @RightBibId = @RightBibId, @UserEmail = @UserEmail;
+            END
+            ELSE IF (@ActionId = 4)
+            BEGIN
+                EXEC BibDedupe.MergePair @KeepBibId = @RightBibId, @DeleteBibId = @LeftBibId, @UserEmail = @UserEmail, @ActionId = @ActionId;
+            END
+
+            SET @Succeeded = 1;
+        END TRY
+        BEGIN CATCH
+            SET @Succeeded = 0;
+            SET @ErrorMessage = LEFT(ERROR_MESSAGE(), 2000);
+        END CATCH;
+
+        INSERT INTO BibDedupe.DecisionBatchResults (BatchId, LeftBibId, RightBibId, ActionId, Succeeded, ErrorMessage)
+        VALUES (@BatchId, @LeftBibId, @RightBibId, @ActionId, @Succeeded, @ErrorMessage);
 
         FETCH NEXT FROM decision_cursor INTO @LeftBibId, @RightBibId, @ActionId;
 

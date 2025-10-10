@@ -11,6 +11,10 @@
 
 <h1>Decisions</h1>
 
+<p class="mb-3">
+    <a asp-controller="Batches" asp-action="Index" class="link-primary">View batch results</a>
+</p>
+
 @if (TempData["Error"] is string errorMessage && !string.IsNullOrWhiteSpace(errorMessage))
 {
     <div class="alert alert-danger" role="alert">@errorMessage</div>

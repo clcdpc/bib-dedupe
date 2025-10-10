@@ -175,6 +175,55 @@ BEGIN
 END
 GO
 
+IF OBJECT_ID('BibDedupe.DecisionBatchResults', 'U') IS NULL
+BEGIN
+    CREATE TABLE BibDedupe.DecisionBatchResults (
+        ResultId INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
+        BatchId INT NOT NULL,
+        LeftBibId INT NOT NULL,
+        RightBibId INT NOT NULL,
+        ActionId INT NOT NULL,
+        ProcessedAt DATETIME2 NOT NULL CONSTRAINT DF_DecisionBatchResults_ProcessedAt DEFAULT SYSDATETIME(),
+        Succeeded BIT NOT NULL,
+        ErrorMessage NVARCHAR(2000) NULL,
+        CONSTRAINT FK_DecisionBatchResults_Batch FOREIGN KEY (BatchId)
+            REFERENCES BibDedupe.DecisionBatches (BatchId)
+            ON DELETE CASCADE,
+        CONSTRAINT FK_DecisionBatchResults_Action FOREIGN KEY (ActionId)
+            REFERENCES BibDedupe.Actions (ActionId)
+    );
+END
+ELSE
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1
+        FROM sys.columns c
+        LEFT JOIN sys.default_constraints dc
+            ON c.default_object_id = dc.object_id
+        WHERE c.object_id = OBJECT_ID('BibDedupe.DecisionBatchResults')
+          AND c.name = 'ProcessedAt'
+          AND dc.object_id IS NOT NULL
+    )
+        ALTER TABLE BibDedupe.DecisionBatchResults
+            ADD CONSTRAINT DF_DecisionBatchResults_ProcessedAt DEFAULT SYSDATETIME() FOR ProcessedAt;
+
+    IF NOT EXISTS (
+        SELECT 1 FROM sys.foreign_keys WHERE name = 'FK_DecisionBatchResults_Batch' AND parent_object_id = OBJECT_ID('BibDedupe.DecisionBatchResults')
+    )
+        ALTER TABLE BibDedupe.DecisionBatchResults
+            ADD CONSTRAINT FK_DecisionBatchResults_Batch FOREIGN KEY (BatchId)
+            REFERENCES BibDedupe.DecisionBatches (BatchId)
+            ON DELETE CASCADE;
+
+    IF NOT EXISTS (
+        SELECT 1 FROM sys.foreign_keys WHERE name = 'FK_DecisionBatchResults_Action' AND parent_object_id = OBJECT_ID('BibDedupe.DecisionBatchResults')
+    )
+        ALTER TABLE BibDedupe.DecisionBatchResults
+            ADD CONSTRAINT FK_DecisionBatchResults_Action FOREIGN KEY (ActionId)
+            REFERENCES BibDedupe.Actions (ActionId);
+END
+GO
+
 IF OBJECT_ID('BibDedupe.PairAssignments', 'U') IS NULL
 BEGIN
     CREATE TABLE BibDedupe.PairAssignments (

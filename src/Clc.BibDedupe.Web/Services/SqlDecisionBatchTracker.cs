@@ -21,7 +21,7 @@ public class SqlDecisionBatchTracker(IDbConnectionFactory factory) : IDecisionBa
     public async Task<DecisionBatchStatus?> GetCurrentAsync(string userEmail)
     {
         using var connection = factory.Create();
-        var row = await connection.QueryFirstOrDefaultAsync<DecisionBatchRow>($"SELECT TOP 1 JobId, StartedAt, CompletedAt FROM {Table} WHERE UserEmail = @UserEmail ORDER BY StartedAt DESC", new { UserEmail = userEmail });
+        var row = await connection.QueryFirstOrDefaultAsync<DecisionBatchRow>($"SELECT TOP 1 BatchId, JobId, StartedAt, CompletedAt FROM {Table} WHERE UserEmail = @UserEmail ORDER BY StartedAt DESC", new { UserEmail = userEmail });
 
         if (row is null || row.CompletedAt.HasValue)
         {
@@ -30,6 +30,7 @@ public class SqlDecisionBatchTracker(IDbConnectionFactory factory) : IDecisionBa
 
         return new DecisionBatchStatus
         {
+            BatchId = row.BatchId,
             JobId = row.JobId,
             StartedAt = new DateTimeOffset(DateTime.SpecifyKind(row.StartedAt, DateTimeKind.Utc)),
             CompletedAt = row.CompletedAt is null
@@ -41,7 +42,7 @@ public class SqlDecisionBatchTracker(IDbConnectionFactory factory) : IDecisionBa
     public async Task<DecisionBatchStatus> StartAsync(string userEmail, DateTimeOffset startedAt, string jobId)
     {
         using var connection = factory.Create();
-        await connection.ExecuteAsync($"INSERT INTO {Table} (UserEmail, JobId, StartedAt) VALUES (@UserEmail, @JobId, @StartedAt)", new
+        var batchId = await connection.ExecuteScalarAsync<int>($"INSERT INTO {Table} (UserEmail, JobId, StartedAt) OUTPUT INSERTED.BatchId VALUES (@UserEmail, @JobId, @StartedAt)", new
         {
             UserEmail = userEmail,
             JobId = jobId,
@@ -50,6 +51,7 @@ public class SqlDecisionBatchTracker(IDbConnectionFactory factory) : IDecisionBa
 
         return new DecisionBatchStatus
         {
+            BatchId = batchId,
             JobId = jobId,
             StartedAt = startedAt,
             CompletedAt = null
@@ -58,6 +60,7 @@ public class SqlDecisionBatchTracker(IDbConnectionFactory factory) : IDecisionBa
 
     private sealed class DecisionBatchRow
     {
+        public int BatchId { get; init; }
         public string JobId { get; init; } = string.Empty;
         public DateTime StartedAt { get; init; }
         public DateTime? CompletedAt { get; init; }

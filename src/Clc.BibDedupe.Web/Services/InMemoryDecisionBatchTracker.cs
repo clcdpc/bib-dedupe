@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Threading;
 using Clc.BibDedupe.Web.Models;
 
 namespace Clc.BibDedupe.Web.Services;
@@ -6,6 +7,7 @@ namespace Clc.BibDedupe.Web.Services;
 public class InMemoryDecisionBatchTracker : IDecisionBatchTracker
 {
     private readonly ConcurrentDictionary<string, DecisionBatchStatus> batches = new();
+    private int nextBatchId;
 
     public Task CompleteAsync(string userEmail, DateTimeOffset completedAt)
     {
@@ -31,6 +33,7 @@ public class InMemoryDecisionBatchTracker : IDecisionBatchTracker
     {
         var status = new DecisionBatchStatus
         {
+            BatchId = Interlocked.Increment(ref nextBatchId),
             JobId = jobId,
             StartedAt = startedAt,
             CompletedAt = null

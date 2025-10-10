@@ -1,0 +1,66 @@
+@using Clc.BibDedupe.Web.Models
+@model DecisionBatchListViewModel
+@{
+    ViewData["Title"] = "Batch Results";
+}
+
+<h1>Batch Results</h1>
+
+@if (Model.CurrentBatch is not null)
+{
+    <div class="alert alert-info" role="status">
+        A batch started at <strong>@Model.CurrentBatch.StartedAt.ToLocalTime().ToString("g")</strong> is still processing.
+    </div>
+}
+
+@if (!Model.HasBatches)
+{
+    <p>No batches have been processed yet.</p>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-striped align-middle">
+            <thead>
+                <tr>
+                    <th scope="col">Batch</th>
+                    <th scope="col">Started</th>
+                    <th scope="col">Completed</th>
+                    <th scope="col">Decisions</th>
+                    <th scope="col">Successes</th>
+                    <th scope="col">Failures</th>
+                    <th scope="col">Status</th>
+                    <th scope="col"></th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var batch in Model.Batches)
+            {
+                var isCurrent = Model.CurrentBatchId.HasValue && batch.BatchId == Model.CurrentBatchId.Value;
+                var statusClass = batch.HasFailures
+                    ? "badge bg-danger"
+                    : batch.IsCompleted
+                        ? "badge bg-success"
+                        : "badge bg-secondary";
+                var statusLabel = batch.HasFailures
+                    ? "Completed with errors"
+                    : batch.IsCompleted
+                        ? "Completed"
+                        : "Processing";
+                <tr class="@(isCurrent ? "table-info" : string.Empty)">
+                    <th scope="row">@batch.BatchId</th>
+                    <td>@batch.StartedAt.ToLocalTime().ToString("g")</td>
+                    <td>@(batch.CompletedAt?.ToLocalTime().ToString("g") ?? "—")</td>
+                    <td>@batch.TotalCount</td>
+                    <td>@batch.SuccessCount</td>
+                    <td>@batch.FailureCount</td>
+                    <td><span class="@statusClass">@statusLabel</span></td>
+                    <td class="text-end">
+                        <a asp-action="Details" asp-route-id="@batch.BatchId" class="btn btn-sm btn-outline-primary">View details</a>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+}
