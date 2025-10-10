@@ -16,6 +16,9 @@
     var hasActiveFilters = Model.SelectedTomId is not null
         || !string.IsNullOrWhiteSpace(Model.SelectedMatchType)
         || Model.SelectedHasHolds is not null;
+    var clearFiltersButtonClass = hasActiveFilters
+        ? "btn btn-primary btn-sm px-3"
+        : "btn btn-secondary btn-sm px-3";
 }
 
 <div class="pairs-toolbar mb-4">
@@ -50,7 +53,7 @@
                     </select>
                 </div>
                 <div class="ms-lg-2">
-                    <button type="submit" name="clearFilters" value="true" class="btn btn-secondary btn-sm px-3" @(hasActiveFilters ? null : "disabled")>Clear filters</button>
+                    <button type="submit" name="clearFilters" value="true" class="@clearFiltersButtonClass" @(hasActiveFilters ? null : "disabled")>Clear filters</button>
                 </div>
             </div>
         </div>
