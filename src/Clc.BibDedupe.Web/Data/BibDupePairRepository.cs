@@ -24,7 +24,7 @@ namespace Clc.BibDedupe.Web.Data
             bool? hasHolds = null)
         {
             const string sql = @"SELECT PairId, PrimaryMARCTOMID AS PrimaryMarcTomId, LeftBibId, RightBibId,
-       LeftTitle, LeftAuthor, RightTitle, RightAuthor, TOM, MatchesJson
+       LeftTitle, LeftAuthor, RightTitle, RightAuthor, TOM, LeftHoldCount, RightHoldCount, TotalHoldCount, MatchesJson
 FROM BibDedupe.GetPairs(DEFAULT, @UserEmail, @TomId, @MatchType, @HasHolds)";
             var rows = await _db.QueryAsync<PairRow>(
                 sql,
@@ -47,7 +47,7 @@ FROM BibDedupe.GetPairs(DEFAULT, @UserEmail, @TomId, @MatchType, @HasHolds)";
             bool? hasHolds = null)
         {
             const string sql = @"SELECT PairId, PrimaryMARCTOMID AS PrimaryMarcTomId, LeftBibId, RightBibId,
-       LeftTitle, LeftAuthor, RightTitle, RightAuthor, TOM, MatchesJson
+       LeftTitle, LeftAuthor, RightTitle, RightAuthor, TOM, LeftHoldCount, RightHoldCount, TotalHoldCount, MatchesJson
 FROM BibDedupe.GetPairs(DEFAULT, @UserEmail, @TomId, @MatchType, @HasHolds) p
 ORDER BY p.LeftTitle, p.RightTitle, p.PairId
 OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY;
@@ -92,7 +92,7 @@ ORDER BY pm.MatchType;";
         public async Task<BibDupePair?> GetByBibIdsAsync(int leftBibId, int rightBibId, string? userEmail = null)
         {
             const string sql = @"SELECT PairId, PrimaryMARCTOMID AS PrimaryMarcTomId, LeftBibId, RightBibId,
-       LeftTitle, LeftAuthor, RightTitle, RightAuthor, TOM, MatchesJson
+       LeftTitle, LeftAuthor, RightTitle, RightAuthor, TOM, LeftHoldCount, RightHoldCount, TotalHoldCount, MatchesJson
  FROM BibDedupe.GetPairs(@Top, @UserEmail, NULL, NULL, NULL)
  WHERE LeftBibId = @LeftBibId AND RightBibId = @RightBibId;";
             var row = await _db.QueryFirstOrDefaultAsync<PairRow>(
