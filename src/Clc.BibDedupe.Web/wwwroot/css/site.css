@@ -202,6 +202,41 @@ body {
   box-shadow: 0 0.25rem 1rem rgba(33, 37, 41, 0.05);
 }
 
+.pairs-toolbar .form-select {
+  padding-right: 0;
+}
+
+.pairs-toolbar .pairs-filter-select {
+  width: max-content;
+  max-width: 100%;
+}
+
+.pairs-toolbar .pairs-filter-select--tom {
+  min-width: 19rem;
+}
+
+.pairs-toolbar .pairs-filter-select--match-type {
+  min-width: 12rem;
+}
+
+.pairs-toolbar .pairs-filter-select--holds {
+  min-width: 9rem;
+}
+
+.pairs-toolbar .pairs-toolbar__filters {
+  gap: 0.25rem;
+}
+
+@media (max-width: 575.98px) {
+  .pairs-toolbar .pairs-filter-select,
+  .pairs-toolbar .pairs-filter-select--tom,
+  .pairs-toolbar .pairs-filter-select--match-type,
+  .pairs-toolbar .pairs-filter-select--holds {
+    min-width: 0;
+    width: 100%;
+  }
+}
+
 .action-toast-container {
   position: fixed;
   top: 16px;

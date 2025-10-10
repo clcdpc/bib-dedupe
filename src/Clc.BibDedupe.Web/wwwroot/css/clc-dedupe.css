@@ -75,7 +75,7 @@ html, body {
 .controls {
     display: flex;
     gap: 20px;
-    padding: 12px;
+    padding: 16px;
     justify-content: center;
 }
 
