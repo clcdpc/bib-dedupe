@@ -68,14 +68,14 @@ else
                 @foreach (var d in Model.Decisions)
                 {
                     <tr data-action="@((int)d.Action)">
-                        <td class="bib-column">@d.Pair.LeftBibId</td>
+                        <td class="bib-column">@await Html.PartialAsync("_BibIdLink", d.Pair.LeftBibId)</td>
                         <td class="work-column">
                             <div class="work-title">@d.Pair.LeftTitle</div>
                         </td>
                         <td class="work-column">
                             <div class="work-author text-muted">@d.Pair.LeftAuthor</div>
                         </td>
-                        <td class="bib-column">@d.Pair.RightBibId</td>
+                        <td class="bib-column">@await Html.PartialAsync("_BibIdLink", d.Pair.RightBibId)</td>
                         <td class="work-column">
                             <div class="work-title">@d.Pair.RightTitle</div>
                         </td>

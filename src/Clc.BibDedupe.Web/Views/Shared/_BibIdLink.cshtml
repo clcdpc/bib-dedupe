@@ -1,0 +1,15 @@
+@model int
+@inject Clc.BibDedupe.Web.Services.IBibliographicLinkBuilder LinkBuilder
+
+@{
+    var url = LinkBuilder.BuildLink(Model);
+}
+
+@if (!string.IsNullOrWhiteSpace(url))
+{
+    <a class="bib-id-link" href="@url" target="_blank" rel="noopener noreferrer">@Model</a>
+}
+else
+{
+    @Model
+}

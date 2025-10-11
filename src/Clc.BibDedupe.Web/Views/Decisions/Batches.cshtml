@@ -66,8 +66,8 @@ else
                                 var rowClass = result.Succeeded ? string.Empty : "table-danger";
                                 <tr class="@rowClass">
                                     <td class="text-nowrap">@result.ProcessedAt.ToLocalTime().ToString("g")</td>
-                                    <td>@result.LeftBibId</td>
-                                    <td>@result.RightBibId</td>
+                                    <td class="bib-column">@await Html.PartialAsync("_BibIdLink", result.LeftBibId)</td>
+                                    <td class="bib-column">@await Html.PartialAsync("_BibIdLink", result.RightBibId)</td>
                                     <td>@result.Action</td>
                                     <td>
                                         @if (result.Succeeded)
