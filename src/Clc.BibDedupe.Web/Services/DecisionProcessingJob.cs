@@ -1,3 +1,4 @@
+using Hangfire;
 using Microsoft.Extensions.Logging;
 
 namespace Clc.BibDedupe.Web.Services;
@@ -7,6 +8,7 @@ public class DecisionProcessingJob(
     IDecisionBatchTracker tracker,
     ILogger<DecisionProcessingJob> logger)
 {
+    [AutomaticRetry(Attempts = 0)]
     public async Task ExecuteAsync(string userEmail)
     {
         try
