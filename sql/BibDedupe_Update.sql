@@ -404,7 +404,7 @@ RETURN (
             gp.RightAuthor,
             gp.TOM,
             gp.MatchesJson
-        FROM BibDedupe.GetPairs(2147483647, NULL, 1, NULL, NULL, NULL) gp
+        FROM BibDedupe.GetPairs(2147483647, NULL, 0, NULL, NULL, NULL) gp
         WHERE gp.LeftBibId = dq.LeftBibId
           AND gp.RightBibId = dq.RightBibId
     ) p
