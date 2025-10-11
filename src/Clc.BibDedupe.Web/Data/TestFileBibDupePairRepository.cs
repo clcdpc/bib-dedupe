@@ -69,7 +69,8 @@ public class TestFileBibDupePairRepository : IBibDupePairRepository
         string? userEmail = null,
         int? tomId = null,
         string? matchType = null,
-        bool? hasHolds = null)
+        bool? hasHolds = null,
+        bool hideDecided = true)
     {
         var filtered = ApplyFilters(_pairs, tomId, matchType, hasHolds);
         return Task.FromResult<IEnumerable<BibDupePair>>(filtered.ToList());
@@ -109,7 +110,8 @@ public class TestFileBibDupePairRepository : IBibDupePairRepository
         string? userEmail = null,
         int? tomId = null,
         string? matchType = null,
-        bool? hasHolds = null)
+        bool? hasHolds = null,
+        bool hideDecided = true)
     {
         var filteredList = ApplyFilters(_pairs, tomId, matchType, hasHolds).ToList();
         var total = filteredList.Count;
@@ -139,7 +141,7 @@ public class TestFileBibDupePairRepository : IBibDupePairRepository
         });
     }
 
-    public Task<BibDupePair?> GetByBibIdsAsync(int leftBibId, int rightBibId, string? userEmail = null)
+    public Task<BibDupePair?> GetByBibIdsAsync(int leftBibId, int rightBibId, string? userEmail = null, bool hideDecided = true)
         => Task.FromResult(_pairs.FirstOrDefault(p => p.LeftBibId == leftBibId && p.RightBibId == rightBibId));
 
     public Task MergeAsync(int keepBibId, int deleteBibId, string userEmail, BibDupePairAction action) => Task.CompletedTask;

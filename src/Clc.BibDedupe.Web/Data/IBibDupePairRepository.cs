@@ -10,15 +10,17 @@ namespace Clc.BibDedupe.Web.Data
             string? userEmail = null,
             int? tomId = null,
             string? matchType = null,
-            bool? hasHolds = null);
+            bool? hasHolds = null,
+            bool hideDecided = true);
         Task<PairsPageResult> GetPagedAsync(
             int page,
             int pageSize,
             string? userEmail = null,
             int? tomId = null,
             string? matchType = null,
-            bool? hasHolds = null);
-        Task<BibDupePair?> GetByBibIdsAsync(int leftBibId, int rightBibId, string? userEmail = null);
+            bool? hasHolds = null,
+            bool hideDecided = true);
+        Task<BibDupePair?> GetByBibIdsAsync(int leftBibId, int rightBibId, string? userEmail = null, bool hideDecided = true);
         Task MergeAsync(int keepBibId, int deleteBibId, string userEmail, BibDupePairAction action);
         Task MarkNotDuplicateAsync(int leftBibId, int rightBibId, string userEmail);
         Task SkipAsync(int leftBibId, int rightBibId, string userEmail);
