@@ -21,16 +21,18 @@ namespace Clc.BibDedupe.Web.Data
             string? userEmail = null,
             int? tomId = null,
             string? matchType = null,
-            bool? hasHolds = null)
+            bool? hasHolds = null,
+            bool hideDecided = true)
         {
             const string sql = @"SELECT PairId, PrimaryMARCTOMID AS PrimaryMarcTomId, LeftBibId, RightBibId,
        LeftTitle, LeftAuthor, RightTitle, RightAuthor, TOM, LeftHoldCount, RightHoldCount, TotalHoldCount, MatchesJson
-FROM BibDedupe.GetPairs(DEFAULT, @UserEmail, @TomId, @MatchType, @HasHolds)";
+FROM BibDedupe.GetPairs(DEFAULT, @UserEmail, @HideDecided, @TomId, @MatchType, @HasHolds)";
             var rows = await _db.QueryAsync<PairRow>(
                 sql,
                 new
                 {
                     UserEmail = userEmail,
+                    HideDecided = hideDecided,
                     TomId = tomId,
                     MatchType = matchType,
                     HasHolds = hasHolds
@@ -44,20 +46,21 @@ FROM BibDedupe.GetPairs(DEFAULT, @UserEmail, @TomId, @MatchType, @HasHolds)";
             string? userEmail = null,
             int? tomId = null,
             string? matchType = null,
-            bool? hasHolds = null)
+            bool? hasHolds = null,
+            bool hideDecided = true)
         {
             const string sql = @"SELECT PairId, PrimaryMARCTOMID AS PrimaryMarcTomId, LeftBibId, RightBibId,
        LeftTitle, LeftAuthor, RightTitle, RightAuthor, TOM, LeftHoldCount, RightHoldCount, TotalHoldCount, MatchesJson
-FROM BibDedupe.GetPairs(DEFAULT, @UserEmail, @TomId, @MatchType, @HasHolds) p
+FROM BibDedupe.GetPairs(DEFAULT, @UserEmail, @HideDecided, @TomId, @MatchType, @HasHolds) p
 ORDER BY p.LeftTitle, p.RightTitle, p.PairId
 OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY;
-SELECT COUNT(*) FROM BibDedupe.GetPairs(@CountTop, @UserEmail, @TomId, @MatchType, @HasHolds) p;
+SELECT COUNT(*) FROM BibDedupe.GetPairs(@CountTop, @UserEmail, @HideDecided, @TomId, @MatchType, @HasHolds) p;
 SELECT DISTINCT gp.PrimaryMarcTomId AS TomId, gp.TOM AS Description
-FROM BibDedupe.GetPairs(@CountTop, @UserEmail, NULL, @MatchType, @HasHolds) gp
+FROM BibDedupe.GetPairs(@CountTop, @UserEmail, @HideDecided, NULL, @MatchType, @HasHolds) gp
 WHERE gp.PrimaryMarcTomId IS NOT NULL AND gp.TOM IS NOT NULL AND LTRIM(RTRIM(gp.TOM)) <> ''
 ORDER BY gp.TOM;
 SELECT DISTINCT pm.MatchType
-FROM BibDedupe.GetPairs(@CountTop, @UserEmail, @TomId, NULL, @HasHolds) gp
+FROM BibDedupe.GetPairs(@CountTop, @UserEmail, @HideDecided, @TomId, NULL, @HasHolds) gp
 JOIN BibDedupe.PairMatches pm ON pm.PairId = gp.PairId
 ORDER BY pm.MatchType;";
             var offset = (page - 1) * pageSize;
@@ -69,6 +72,7 @@ ORDER BY pm.MatchType;";
                     PageSize = pageSize,
                     CountTop = UnlimitedPairsLimit,
                     UserEmail = userEmail,
+                    HideDecided = hideDecided,
                     TomId = tomId,
                     MatchType = matchType,
                     HasHolds = hasHolds
@@ -89,15 +93,15 @@ ORDER BY pm.MatchType;";
             };
         }
 
-        public async Task<BibDupePair?> GetByBibIdsAsync(int leftBibId, int rightBibId, string? userEmail = null)
+        public async Task<BibDupePair?> GetByBibIdsAsync(int leftBibId, int rightBibId, string? userEmail = null, bool hideDecided = true)
         {
             const string sql = @"SELECT PairId, PrimaryMARCTOMID AS PrimaryMarcTomId, LeftBibId, RightBibId,
        LeftTitle, LeftAuthor, RightTitle, RightAuthor, TOM, LeftHoldCount, RightHoldCount, TotalHoldCount, MatchesJson
- FROM BibDedupe.GetPairs(@Top, @UserEmail, NULL, NULL, NULL)
+ FROM BibDedupe.GetPairs(@Top, @UserEmail, @HideDecided, NULL, NULL, NULL)
  WHERE LeftBibId = @LeftBibId AND RightBibId = @RightBibId;";
             var row = await _db.QueryFirstOrDefaultAsync<PairRow>(
                 sql,
-                new { LeftBibId = leftBibId, RightBibId = rightBibId, Top = UnlimitedPairsLimit, UserEmail = userEmail });
+                new { LeftBibId = leftBibId, RightBibId = rightBibId, Top = UnlimitedPairsLimit, UserEmail = userEmail, HideDecided = hideDecided });
             return row is null ? null : MapRow(row);
         }
 
