@@ -587,6 +587,14 @@ body {
   overflow-wrap: normal;
 }
 
+a.bib-id-link,
+a.bib-id-link:visited,
+a.bib-id-link:hover,
+a.bib-id-link:focus,
+a.bib-id-link:active {
+  color: inherit;
+}
+
 .pairs-table .work-column,
 .decisions-table .work-column {
   min-width: 0;
