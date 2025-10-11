@@ -830,6 +830,39 @@ a.bib-id-link:active {
     border: 1px solid #1e40af;
   }
 
+  .card {
+    background-color: #20252c;
+    border-color: #343a40;
+    color: #f8f9fa;
+    box-shadow: 0 0.75rem 1.75rem rgba(0, 0, 0, 0.45);
+  }
+
+  .card-header {
+    background-color: #272d35;
+    border-bottom-color: #343a40;
+  }
+
+  .card-header .text-muted,
+  .card-body .text-muted,
+  .card .small.text-muted {
+    color: #cbd5f5 !important;
+  }
+
+  .badge.bg-secondary {
+    background-color: #475569 !important;
+    color: #e2e8f0;
+  }
+
+  .badge.bg-success {
+    background-color: #15803d !important;
+    color: #f0fdf4;
+  }
+
+  .badge.bg-danger {
+    background-color: #b91c1c !important;
+    color: #fee2e2;
+  }
+
   .modal-content {
     background-color: #252a31;
     color: #f8f9fa;
@@ -940,7 +973,35 @@ a.bib-id-link:active {
     --bs-table-bg: #1b1e22;
     --bs-table-striped-bg: #2c3034;
     --bs-table-striped-color: #f8f9fa;
+    --bs-table-hover-bg: #2f3439;
+    --bs-table-hover-color: #f8f9fa;
     --bs-table-border-color: #373b3e;
     color: #f8f9fa;
+  }
+
+  .table thead th {
+    background-color: #272d35;
+    color: #f8f9fa;
+    border-bottom-color: #343a40;
+  }
+
+  .table tbody tr.table-danger {
+    --bs-table-bg: #3f1f26;
+    --bs-table-striped-bg: #45232b;
+    --bs-table-hover-bg: #4c2831;
+    --bs-table-color: #f8d7da;
+    --bs-table-border-color: #5c2d36;
+  }
+
+  .btn-outline-secondary {
+    color: #e2e8f0;
+    border-color: #94a3b8;
+  }
+
+  .btn-outline-secondary:hover,
+  .btn-outline-secondary:focus {
+    color: #0f172a;
+    background-color: #e2e8f0;
+    border-color: #cbd5f5;
   }
 }
