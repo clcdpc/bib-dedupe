@@ -86,14 +86,14 @@
                 foreach (var p in visiblePairs)
                 {
                     <tr class="pairs-row">
-                        <td class="bib-column">@p.LeftBibId</td>
+                        <td class="bib-column">@await Html.PartialAsync("_BibIdLink", p.LeftBibId)</td>
                         <td class="work-column">
                             <div class="work-title">@p.LeftTitle</div>
                         </td>
                         <td class="work-column">
                             <div class="work-author text-muted">@p.LeftAuthor</div>
                         </td>
-                        <td class="bib-column">@p.RightBibId</td>
+                        <td class="bib-column">@await Html.PartialAsync("_BibIdLink", p.RightBibId)</td>
                         <td class="work-column">
                             <div class="work-title">@p.RightTitle</div>
                         </td>

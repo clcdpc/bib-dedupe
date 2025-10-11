@@ -54,6 +54,8 @@ namespace Clc.BibDedupe.Web
 
             builder.Services.Configure<PairAssignmentCleanupOptions>(
                 builder.Configuration.GetSection("PairAssignmentCleanup"));
+            builder.Services.Configure<BibliographicRecordLinkOptions>(options =>
+                options.UrlTemplate = builder.Configuration.GetValue<string>(BibliographicRecordLinkOptions.ConfigurationKey));
 
             if (string.IsNullOrWhiteSpace(bibDedupeConn))
             {
@@ -111,7 +113,8 @@ namespace Clc.BibDedupe.Web
             builder.Services
                 .AddSingleton<IHttpContextAccessor, HttpContextAccessor>()
                 .AddSingleton<ICurrentPairStore, SessionCurrentPairStore>()
-                .AddSingleton<IPairFilterStore, SessionPairFilterStore>();
+                .AddSingleton<IPairFilterStore, SessionPairFilterStore>()
+                .AddSingleton<IBibliographicLinkBuilder, BibliographicLinkBuilder>();
 
             builder.Services
                 .AddScoped<IDecisionSubmissionService, DecisionSubmissionService>()

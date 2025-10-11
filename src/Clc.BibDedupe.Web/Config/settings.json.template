@@ -11,5 +11,6 @@
     "DecisionProcessingDb": "YOUR_DECISION_PROCESSING_DB_CONNECTION",
     "AuthorizedUsersDb": "YOUR_AUTH_DB_CONNECTION"
   },
-  "AuthorizedUsers": []
+  "AuthorizedUsers": [],
+  "LeapBibLinkFormat": "https://your.catalog.example/bib/{bibId}"
 }
