@@ -19,7 +19,8 @@ public class SqlDecisionBatchHistoryService(IDbConnectionFactory factory) : IDec
               LEFT JOIN BibDedupe.DecisionBatchResults r ON b.BatchId = r.BatchId
               WHERE b.UserEmail = @UserEmail
               ORDER BY b.StartedAt DESC, r.ProcessedAt, r.ResultId",
-            new { UserEmail = userEmail })).ToList();
+            new { UserEmail = userEmail },
+            commandTimeout: 0)).ToList();
 
         if (rows.Count == 0)
         {
