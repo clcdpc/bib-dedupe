@@ -57,6 +57,10 @@ BEGIN
             END
         END TRY
         BEGIN CATCH
+            IF @@TRANCOUNT > 0
+            BEGIN
+                ROLLBACK TRANSACTION;
+            END;
             SET @ErrorMessage = ERROR_MESSAGE();
         END CATCH;
 
