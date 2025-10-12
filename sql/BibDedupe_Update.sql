@@ -184,6 +184,14 @@ IF COL_LENGTH('BibDedupe.DecisionBatches', 'FailureMessage') IS NULL
     ALTER TABLE BibDedupe.DecisionBatches ADD FailureMessage NVARCHAR(1024) NULL;
 GO
 
+IF NOT EXISTS (
+    SELECT 1 FROM sys.indexes WHERE name = 'IX_DecisionBatches_UserEmail_StartedAt' AND object_id = OBJECT_ID('BibDedupe.DecisionBatches')
+)
+    CREATE NONCLUSTERED INDEX IX_DecisionBatches_UserEmail_StartedAt
+        ON BibDedupe.DecisionBatches (UserEmail, StartedAt DESC)
+        INCLUDE (CompletedAt, FailedAt, FailureMessage);
+GO
+
 IF OBJECT_ID('BibDedupe.DecisionBatchResults', 'U') IS NULL
 BEGIN
     CREATE TABLE BibDedupe.DecisionBatchResults (
@@ -233,11 +241,14 @@ BEGIN
 END
 GO
 
-IF NOT EXISTS (
+IF EXISTS (
     SELECT 1 FROM sys.indexes WHERE name = 'IX_DecisionBatchResults_BatchId' AND object_id = OBJECT_ID('BibDedupe.DecisionBatchResults')
 )
-    CREATE NONCLUSTERED INDEX IX_DecisionBatchResults_BatchId
-        ON BibDedupe.DecisionBatchResults (BatchId, ProcessedAt);
+    DROP INDEX IX_DecisionBatchResults_BatchId ON BibDedupe.DecisionBatchResults;
+
+CREATE NONCLUSTERED INDEX IX_DecisionBatchResults_BatchId
+    ON BibDedupe.DecisionBatchResults (BatchId, ProcessedAt)
+    INCLUDE (ResultId, LeftBibId, RightBibId, ActionId, Succeeded, ErrorMessage);
 GO
 
 IF OBJECT_ID('BibDedupe.PairAssignments', 'U') IS NULL

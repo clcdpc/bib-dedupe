@@ -140,6 +140,11 @@ CREATE TABLE BibDedupe.DecisionBatches
 );
 GO
 
+CREATE NONCLUSTERED INDEX IX_DecisionBatches_UserEmail_StartedAt
+    ON BibDedupe.DecisionBatches (UserEmail, StartedAt DESC)
+    INCLUDE (CompletedAt, FailedAt, FailureMessage);
+GO
+
 CREATE TABLE BibDedupe.DecisionBatchResults
 (
     ResultId INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
@@ -158,7 +163,8 @@ CREATE TABLE BibDedupe.DecisionBatchResults
 GO
 
 CREATE NONCLUSTERED INDEX IX_DecisionBatchResults_BatchId
-    ON BibDedupe.DecisionBatchResults(BatchId, ProcessedAt);
+    ON BibDedupe.DecisionBatchResults (BatchId, ProcessedAt)
+    INCLUDE (ResultId, LeftBibId, RightBibId, ActionId, Succeeded, ErrorMessage);
 GO
 
 

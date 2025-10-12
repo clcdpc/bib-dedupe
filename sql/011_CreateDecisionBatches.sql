@@ -13,3 +13,8 @@ CREATE TABLE BibDedupe.DecisionBatches
     FailureMessage NVARCHAR(1024) NULL
 );
 GO
+
+CREATE NONCLUSTERED INDEX IX_DecisionBatches_UserEmail_StartedAt
+    ON BibDedupe.DecisionBatches (UserEmail, StartedAt DESC)
+    INCLUDE (CompletedAt, FailedAt, FailureMessage);
+GO
