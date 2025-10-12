@@ -64,7 +64,7 @@ BEGIN
         BEGIN
             SELECT TOP 1 @BatchId = BatchId
             FROM BibDedupe.DecisionBatches
-            WHERE UserEmail = @UserEmail AND CompletedAt IS NULL
+            WHERE UserEmail = @UserEmail AND CompletedAt IS NULL AND FailedAt IS NULL
             ORDER BY StartedAt DESC;
         END
 

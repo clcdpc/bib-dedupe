@@ -10,7 +10,7 @@ public class DecisionIndexViewModel
     public DecisionSummary Summary { get; init; } = new();
 
     public bool HasDecisions => Decisions.Count > 0;
-    public bool HasPendingBatch => BatchStatus is not null && !BatchStatus.IsCompleted;
+    public bool HasPendingBatch => BatchStatus is not null && !BatchStatus.IsTerminal;
 
     public static DecisionIndexViewModel Create(IEnumerable<PairDecision> decisions, DecisionBatchStatus? batch)
     {

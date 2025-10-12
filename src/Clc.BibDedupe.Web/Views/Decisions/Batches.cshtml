@@ -24,7 +24,11 @@ else
                     <h2 class="h5 mb-1" id="batch-@batch.BatchId">Batch #@batch.BatchId</h2>
                     <div class="text-muted small">
                         Started @batch.StartedAt.ToLocalTime().ToString("f")
-                        @if (batch.CompletedAt is not null)
+                        @if (batch.HasFailed && batch.FailedAt is not null)
+                        {
+                            <text>| Failed @batch.FailedAt.Value.ToLocalTime().ToString("f")</text>
+                        }
+                        else if (batch.CompletedAt is not null)
                         {
                             <text>| Completed @batch.CompletedAt.Value.ToLocalTime().ToString("f")</text>
                         }
@@ -41,9 +45,35 @@ else
                 </div>
             </div>
             <div class="card-body">
+                @if (batch.HasFailed)
+                {
+                    <div class="alert alert-danger" role="alert">
+                        @if (batch.FailedAt is not null)
+                        {
+                            <span>Processing failed @batch.FailedAt.Value.ToLocalTime().ToString("f").</span>
+                        }
+
+                        @if (!string.IsNullOrWhiteSpace(batch.FailureMessage))
+                        {
+                            <span class="d-block mt-2">@batch.FailureMessage</span>
+                        }
+                        else
+                        {
+                            <span class="d-block mt-2">An unexpected error occurred while running this batch.</span>
+                        }
+                    </div>
+                }
+
                 @if (!batch.HasResults)
                 {
-                    <p class="text-muted mb-0">Results will appear here once processing begins.</p>
+                    if (batch.HasFailed)
+                    {
+                        <p class="text-muted mb-0">No results were processed before the failure.</p>
+                    }
+                    else
+                    {
+                        <p class="text-muted mb-0">Results will appear here once processing begins.</p>
+                    }
                 }
                 else
                 {

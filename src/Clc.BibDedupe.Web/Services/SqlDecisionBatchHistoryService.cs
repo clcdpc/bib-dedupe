@@ -13,7 +13,7 @@ public class SqlDecisionBatchHistoryService(IDbConnectionFactory factory) : IDec
     {
         using var connection = factory.Create();
         var rows = (await connection.QueryAsync<BatchResultRow>(
-            @"SELECT b.BatchId, b.StartedAt, b.CompletedAt,
+            @"SELECT b.BatchId, b.StartedAt, b.CompletedAt, b.FailedAt, b.FailureMessage,
                      r.ResultId, r.LeftBibId, r.RightBibId, r.ActionId, r.Succeeded, r.ErrorMessage, r.ProcessedAt
               FROM BibDedupe.DecisionBatches b
               LEFT JOIN BibDedupe.DecisionBatchResults r ON b.BatchId = r.BatchId
@@ -39,10 +39,24 @@ public class SqlDecisionBatchHistoryService(IDbConnectionFactory factory) : IDec
                     CompletedAt = row.CompletedAt.HasValue
                         ? new DateTimeOffset(DateTime.SpecifyKind(row.CompletedAt.Value, DateTimeKind.Utc))
                         : (DateTimeOffset?)null,
+                    FailedAt = row.FailedAt.HasValue
+                        ? new DateTimeOffset(DateTime.SpecifyKind(row.FailedAt.Value, DateTimeKind.Utc))
+                        : (DateTimeOffset?)null,
+                    FailureMessage = row.FailureMessage,
                     Results = new List<DecisionBatchResult>()
                 };
 
                 batchLookup.Add(row.BatchId, accumulator);
+            }
+
+            if (!accumulator.FailedAt.HasValue && row.FailedAt.HasValue)
+            {
+                accumulator.FailedAt = new DateTimeOffset(DateTime.SpecifyKind(row.FailedAt.Value, DateTimeKind.Utc));
+            }
+
+            if (string.IsNullOrWhiteSpace(accumulator.FailureMessage) && !string.IsNullOrWhiteSpace(row.FailureMessage))
+            {
+                accumulator.FailureMessage = row.FailureMessage;
             }
 
             if (row.ResultId.HasValue && row.ActionId.HasValue && row.LeftBibId.HasValue && row.RightBibId.HasValue && row.ProcessedAt.HasValue)
@@ -71,6 +85,8 @@ public class SqlDecisionBatchHistoryService(IDbConnectionFactory factory) : IDec
                 BatchId = b.BatchId,
                 StartedAt = b.StartedAt,
                 CompletedAt = b.CompletedAt,
+                FailedAt = b.FailedAt,
+                FailureMessage = b.FailureMessage,
                 Results = b.Results
                     .OrderBy(r => r.ProcessedAt)
                     .ToList()
@@ -85,6 +101,8 @@ public class SqlDecisionBatchHistoryService(IDbConnectionFactory factory) : IDec
         public required int BatchId { get; init; }
         public required DateTimeOffset StartedAt { get; init; }
         public DateTimeOffset? CompletedAt { get; init; }
+        public DateTimeOffset? FailedAt { get; set; }
+        public string? FailureMessage { get; set; }
         public required List<DecisionBatchResult> Results { get; init; }
     }
 
@@ -93,6 +111,8 @@ public class SqlDecisionBatchHistoryService(IDbConnectionFactory factory) : IDec
         public int BatchId { get; init; }
         public DateTime StartedAt { get; init; }
         public DateTime? CompletedAt { get; init; }
+        public DateTime? FailedAt { get; init; }
+        public string? FailureMessage { get; init; }
         public int? ResultId { get; init; }
         public int? LeftBibId { get; init; }
         public int? RightBibId { get; init; }
