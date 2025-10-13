@@ -1,3 +1,4 @@
+@using System.Linq;
 @model DecisionBatchHistoryViewModel
 @{
     ViewData["Title"] = "Batch History";
@@ -18,13 +19,44 @@ else
 {
     foreach (var batch in Model.Batches)
     {
+        var collapseId = $"batch-{batch.BatchId}-details";
+        var failedResults = batch.Results.Where(r => !r.Succeeded).OrderBy(r => r.ProcessedAt).ToList();
+        var succeededResults = batch.Results.Where(r => r.Succeeded).OrderBy(r => r.ProcessedAt).ToList();
+        var statusText = batch.HasFailed
+            ? "Failed"
+            : batch.CompletedAt.HasValue
+                ? "Completed"
+                : "In progress";
+        var statusClass = batch.HasFailed ? "bg-danger" : batch.CompletedAt.HasValue ? "bg-success" : "bg-info";
+        var resultWord = batch.TotalResults == 1 ? "result" : "results";
+        var failureWord = batch.FailureCount == 1 ? "failure" : "failures";
+        var successWord = batch.SuccessCount == 1 ? "success" : "successes";
+        var summaryText = batch.HasFailed
+            ? $"Processing stopped after {batch.TotalResults} {resultWord} with {batch.FailureCount} {failureWord}."
+            : batch.CompletedAt.HasValue
+                ? batch.FailureCount > 0
+                    ? $"Completed {batch.TotalResults} {resultWord} with {batch.SuccessCount} {successWord} and {batch.FailureCount} {failureWord}."
+                    : $"Completed {batch.TotalResults} {resultWord} with {batch.SuccessCount} {successWord}."
+                : $"Processing {batch.TotalResults} {resultWord} so far: {batch.SuccessCount} {successWord} and {batch.FailureCount} {failureWord}.";
+        string? shortFailureMessage = null;
+        if (!string.IsNullOrWhiteSpace(batch.FailureMessage))
+        {
+            shortFailureMessage = batch.FailureMessage.Length > 160
+                ? batch.FailureMessage[..160] + "…"
+                : batch.FailureMessage;
+        }
+
         <section class="card mb-4" aria-labelledby="batch-@batch.BatchId">
             <div class="card-header d-flex flex-wrap justify-content-between align-items-start gap-2">
                 <div>
                     <h2 class="h5 mb-1" id="batch-@batch.BatchId">Batch #@batch.BatchId</h2>
                     <div class="text-muted small">
                         Started @batch.StartedAt.ToLocalTime().ToString("f")
-                        @if (batch.CompletedAt is not null)
+                        @if (batch.HasFailed && batch.FailedAt is not null)
+                        {
+                            <text>| Failed @batch.FailedAt.Value.ToLocalTime().ToString("f")</text>
+                        }
+                        else if (batch.CompletedAt is not null)
                         {
                             <text>| Completed @batch.CompletedAt.Value.ToLocalTime().ToString("f")</text>
                         }
@@ -34,66 +66,149 @@ else
                         }
                     </div>
                 </div>
-                <div class="d-flex flex-wrap gap-2">
-                    <span class="badge bg-secondary">Total: @batch.TotalResults</span>
-                    <span class="badge bg-success">Succeeded: @batch.SuccessCount</span>
-                    <span class="badge bg-danger">Failed: @batch.FailureCount</span>
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge @statusClass">@statusText</span>
                 </div>
             </div>
             <div class="card-body">
-                @if (!batch.HasResults)
-                {
-                    <p class="text-muted mb-0">Results will appear here once processing begins.</p>
-                }
-                else
-                {
-                    <div class="table-responsive">
-                        <table class="table table-sm table-hover align-middle mb-0">
-                            <thead>
-                                <tr>
-                                    <th scope="col">Processed</th>
-                                    <th scope="col">Left Bib</th>
-                                    <th scope="col">Right Bib</th>
-                                    <th scope="col">Action</th>
-                                    <th scope="col">Status</th>
-                                    <th scope="col">Details</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                            @foreach (var result in batch.Results)
-                            {
-                                var rowClass = result.Succeeded ? string.Empty : "table-danger";
-                                <tr class="@rowClass">
-                                    <td class="text-nowrap">@result.ProcessedAt.ToLocalTime().ToString("g")</td>
-                                    <td class="bib-column">@await Html.PartialAsync("_BibIdLink", result.LeftBibId)</td>
-                                    <td class="bib-column">@await Html.PartialAsync("_BibIdLink", result.RightBibId)</td>
-                                    <td>@result.Action</td>
-                                    <td>
-                                        @if (result.Succeeded)
-                                        {
-                                            <span class="badge bg-success">Succeeded</span>
-                                        }
-                                        else
-                                        {
-                                            <span class="badge bg-danger">Failed</span>
-                                        }
-                                    </td>
-                                    <td class="text-break">
-                                        @if (result.Succeeded || string.IsNullOrWhiteSpace(result.ErrorMessage))
-                                        {
-                                            <span class="text-muted">&mdash;</span>
-                                        }
-                                        else
-                                        {
-                                            @result.ErrorMessage
-                                        }
-                                    </td>
-                                </tr>
-                            }
-                            </tbody>
-                        </table>
+                <div class="batch-summary">
+                    <div class="batch-summary-counts">
+                        <span>Total <strong>@batch.TotalResults</strong></span>
+                        <span class="text-success">Succeeded <strong>@batch.SuccessCount</strong></span>
+                        <span class="text-danger">Failed <strong>@batch.FailureCount</strong></span>
                     </div>
-                }
+                    <p class="batch-summary-text mb-0">@summaryText</p>
+                    @if (!string.IsNullOrWhiteSpace(shortFailureMessage))
+                    {
+                        <p class="batch-summary-text batch-summary-failure mb-0">Failure: @shortFailureMessage</p>
+                    }
+                </div>
+
+                <button class="btn btn-outline-secondary btn-sm mt-3 batch-details-toggle collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#@collapseId" aria-expanded="false" aria-controls="@collapseId">
+                    <span class="collapsed-label">View details</span>
+                    <span class="expanded-label">Hide details</span>
+                </button>
+
+                <div class="collapse batch-details" id="@collapseId">
+                    @if (batch.HasFailed || !batch.HasResults)
+                    {
+                        <div class="batch-details-section">
+                            @if (batch.HasFailed)
+                            {
+                                <div class="alert alert-danger batch-failure-alert" role="alert">
+                                    @if (batch.FailedAt is not null)
+                                    {
+                                        <span>Processing failed @batch.FailedAt.Value.ToLocalTime().ToString("f").</span>
+                                    }
+
+                                    @if (!string.IsNullOrWhiteSpace(batch.FailureMessage))
+                                    {
+                                        <span class="d-block mt-2">@batch.FailureMessage</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="d-block mt-2">An unexpected error occurred while running this batch.</span>
+                                    }
+                                </div>
+                            }
+
+                            @if (!batch.HasResults)
+                            {
+                                if (batch.HasFailed)
+                                {
+                                    <p class="text-muted mb-0">No results were processed before the failure.</p>
+                                }
+                                else
+                                {
+                                    <p class="text-muted mb-0">Results will appear here once processing begins.</p>
+                                }
+                            }
+                        </div>
+                    }
+
+                    @if (failedResults.Any())
+                    {
+                        <div class="batch-details-section">
+                            <h3 class="batch-details-heading text-danger">Failed (@failedResults.Count)</h3>
+                            <div class="table-responsive">
+                                <table class="table table-sm table-hover align-middle mb-0 batch-history-table">
+                                    <thead>
+                                        <tr>
+                                            <th scope="col">Processed</th>
+                                            <th scope="col">Left Bib</th>
+                                            <th scope="col">Right Bib</th>
+                                            <th scope="col">Action</th>
+                                            <th scope="col">Status</th>
+                                            <th scope="col">Details</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                    @foreach (var result in failedResults)
+                                    {
+                                        <tr class="table-danger">
+                                            <td class="text-nowrap">@result.ProcessedAt.ToLocalTime().ToString("g")</td>
+                                            <td class="bib-column">@await Html.PartialAsync("_BibIdLink", result.LeftBibId)</td>
+                                            <td class="bib-column">@await Html.PartialAsync("_BibIdLink", result.RightBibId)</td>
+                                            <td>@result.Action</td>
+                                            <td>
+                                                <span class="badge bg-danger">Failed</span>
+                                            </td>
+                                            <td class="details-cell text-break">
+                                                @if (string.IsNullOrWhiteSpace(result.ErrorMessage))
+                                                {
+                                                    <span class="text-muted">&mdash;</span>
+                                                }
+                                                else
+                                                {
+                                                    @result.ErrorMessage
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    }
+
+                    @if (succeededResults.Any())
+                    {
+                        <div class="batch-details-section">
+                            <h3 class="batch-details-heading text-success">Succeeded (@succeededResults.Count)</h3>
+                            <div class="table-responsive">
+                                <table class="table table-sm table-hover align-middle mb-0 batch-history-table">
+                                    <thead>
+                                        <tr>
+                                            <th scope="col">Processed</th>
+                                            <th scope="col">Left Bib</th>
+                                            <th scope="col">Right Bib</th>
+                                            <th scope="col">Action</th>
+                                            <th scope="col">Status</th>
+                                            <th scope="col">Details</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                    @foreach (var result in succeededResults)
+                                    {
+                                        <tr>
+                                            <td class="text-nowrap">@result.ProcessedAt.ToLocalTime().ToString("g")</td>
+                                            <td class="bib-column">@await Html.PartialAsync("_BibIdLink", result.LeftBibId)</td>
+                                            <td class="bib-column">@await Html.PartialAsync("_BibIdLink", result.RightBibId)</td>
+                                            <td>@result.Action</td>
+                                            <td>
+                                                <span class="badge bg-success">Succeeded</span>
+                                            </td>
+                                            <td class="details-cell text-break">
+                                                <span class="text-muted">&mdash;</span>
+                                            </td>
+                                        </tr>
+                                    }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    }
+                </div>
             </div>
         </section>
     }

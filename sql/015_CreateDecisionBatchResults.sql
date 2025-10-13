@@ -20,5 +20,6 @@ CREATE TABLE BibDedupe.DecisionBatchResults
 GO
 
 CREATE NONCLUSTERED INDEX IX_DecisionBatchResults_BatchId
-    ON BibDedupe.DecisionBatchResults(BatchId, ProcessedAt);
+    ON BibDedupe.DecisionBatchResults (BatchId, ProcessedAt)
+    INCLUDE (ResultId, LeftBibId, RightBibId, ActionId, Succeeded, ErrorMessage);
 GO

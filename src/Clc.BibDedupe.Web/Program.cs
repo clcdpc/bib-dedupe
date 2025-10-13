@@ -17,6 +17,7 @@ using Microsoft.Identity.Web.UI;
 using System.Threading.Tasks;
 using Clc.BibDedupe.Web.Extensions;
 using Hangfire;
+using Hangfire.Dashboard;
 using Hangfire.MemoryStorage;
 using Hangfire.SqlServer;
 using Microsoft.Extensions.DependencyInjection;
@@ -213,6 +214,11 @@ namespace Clc.BibDedupe.Web
 
             app.UseAuthentication();
             app.UseAuthorization();
+
+            app.MapHangfireDashboard("/hangfire", new DashboardOptions
+            {
+                Authorization = new[] { new HangfireDashboardAuthorizationFilter() }
+            });
 
             app.MapControllerRoute(
                 name: "default",

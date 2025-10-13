@@ -618,6 +618,78 @@ a.bib-id-link:active {
   font-size: 0.8125rem;
 }
 
+.batch-history-table .details-cell {
+  min-width: 14rem;
+}
+
+.batch-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.batch-summary-counts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  font-size: 0.875rem;
+  color: #6c757d;
+}
+
+.batch-summary-counts span {
+  display: inline-flex;
+  gap: 0.35rem;
+  align-items: baseline;
+}
+
+.batch-summary-counts strong {
+  color: #212529;
+}
+
+.batch-summary-text {
+  color: #495057;
+}
+
+.batch-summary-failure {
+  color: #b02a37;
+  font-weight: 600;
+}
+
+.batch-details {
+  margin-top: 1.5rem;
+}
+
+.batch-details-section + .batch-details-section {
+  margin-top: 1.5rem;
+}
+
+.batch-details-heading {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 0.75rem;
+}
+
+.batch-details-toggle .expanded-label {
+  display: none;
+}
+
+.batch-details-toggle.collapsed .collapsed-label {
+  display: inline;
+}
+
+.batch-details-toggle.collapsed .expanded-label {
+  display: none;
+}
+
+.batch-details-toggle:not(.collapsed) .collapsed-label {
+  display: none;
+}
+
+.batch-details-toggle:not(.collapsed) .expanded-label {
+  display: inline;
+}
 
 .match-points {
   display: flex;
@@ -985,12 +1057,90 @@ a.bib-id-link:active {
     border-bottom-color: #343a40;
   }
 
+  .batch-history-table {
+    --bs-table-bg: #1f2329;
+    --bs-table-striped-bg: #262b31;
+    --bs-table-hover-bg: #2c3138;
+    --bs-table-border-color: #363c43;
+  }
+
   .table tbody tr.table-danger {
     --bs-table-bg: #3f1f26;
     --bs-table-striped-bg: #45232b;
     --bs-table-hover-bg: #4c2831;
     --bs-table-color: #f8d7da;
     --bs-table-border-color: #5c2d36;
+  }
+
+  .batch-history-table tbody tr.table-danger {
+    --bs-table-bg: #5a212a;
+    --bs-table-striped-bg: #62262f;
+    --bs-table-hover-bg: #6a2b35;
+    --bs-table-color: #ffe2e6;
+    --bs-table-border-color: #7a3340;
+  }
+
+  .batch-history-table tbody tr.table-danger td,
+  .batch-history-table tbody tr.table-danger th {
+    color: #fff5f5;
+  }
+
+  .batch-history-table tbody tr.table-danger .bib-id-link,
+  .batch-history-table tbody tr.table-danger .bib-id-link:visited,
+  .batch-history-table tbody tr.table-danger .bib-id-link:hover,
+  .batch-history-table tbody tr.table-danger .bib-id-link:focus {
+    color: #fff5f5;
+  }
+
+  .batch-history-table .details-cell {
+    color: #f8f9fa;
+  }
+
+  .batch-history-table .details-cell .text-muted {
+    color: #cbd5f5 !important;
+  }
+
+  .batch-summary-counts {
+    color: #cbd5e1;
+  }
+
+  .batch-summary-counts strong {
+    color: #f8fafc;
+  }
+
+  .batch-summary-text {
+    color: #e2e8f0;
+  }
+
+  .batch-summary-failure {
+    color: #fca5a5;
+  }
+
+  .batch-details-heading {
+    color: #cbd5f5;
+  }
+
+  .batch-history-table tbody tr.table-danger .details-cell {
+    color: #fff7f7;
+  }
+
+  .batch-history-table tbody tr.table-danger .details-cell .text-muted {
+    color: #fee2e2 !important;
+  }
+
+  .batch-history-table tbody tr.table-danger .badge.bg-danger {
+    background-color: #f87171 !important;
+    color: #450a0a;
+  }
+
+  .batch-failure-alert {
+    background-color: rgba(185, 28, 28, 0.22);
+    border-color: rgba(248, 113, 113, 0.45);
+    color: #ffe2e2;
+  }
+
+  .batch-failure-alert .text-muted {
+    color: #f9a8d4 !important;
   }
 
   .btn-outline-secondary {

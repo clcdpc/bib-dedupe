@@ -15,6 +15,7 @@ public class SqlDecisionProcessingExecutor(IDecisionProcessingDbConnectionFactor
         await connection.ExecuteAsync(
             "clcdb.BibDedupe.ProcessDecisionBatch",
             new { UserEmail = userEmail },
-            commandType: CommandType.StoredProcedure);
+            commandType: CommandType.StoredProcedure,
+            commandTimeout: 0);
     }
 }

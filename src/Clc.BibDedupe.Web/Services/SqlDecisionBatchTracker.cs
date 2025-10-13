@@ -11,19 +11,30 @@ public class SqlDecisionBatchTracker(IDbConnectionFactory factory) : IDecisionBa
     public async Task CompleteAsync(string userEmail, DateTimeOffset completedAt)
     {
         using var connection = factory.Create();
-        await connection.ExecuteAsync($"UPDATE {Table} SET CompletedAt = @CompletedAt WHERE UserEmail = @UserEmail AND CompletedAt IS NULL", new
+        await connection.ExecuteAsync($"UPDATE {Table} SET CompletedAt = @CompletedAt, FailedAt = NULL, FailureMessage = NULL WHERE UserEmail = @UserEmail AND CompletedAt IS NULL AND FailedAt IS NULL", new
         {
             UserEmail = userEmail,
             CompletedAt = completedAt.UtcDateTime
         });
     }
 
+    public async Task FailAsync(string userEmail, DateTimeOffset failedAt, string errorMessage)
+    {
+        using var connection = factory.Create();
+        await connection.ExecuteAsync($"UPDATE {Table} SET FailedAt = @FailedAt, FailureMessage = @FailureMessage WHERE UserEmail = @UserEmail AND CompletedAt IS NULL AND FailedAt IS NULL", new
+        {
+            UserEmail = userEmail,
+            FailedAt = failedAt.UtcDateTime,
+            FailureMessage = errorMessage
+        });
+    }
+
     public async Task<DecisionBatchStatus?> GetCurrentAsync(string userEmail)
     {
         using var connection = factory.Create();
-        var row = await connection.QueryFirstOrDefaultAsync<DecisionBatchRow>($"SELECT TOP 1 JobId, StartedAt, CompletedAt FROM {Table} WHERE UserEmail = @UserEmail ORDER BY StartedAt DESC", new { UserEmail = userEmail });
+        var row = await connection.QueryFirstOrDefaultAsync<DecisionBatchRow>($"SELECT TOP 1 JobId, StartedAt, CompletedAt, FailedAt, FailureMessage FROM {Table} WHERE UserEmail = @UserEmail ORDER BY StartedAt DESC", new { UserEmail = userEmail });
 
-        if (row is null || row.CompletedAt.HasValue)
+        if (row is null || row.CompletedAt.HasValue || row.FailedAt.HasValue)
         {
             return null;
         }
@@ -34,7 +45,11 @@ public class SqlDecisionBatchTracker(IDbConnectionFactory factory) : IDecisionBa
             StartedAt = new DateTimeOffset(DateTime.SpecifyKind(row.StartedAt, DateTimeKind.Utc)),
             CompletedAt = row.CompletedAt is null
                 ? null
-                : new DateTimeOffset(DateTime.SpecifyKind(row.CompletedAt.Value, DateTimeKind.Utc))
+                : new DateTimeOffset(DateTime.SpecifyKind(row.CompletedAt.Value, DateTimeKind.Utc)),
+            FailedAt = row.FailedAt is null
+                ? null
+                : new DateTimeOffset(DateTime.SpecifyKind(row.FailedAt.Value, DateTimeKind.Utc)),
+            FailureMessage = row.FailureMessage
         };
     }
 
@@ -52,7 +67,9 @@ public class SqlDecisionBatchTracker(IDbConnectionFactory factory) : IDecisionBa
         {
             JobId = jobId,
             StartedAt = startedAt,
-            CompletedAt = null
+            CompletedAt = null,
+            FailedAt = null,
+            FailureMessage = null
         };
     }
 
@@ -61,5 +78,7 @@ public class SqlDecisionBatchTracker(IDbConnectionFactory factory) : IDecisionBa
         public string JobId { get; init; } = string.Empty;
         public DateTime StartedAt { get; init; }
         public DateTime? CompletedAt { get; init; }
+        public DateTime? FailedAt { get; init; }
+        public string? FailureMessage { get; init; }
     }
 }

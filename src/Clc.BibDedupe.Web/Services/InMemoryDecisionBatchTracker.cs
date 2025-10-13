@@ -9,9 +9,19 @@ public class InMemoryDecisionBatchTracker : IDecisionBatchTracker
 
     public Task CompleteAsync(string userEmail, DateTimeOffset completedAt)
     {
-        if (batches.TryGetValue(userEmail, out var status) && !status.IsCompleted)
+        if (batches.TryGetValue(userEmail, out var status) && !status.IsTerminal)
         {
-            batches[userEmail] = status with { CompletedAt = completedAt };
+            batches[userEmail] = status with { CompletedAt = completedAt, FailedAt = null, FailureMessage = null };
+        }
+
+        return Task.CompletedTask;
+    }
+
+    public Task FailAsync(string userEmail, DateTimeOffset failedAt, string errorMessage)
+    {
+        if (batches.TryGetValue(userEmail, out var status) && !status.IsTerminal)
+        {
+            batches[userEmail] = status with { FailedAt = failedAt, FailureMessage = errorMessage };
         }
 
         return Task.CompletedTask;
@@ -19,7 +29,7 @@ public class InMemoryDecisionBatchTracker : IDecisionBatchTracker
 
     public Task<DecisionBatchStatus?> GetCurrentAsync(string userEmail)
     {
-        if (batches.TryGetValue(userEmail, out var status) && !status.IsCompleted)
+        if (batches.TryGetValue(userEmail, out var status) && !status.IsTerminal)
         {
             return Task.FromResult<DecisionBatchStatus?>(status);
         }
@@ -33,7 +43,9 @@ public class InMemoryDecisionBatchTracker : IDecisionBatchTracker
         {
             JobId = jobId,
             StartedAt = startedAt,
-            CompletedAt = null
+            CompletedAt = null,
+            FailedAt = null,
+            FailureMessage = null
         };
 
         batches[userEmail] = status;

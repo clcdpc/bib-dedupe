@@ -9,6 +9,8 @@ public record DecisionBatchHistory
     public required int BatchId { get; init; }
     public required DateTimeOffset StartedAt { get; init; }
     public DateTimeOffset? CompletedAt { get; init; }
+    public DateTimeOffset? FailedAt { get; init; }
+    public string? FailureMessage { get; init; }
     public IReadOnlyList<DecisionBatchResult> Results { get; init; } = Array.Empty<DecisionBatchResult>();
 
     public int TotalResults => Results.Count;
@@ -16,6 +18,7 @@ public record DecisionBatchHistory
     public int FailureCount => Results.Count(r => !r.Succeeded);
     public bool HasResults => TotalResults > 0;
     public bool HasFailures => FailureCount > 0;
+    public bool HasFailed => FailedAt.HasValue || !string.IsNullOrWhiteSpace(FailureMessage);
 }
 
 public record DecisionBatchResult
