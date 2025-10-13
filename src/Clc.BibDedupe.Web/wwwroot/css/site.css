@@ -622,6 +622,74 @@ a.bib-id-link:active {
   min-width: 14rem;
 }
 
+.batch-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.batch-summary-counts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  font-size: 0.875rem;
+  color: #6c757d;
+}
+
+.batch-summary-counts span {
+  display: inline-flex;
+  gap: 0.35rem;
+  align-items: baseline;
+}
+
+.batch-summary-counts strong {
+  color: #212529;
+}
+
+.batch-summary-text {
+  color: #495057;
+}
+
+.batch-summary-failure {
+  color: #b02a37;
+  font-weight: 600;
+}
+
+.batch-details {
+  margin-top: 1.5rem;
+}
+
+.batch-details-section + .batch-details-section {
+  margin-top: 1.5rem;
+}
+
+.batch-details-heading {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 0.75rem;
+}
+
+.batch-details-toggle .expanded-label {
+  display: none;
+}
+
+.batch-details-toggle.collapsed .collapsed-label {
+  display: inline;
+}
+
+.batch-details-toggle.collapsed .expanded-label {
+  display: none;
+}
+
+.batch-details-toggle:not(.collapsed) .collapsed-label {
+  display: none;
+}
+
+.batch-details-toggle:not(.collapsed) .expanded-label {
+  display: inline;
+}
 
 .match-points {
   display: flex;
@@ -1030,6 +1098,26 @@ a.bib-id-link:active {
 
   .batch-history-table .details-cell .text-muted {
     color: #cbd5f5 !important;
+  }
+
+  .batch-summary-counts {
+    color: #cbd5e1;
+  }
+
+  .batch-summary-counts strong {
+    color: #f8fafc;
+  }
+
+  .batch-summary-text {
+    color: #e2e8f0;
+  }
+
+  .batch-summary-failure {
+    color: #fca5a5;
+  }
+
+  .batch-details-heading {
+    color: #cbd5f5;
   }
 
   .batch-history-table tbody tr.table-danger .details-cell {
