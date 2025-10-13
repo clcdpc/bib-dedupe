@@ -618,6 +618,10 @@ a.bib-id-link:active {
   font-size: 0.8125rem;
 }
 
+.batch-history-table .details-cell {
+  min-width: 14rem;
+}
+
 
 .match-points {
   display: flex;
@@ -985,12 +989,45 @@ a.bib-id-link:active {
     border-bottom-color: #343a40;
   }
 
+  .batch-history-table {
+    --bs-table-bg: #1f2329;
+    --bs-table-striped-bg: #262b31;
+    --bs-table-hover-bg: #2c3138;
+    --bs-table-border-color: #363c43;
+  }
+
   .table tbody tr.table-danger {
     --bs-table-bg: #3f1f26;
     --bs-table-striped-bg: #45232b;
     --bs-table-hover-bg: #4c2831;
     --bs-table-color: #f8d7da;
     --bs-table-border-color: #5c2d36;
+  }
+
+  .batch-history-table tbody tr.table-danger {
+    --bs-table-bg: #5a212a;
+    --bs-table-striped-bg: #62262f;
+    --bs-table-hover-bg: #6a2b35;
+    --bs-table-color: #ffe2e6;
+    --bs-table-border-color: #7a3340;
+  }
+
+  .batch-history-table .details-cell {
+    color: #f8f9fa;
+  }
+
+  .batch-history-table .details-cell .text-muted {
+    color: #cbd5f5 !important;
+  }
+
+  .batch-failure-alert {
+    background-color: rgba(185, 28, 28, 0.22);
+    border-color: rgba(248, 113, 113, 0.45);
+    color: #ffe2e2;
+  }
+
+  .batch-failure-alert .text-muted {
+    color: #f9a8d4 !important;
   }
 
   .btn-outline-secondary {

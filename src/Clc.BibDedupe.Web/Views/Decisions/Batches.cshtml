@@ -47,7 +47,7 @@ else
             <div class="card-body">
                 @if (batch.HasFailed)
                 {
-                    <div class="alert alert-danger" role="alert">
+                    <div class="alert alert-danger batch-failure-alert" role="alert">
                         @if (batch.FailedAt is not null)
                         {
                             <span>Processing failed @batch.FailedAt.Value.ToLocalTime().ToString("f").</span>
@@ -78,7 +78,7 @@ else
                 else
                 {
                     <div class="table-responsive">
-                        <table class="table table-sm table-hover align-middle mb-0">
+                        <table class="table table-sm table-hover align-middle mb-0 batch-history-table">
                             <thead>
                                 <tr>
                                     <th scope="col">Processed</th>
@@ -108,7 +108,7 @@ else
                                             <span class="badge bg-danger">Failed</span>
                                         }
                                     </td>
-                                    <td class="text-break">
+                                    <td class="details-cell text-break">
                                         @if (result.Succeeded || string.IsNullOrWhiteSpace(result.ErrorMessage))
                                         {
                                             <span class="text-muted">&mdash;</span>
