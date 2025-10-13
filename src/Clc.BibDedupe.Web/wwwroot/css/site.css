@@ -1012,12 +1012,37 @@ a.bib-id-link:active {
     --bs-table-border-color: #7a3340;
   }
 
+  .batch-history-table tbody tr.table-danger td,
+  .batch-history-table tbody tr.table-danger th {
+    color: #fff5f5;
+  }
+
+  .batch-history-table tbody tr.table-danger .bib-id-link,
+  .batch-history-table tbody tr.table-danger .bib-id-link:visited,
+  .batch-history-table tbody tr.table-danger .bib-id-link:hover,
+  .batch-history-table tbody tr.table-danger .bib-id-link:focus {
+    color: #fff5f5;
+  }
+
   .batch-history-table .details-cell {
     color: #f8f9fa;
   }
 
   .batch-history-table .details-cell .text-muted {
     color: #cbd5f5 !important;
+  }
+
+  .batch-history-table tbody tr.table-danger .details-cell {
+    color: #fff7f7;
+  }
+
+  .batch-history-table tbody tr.table-danger .details-cell .text-muted {
+    color: #fee2e2 !important;
+  }
+
+  .batch-history-table tbody tr.table-danger .badge.bg-danger {
+    background-color: #f87171 !important;
+    color: #450a0a;
   }
 
   .batch-failure-alert {
