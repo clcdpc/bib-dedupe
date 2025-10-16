@@ -29,6 +29,10 @@ IF OBJECT_ID('BibDedupe.GetDecisionQueue','IF') IS NOT NULL
     DROP FUNCTION BibDedupe.GetDecisionQueue;
 GO
 
+IF OBJECT_ID('BibDedupe.GetValidPairActions','IF') IS NOT NULL
+    DROP FUNCTION BibDedupe.GetValidPairActions;
+GO
+
 -- Drop tables in foreign key order
 IF OBJECT_ID('BibDedupe.DecisionQueue','U') IS NOT NULL
     DROP TABLE BibDedupe.DecisionQueue;
@@ -325,6 +329,41 @@ RETURN (
           AND gp.RightBibId = dq.RightBibId
     ) p
     WHERE dq.UserEmail = @UserEmail
+);
+GO
+
+CREATE OR ALTER FUNCTION BibDedupe.GetValidPairActions (
+    @UserEmail NVARCHAR(256),
+    @LeftBibId INT,
+    @RightBibId INT
+)
+RETURNS TABLE
+AS
+RETURN (
+    WITH ExistingDecisions AS (
+        SELECT
+            dq.KeptBibId,
+            dq.DeletedBibId
+        FROM BibDedupe.DecisionQueue dq
+        WHERE dq.UserEmail = @UserEmail
+          AND NOT (dq.LeftBibId = @LeftBibId AND dq.RightBibId = @RightBibId)
+    )
+    SELECT a.ActionId
+    FROM BibDedupe.Actions a
+    WHERE a.ActionId IN (1, 2, 3, 4)
+      AND (
+            a.ActionId NOT IN (1, 4)
+        OR (
+                a.ActionId = 1
+            AND NOT EXISTS (SELECT 1 FROM ExistingDecisions WHERE DeletedBibId IN (@LeftBibId, @RightBibId))
+            AND NOT EXISTS (SELECT 1 FROM ExistingDecisions WHERE KeptBibId = @RightBibId)
+        )
+        OR (
+                a.ActionId = 4
+            AND NOT EXISTS (SELECT 1 FROM ExistingDecisions WHERE DeletedBibId IN (@LeftBibId, @RightBibId))
+            AND NOT EXISTS (SELECT 1 FROM ExistingDecisions WHERE KeptBibId = @LeftBibId)
+        )
+      )
 );
 GO
 

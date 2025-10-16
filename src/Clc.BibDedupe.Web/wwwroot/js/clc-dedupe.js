@@ -327,13 +327,22 @@
     const rightTitle = page ? page.dataset.rightTitle : '';
 
     const actionButtons = Array.from(document.querySelectorAll('.controls button'));
+
+    function isActionAvailable(btn) {
+        return (btn.dataset.available || 'true') !== 'false';
+    }
+
     if (actionButtons.length) {
         actionButtons.forEach(btn => {
+            const available = isActionAvailable(btn);
             btn.disabled = true;
+            if (!available) {
+                btn.dataset.locked = 'true';
+            }
         });
         setTimeout(() => {
             actionButtons.forEach(btn => {
-                if (btn.dataset.locked === 'true') {
+                if (btn.dataset.locked === 'true' || !isActionAvailable(btn)) {
                     return;
                 }
                 btn.disabled = false;
@@ -343,6 +352,13 @@
 
     function setButtonsLocked(isLocked) {
         actionButtons.forEach(btn => {
+            const available = isActionAvailable(btn);
+            if (!available) {
+                btn.dataset.locked = 'true';
+                btn.disabled = true;
+                return;
+            }
+
             if (isLocked) {
                 btn.dataset.locked = 'true';
                 btn.disabled = true;

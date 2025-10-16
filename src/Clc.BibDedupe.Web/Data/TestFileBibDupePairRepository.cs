@@ -144,6 +144,9 @@ public class TestFileBibDupePairRepository : IBibDupePairRepository
     public Task<BibDupePair?> GetByBibIdsAsync(int leftBibId, int rightBibId, string? userEmail = null, bool hideDecided = true)
         => Task.FromResult(_pairs.FirstOrDefault(p => p.LeftBibId == leftBibId && p.RightBibId == rightBibId));
 
+    public Task<IReadOnlyCollection<BibDupePairAction>> GetValidActionsAsync(int leftBibId, int rightBibId, string userEmail)
+        => Task.FromResult<IReadOnlyCollection<BibDupePairAction>>(Enum.GetValues<BibDupePairAction>());
+
     public Task MergeAsync(int keepBibId, int deleteBibId, string userEmail, BibDupePairAction action) => Task.CompletedTask;
 
     public Task MarkNotDuplicateAsync(int leftBibId, int rightBibId, string userEmail) => Task.CompletedTask;

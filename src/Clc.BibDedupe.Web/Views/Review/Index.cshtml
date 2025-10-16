@@ -1,7 +1,12 @@
 @using Clc.BibDedupe.Web.Models
 @model IndexViewModel
-@{
+@{ 
     Layout = null;
+    var validActions = Model.ValidActions;
+    var keepLeftAvailable = validActions.Contains(BibDupePairAction.KeepLeft);
+    var notDuplicateAvailable = validActions.Contains(BibDupePairAction.NotDuplicate);
+    var skipAvailable = validActions.Contains(BibDupePairAction.Skip);
+    var keepRightAvailable = validActions.Contains(BibDupePairAction.KeepRight);
 }
 <!DOCTYPE html>
 <html lang="en">
@@ -49,10 +54,10 @@
         </div>
     </div>
     <div class="controls">
-        <button data-action="@nameof(BibDupePairAction.KeepLeft)" type="button">⬅️ Keep Left</button>
-        <button data-action="@nameof(BibDupePairAction.NotDuplicate)" type="button">↔️ Not Duplicate</button>
-        <button data-action="@nameof(BibDupePairAction.Skip)" type="button">⏭️ Pass</button>
-        <button data-action="@nameof(BibDupePairAction.KeepRight)" type="button">➡️ Keep Right</button>
+        <button data-action="@nameof(BibDupePairAction.KeepLeft)" data-available="@(keepLeftAvailable ? "true" : "false")" type="button" @(keepLeftAvailable ? string.Empty : "disabled=\"disabled\" aria-disabled=\"true\"")>⬅️ Keep Left</button>
+        <button data-action="@nameof(BibDupePairAction.NotDuplicate)" data-available="@(notDuplicateAvailable ? "true" : "false")" type="button" @(notDuplicateAvailable ? string.Empty : "disabled=\"disabled\" aria-disabled=\"true\"")>↔️ Not Duplicate</button>
+        <button data-action="@nameof(BibDupePairAction.Skip)" data-available="@(skipAvailable ? "true" : "false")" type="button" @(skipAvailable ? string.Empty : "disabled=\"disabled\" aria-disabled=\"true\"")>⏭️ Pass</button>
+        <button data-action="@nameof(BibDupePairAction.KeepRight)" data-available="@(keepRightAvailable ? "true" : "false")" type="button" @(keepRightAvailable ? string.Empty : "disabled=\"disabled\" aria-disabled=\"true\"")>➡️ Keep Right</button>
     </div>
 </div>
 <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
