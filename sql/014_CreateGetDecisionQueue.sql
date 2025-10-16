@@ -13,6 +13,8 @@ RETURN (
         dq.LeftBibId,
         dq.RightBibId,
         dq.ActionId,
+        dq.KeptBibId,
+        dq.DeletedBibId,
         p.PrimaryMarcTomId,
         p.LeftTitle,
         p.LeftAuthor,
