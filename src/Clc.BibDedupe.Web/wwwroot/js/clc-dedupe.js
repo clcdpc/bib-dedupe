@@ -332,8 +332,21 @@
         return (btn.dataset.available || 'true') !== 'false';
     }
 
+    function ensureUnavailableTooltip(btn) {
+        if (isActionAvailable(btn)) {
+            return;
+        }
+
+        const reason = btn.dataset.unavailableReason || 'This action conflicts with another decision in your queue.';
+        btn.dataset.unavailableReason = reason;
+        if (!btn.getAttribute('title')) {
+            btn.setAttribute('title', reason);
+        }
+    }
+
     if (actionButtons.length) {
         actionButtons.forEach(btn => {
+            ensureUnavailableTooltip(btn);
             const available = isActionAvailable(btn);
             btn.disabled = true;
             if (!available) {
@@ -342,6 +355,7 @@
         });
         setTimeout(() => {
             actionButtons.forEach(btn => {
+                ensureUnavailableTooltip(btn);
                 if (btn.dataset.locked === 'true' || !isActionAvailable(btn)) {
                     return;
                 }
@@ -352,6 +366,7 @@
 
     function setButtonsLocked(isLocked) {
         actionButtons.forEach(btn => {
+            ensureUnavailableTooltip(btn);
             const available = isActionAvailable(btn);
             if (!available) {
                 btn.dataset.locked = 'true';
