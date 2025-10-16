@@ -141,6 +141,20 @@ BEGIN
         LeftBibId INT NOT NULL,
         RightBibId INT NOT NULL,
         ActionId INT NOT NULL,
+        KeptBibId AS (
+            CASE ActionId
+                WHEN 1 THEN LeftBibId
+                WHEN 4 THEN RightBibId
+                ELSE NULL
+            END
+        ) PERSISTED,
+        DeletedBibId AS (
+            CASE ActionId
+                WHEN 1 THEN RightBibId
+                WHEN 4 THEN LeftBibId
+                ELSE NULL
+            END
+        ) PERSISTED,
         CONSTRAINT PK_DecisionQueue PRIMARY KEY (UserEmail, LeftBibId, RightBibId),
         CONSTRAINT FK_DecisionQueue_ActionId FOREIGN KEY (ActionId)
             REFERENCES BibDedupe.Actions (ActionId)
@@ -160,6 +174,26 @@ BEGIN
         ALTER TABLE BibDedupe.DecisionQueue
             ADD CONSTRAINT FK_DecisionQueue_ActionId FOREIGN KEY (ActionId)
             REFERENCES BibDedupe.Actions (ActionId);
+
+    IF COL_LENGTH('BibDedupe.DecisionQueue', 'KeptBibId') IS NULL
+        ALTER TABLE BibDedupe.DecisionQueue
+            ADD KeptBibId AS (
+                CASE ActionId
+                    WHEN 1 THEN LeftBibId
+                    WHEN 4 THEN RightBibId
+                    ELSE NULL
+                END
+            ) PERSISTED;
+
+    IF COL_LENGTH('BibDedupe.DecisionQueue', 'DeletedBibId') IS NULL
+        ALTER TABLE BibDedupe.DecisionQueue
+            ADD DeletedBibId AS (
+                CASE ActionId
+                    WHEN 1 THEN RightBibId
+                    WHEN 4 THEN LeftBibId
+                    ELSE NULL
+                END
+            ) PERSISTED;
 END
 GO
 
@@ -407,6 +441,8 @@ RETURN (
         dq.LeftBibId,
         dq.RightBibId,
         dq.ActionId,
+        dq.KeptBibId,
+        dq.DeletedBibId,
         p.PrimaryMarcTomId,
         p.LeftTitle,
         p.LeftAuthor,
