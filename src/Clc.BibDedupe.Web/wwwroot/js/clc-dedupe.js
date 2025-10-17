@@ -334,13 +334,32 @@
 
     function ensureUnavailableTooltip(btn) {
         if (isActionAvailable(btn)) {
+            if (typeof bootstrap !== 'undefined' && bootstrap.Tooltip) {
+                const existing = bootstrap.Tooltip.getInstance(btn);
+                if (existing) {
+                    existing.dispose();
+                }
+            }
+            btn.removeAttribute('data-bs-toggle');
+            btn.removeAttribute('data-bs-title');
+            btn.removeAttribute('data-bs-original-title');
+            btn.removeAttribute('title');
             return;
         }
 
         const reason = btn.dataset.unavailableReason || 'This action conflicts with another decision in your queue.';
         btn.dataset.unavailableReason = reason;
-        if (!btn.getAttribute('title')) {
-            btn.setAttribute('title', reason);
+        btn.setAttribute('title', reason);
+        btn.setAttribute('data-bs-toggle', 'tooltip');
+        btn.setAttribute('data-bs-title', reason);
+        if (typeof bootstrap !== 'undefined' && bootstrap.Tooltip) {
+            const tooltip = bootstrap.Tooltip.getOrCreateInstance(btn);
+            if (tooltip && typeof tooltip.setContent === 'function') {
+                tooltip.setContent({ '.tooltip-inner': reason });
+            } else {
+                btn.setAttribute('data-bs-original-title', reason);
+                tooltip?.update?.();
+            }
         }
     }
 
