@@ -37,6 +37,9 @@ public class ReviewController(
         var (leftRecord, rightRecord) = await loader.LoadAsync(reviewPair.LeftBibId, reviewPair.RightBibId);
         var validActions = await repository.GetValidActionsAsync(reviewPair.LeftBibId, reviewPair.RightBibId, userEmail);
 
+        var existingDecisionAction = reviewPair.ExistingDecision?.Action;
+        var isReReview = existingDecisionAction is not null;
+
         var model = new IndexViewModel
         {
             LeftBibId = reviewPair.LeftBibId,
@@ -51,7 +54,9 @@ public class ReviewController(
             LeftHoldCount = reviewPair.Pair.LeftHoldCount,
             RightHoldCount = reviewPair.Pair.RightHoldCount,
             TotalHoldCount = reviewPair.Pair.TotalHoldCount,
-            ValidActions = validActions.ToHashSet()
+            ValidActions = validActions.ToHashSet(),
+            IsReReview = isReReview,
+            ExistingDecisionAction = existingDecisionAction
         };
 
         await currentPairStore.SetAsync(userEmail, new CurrentPair

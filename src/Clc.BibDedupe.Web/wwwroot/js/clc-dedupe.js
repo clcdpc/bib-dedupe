@@ -325,8 +325,41 @@
     const reviewUrl = page ? page.dataset.reviewUrl : '';
     const leftTitle = page ? page.dataset.leftTitle : '';
     const rightTitle = page ? page.dataset.rightTitle : '';
+    const isReReview = page ? page.dataset.reReview === 'true' : false;
+    const reReviewAction = page ? page.dataset.reReviewAction || '' : '';
 
     const actionButtons = Array.from(document.querySelectorAll('.controls button'));
+
+    function getButtonLabel(btn) {
+        if (!btn) {
+            return '';
+        }
+        const datasetLabel = (btn.dataset.label || '').trim();
+        if (datasetLabel) {
+            return datasetLabel;
+        }
+        const text = (btn.textContent || '').trim();
+        if (!text) {
+            return '';
+        }
+        const firstSpace = text.indexOf(' ');
+        return firstSpace >= 0 ? text.slice(firstSpace + 1).trim() : text;
+    }
+
+    function applyReReviewState() {
+        if (!isReReview || !reReviewAction) {
+            return;
+        }
+        const reReviewButton = actionButtons.find(btn => (btn.dataset.action || '') === reReviewAction);
+        if (!reReviewButton) {
+            return;
+        }
+        const label = getButtonLabel(reReviewButton);
+        reReviewButton.textContent = label ? `✅ ${label}` : '✅';
+        reReviewButton.classList.add('controls__button--re-review');
+    }
+
+    applyReReviewState();
 
     function isActionAvailable(btn) {
         return (btn.dataset.available || 'true') !== 'false';
