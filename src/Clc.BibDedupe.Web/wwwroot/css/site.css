@@ -354,7 +354,7 @@ body {
 
   display: inline-flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   gap: var(--action-toast-bib-gap);
   font-family: var(--bs-font-monospace, 'SFMono-Regular', Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace);
   font-size: 0.8rem;
@@ -418,8 +418,9 @@ body {
 .action-toast__record-bib-text {
   display: inline-flex;
   line-height: 1.1;
-  justify-content: center;
+  justify-content: flex-start;
   align-items: center;
+  text-align: left;
   flex: 0 0 var(--action-toast-bib-text-width);
   width: var(--action-toast-bib-text-width);
   white-space: nowrap;
