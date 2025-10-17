@@ -347,7 +347,7 @@ body {
 }
 
 .action-toast__record-bib {
-  --action-toast-bib-text-width: 15ch;
+  --action-toast-bib-text-width: 11ch;
   --action-toast-bib-icon-width: 0.85rem;
   --action-toast-bib-gap: 6px;
   --action-toast-bib-horizontal-padding: 10px;
