@@ -347,15 +347,21 @@ body {
 }
 
 .action-toast__record-bib {
+  --action-toast-bib-text-width: 10ch;
+  --action-toast-bib-icon-width: 0.85rem;
+  --action-toast-bib-gap: 6px;
+  --action-toast-bib-horizontal-padding: 10px;
+
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  justify-content: center;
+  gap: var(--action-toast-bib-gap);
   font-family: var(--bs-font-monospace, 'SFMono-Regular', Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace);
   font-size: 0.8rem;
   font-weight: 600;
   background: rgba(148, 163, 184, 0.28);
   color: #e2e8f0;
-  padding: 3px 10px;
+  padding: 3px var(--action-toast-bib-horizontal-padding);
   border-radius: 8px;
   border: none;
   cursor: pointer;
@@ -363,6 +369,12 @@ body {
   grid-column: 3;
   justify-self: end;
   align-self: center;
+  min-width: calc(
+    var(--action-toast-bib-text-width) +
+    var(--action-toast-bib-icon-width) +
+    var(--action-toast-bib-gap) +
+    (var(--action-toast-bib-horizontal-padding) * 2)
+  );
 }
 
 @media (max-width: 520px) {
@@ -408,7 +420,8 @@ body {
   line-height: 1.1;
   justify-content: center;
   align-items: center;
-  flex: 0 0 10ch;
+  flex: 0 0 var(--action-toast-bib-text-width);
+  width: var(--action-toast-bib-text-width);
   white-space: nowrap;
 }
 
