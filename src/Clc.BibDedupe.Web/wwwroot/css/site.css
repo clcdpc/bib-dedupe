@@ -301,7 +301,7 @@ body {
 }
 
 .action-toast__record {
-  --action-toast-label-column-width: clamp(6rem, 18vw, 7.5rem);
+  --action-toast-label-column-width: clamp(5.85rem, 18vw, 7.35rem);
   display: grid;
   grid-template-columns: var(--action-toast-label-column-width) minmax(0, 1fr) max-content;
   column-gap: 12px;
@@ -347,26 +347,39 @@ body {
 }
 
 .action-toast__record-bib {
+  --action-toast-bib-text-width: 11ch;
+  --action-toast-bib-icon-width: 0.85rem;
+  --action-toast-bib-gap: 6px;
+  --action-toast-bib-horizontal-padding: 10px;
+
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  justify-content: flex-start;
+  gap: var(--action-toast-bib-gap);
   font-family: var(--bs-font-monospace, 'SFMono-Regular', Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace);
   font-size: 0.8rem;
   font-weight: 600;
   background: rgba(148, 163, 184, 0.28);
   color: #e2e8f0;
-  padding: 3px 10px;
+  padding: 3px var(--action-toast-bib-horizontal-padding);
   border-radius: 8px;
   border: none;
   cursor: pointer;
   transition: background 0.15s ease, color 0.15s ease, box-shadow 0.2s ease, transform 0.1s ease;
   grid-column: 3;
   justify-self: end;
+  align-self: center;
+  min-width: calc(
+    var(--action-toast-bib-text-width) +
+    var(--action-toast-bib-icon-width) +
+    var(--action-toast-bib-gap) +
+    (var(--action-toast-bib-horizontal-padding) * 2)
+  );
 }
 
 @media (max-width: 520px) {
   .action-toast__record {
-    --action-toast-label-column-width: clamp(5.75rem, 40vw, 7.25rem);
+    --action-toast-label-column-width: clamp(5.6rem, 40vw, 7.1rem);
     grid-template-columns: var(--action-toast-label-column-width) minmax(0, 1fr);
   }
 
@@ -374,6 +387,7 @@ body {
     grid-column: 2;
     grid-row: 2;
     justify-self: start;
+    align-self: start;
   }
 }
 
@@ -402,8 +416,14 @@ body {
 }
 
 .action-toast__record-bib-text {
-  display: inline-block;
+  display: inline-flex;
   line-height: 1.1;
+  justify-content: flex-start;
+  align-items: center;
+  text-align: left;
+  flex: 0 0 var(--action-toast-bib-text-width);
+  width: var(--action-toast-bib-text-width);
+  white-space: nowrap;
 }
 
 .action-toast__record-bib--copied {
