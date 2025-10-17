@@ -404,8 +404,12 @@ body {
 }
 
 .action-toast__record-bib-text {
-  display: inline-block;
+  display: inline-flex;
   line-height: 1.1;
+  justify-content: center;
+  align-items: center;
+  flex: 0 0 10ch;
+  white-space: nowrap;
 }
 
 .action-toast__record-bib--copied {
