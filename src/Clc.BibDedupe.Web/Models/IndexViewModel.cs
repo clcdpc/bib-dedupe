@@ -17,6 +17,8 @@ namespace Clc.BibDedupe.Web.Models
         public int RightHoldCount { get; set; }
         public int TotalHoldCount { get; set; }
         public HashSet<BibDupePairAction> ValidActions { get; set; } = new();
+        public bool IsReReview { get; set; }
+        public BibDupePairAction? ExistingDecisionAction { get; set; }
         public List<ItemField> ItemFields { get; set; } = new()
         {
             new("AssignedBranch", "Assigned Branch"),

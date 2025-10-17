@@ -114,6 +114,16 @@ html, body {
             box-shadow: none;
         }
 
+    .controls button.controls__button--re-review {
+        border-color: #86efac;
+        box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.25);
+    }
+
+        .controls button.controls__button--re-review:disabled {
+            border-color: #86efac;
+            box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.25);
+        }
+
 :root {
     --tag: #7c3aed; /* tag */
     --ind: #d97706; /* indicators */

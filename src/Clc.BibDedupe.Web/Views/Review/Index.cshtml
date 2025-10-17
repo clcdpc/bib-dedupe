@@ -20,7 +20,15 @@
 </head>
 <body>
 <div class="action-toast-container" aria-live="polite" aria-atomic="true"></div>
-<div class="page" data-resolve-url="@Url.Action("Resolve")" data-review-url="@Url.Action("Index")" data-left-bib-id="@Model.LeftBibId" data-right-bib-id="@Model.RightBibId" data-left-title="@Model.LeftTitle" data-right-title="@Model.RightTitle">
+<div class="page"
+     data-resolve-url="@Url.Action("Resolve")"
+     data-review-url="@Url.Action("Index")"
+     data-left-bib-id="@Model.LeftBibId"
+     data-right-bib-id="@Model.RightBibId"
+     data-left-title="@Model.LeftTitle"
+     data-right-title="@Model.RightTitle"
+     data-re-review="@(Model.IsReReview ? "true" : "false")"
+     data-re-review-action="@(Model.ExistingDecisionAction?.ToString() ?? string.Empty)">
     @{ 
         ViewData["MatchPoints"] = Model.Matches;
         ViewData["MatchSummaryTitle"] = "Match Types";
@@ -56,6 +64,7 @@
     </div>
     <div class="controls">
         <button data-action="@nameof(BibDupePairAction.KeepLeft)"
+                data-label="Keep Left"
                 data-available="@(keepLeftAvailable ? "true" : "false")"
                 type="button"
                 disabled="@(keepLeftAvailable ? null : "disabled")"
@@ -65,6 +74,7 @@
                 data-bs-title="@(keepLeftAvailable ? null : unavailableActionReason)"
                 data-unavailable-reason="@(keepLeftAvailable ? null : unavailableActionReason)">⬅️ Keep Left</button>
         <button data-action="@nameof(BibDupePairAction.NotDuplicate)"
+                data-label="Not Duplicate"
                 data-available="@(notDuplicateAvailable ? "true" : "false")"
                 type="button"
                 disabled="@(notDuplicateAvailable ? null : "disabled")"
@@ -74,6 +84,7 @@
                 data-bs-title="@(notDuplicateAvailable ? null : unavailableActionReason)"
                 data-unavailable-reason="@(notDuplicateAvailable ? null : unavailableActionReason)">↔️ Not Duplicate</button>
         <button data-action="@nameof(BibDupePairAction.Skip)"
+                data-label="Pass"
                 data-available="@(skipAvailable ? "true" : "false")"
                 type="button"
                 disabled="@(skipAvailable ? null : "disabled")"
@@ -83,6 +94,7 @@
                 data-bs-title="@(skipAvailable ? null : unavailableActionReason)"
                 data-unavailable-reason="@(skipAvailable ? null : unavailableActionReason)">⏭️ Pass</button>
         <button data-action="@nameof(BibDupePairAction.KeepRight)"
+                data-label="Keep Right"
                 data-available="@(keepRightAvailable ? "true" : "false")"
                 type="button"
                 disabled="@(keepRightAvailable ? null : "disabled")"
