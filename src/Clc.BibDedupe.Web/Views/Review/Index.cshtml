@@ -1,7 +1,13 @@
 @using Clc.BibDedupe.Web.Models
 @model IndexViewModel
-@{
+@{ 
     Layout = null;
+    var validActions = Model.ValidActions;
+    var keepLeftAvailable = validActions.Contains(BibDupePairAction.KeepLeft);
+    var notDuplicateAvailable = validActions.Contains(BibDupePairAction.NotDuplicate);
+    var skipAvailable = validActions.Contains(BibDupePairAction.Skip);
+    var keepRightAvailable = validActions.Contains(BibDupePairAction.KeepRight);
+    const string unavailableActionReason = "This action conflicts with another decision in your queue.";
 }
 <!DOCTYPE html>
 <html lang="en">
@@ -49,10 +55,42 @@
         </div>
     </div>
     <div class="controls">
-        <button data-action="@nameof(BibDupePairAction.KeepLeft)" type="button">⬅️ Keep Left</button>
-        <button data-action="@nameof(BibDupePairAction.NotDuplicate)" type="button">↔️ Not Duplicate</button>
-        <button data-action="@nameof(BibDupePairAction.Skip)" type="button">⏭️ Pass</button>
-        <button data-action="@nameof(BibDupePairAction.KeepRight)" type="button">➡️ Keep Right</button>
+        <button data-action="@nameof(BibDupePairAction.KeepLeft)"
+                data-available="@(keepLeftAvailable ? "true" : "false")"
+                type="button"
+                disabled="@(keepLeftAvailable ? null : "disabled")"
+                aria-disabled="@(keepLeftAvailable ? null : "true")"
+                title="@(keepLeftAvailable ? null : unavailableActionReason)"
+                data-bs-toggle="@(keepLeftAvailable ? null : "tooltip")"
+                data-bs-title="@(keepLeftAvailable ? null : unavailableActionReason)"
+                data-unavailable-reason="@(keepLeftAvailable ? null : unavailableActionReason)">⬅️ Keep Left</button>
+        <button data-action="@nameof(BibDupePairAction.NotDuplicate)"
+                data-available="@(notDuplicateAvailable ? "true" : "false")"
+                type="button"
+                disabled="@(notDuplicateAvailable ? null : "disabled")"
+                aria-disabled="@(notDuplicateAvailable ? null : "true")"
+                title="@(notDuplicateAvailable ? null : unavailableActionReason)"
+                data-bs-toggle="@(notDuplicateAvailable ? null : "tooltip")"
+                data-bs-title="@(notDuplicateAvailable ? null : unavailableActionReason)"
+                data-unavailable-reason="@(notDuplicateAvailable ? null : unavailableActionReason)">↔️ Not Duplicate</button>
+        <button data-action="@nameof(BibDupePairAction.Skip)"
+                data-available="@(skipAvailable ? "true" : "false")"
+                type="button"
+                disabled="@(skipAvailable ? null : "disabled")"
+                aria-disabled="@(skipAvailable ? null : "true")"
+                title="@(skipAvailable ? null : unavailableActionReason)"
+                data-bs-toggle="@(skipAvailable ? null : "tooltip")"
+                data-bs-title="@(skipAvailable ? null : unavailableActionReason)"
+                data-unavailable-reason="@(skipAvailable ? null : unavailableActionReason)">⏭️ Pass</button>
+        <button data-action="@nameof(BibDupePairAction.KeepRight)"
+                data-available="@(keepRightAvailable ? "true" : "false")"
+                type="button"
+                disabled="@(keepRightAvailable ? null : "disabled")"
+                aria-disabled="@(keepRightAvailable ? null : "true")"
+                title="@(keepRightAvailable ? null : unavailableActionReason)"
+                data-bs-toggle="@(keepRightAvailable ? null : "tooltip")"
+                data-bs-title="@(keepRightAvailable ? null : unavailableActionReason)"
+                data-unavailable-reason="@(keepRightAvailable ? null : unavailableActionReason)">➡️ Keep Right</button>
     </div>
 </div>
 <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>

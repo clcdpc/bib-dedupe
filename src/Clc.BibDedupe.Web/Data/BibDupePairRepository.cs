@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
@@ -103,6 +104,29 @@ ORDER BY pm.MatchType;";
                 sql,
                 new { LeftBibId = leftBibId, RightBibId = rightBibId, Top = UnlimitedPairsLimit, UserEmail = userEmail, HideDecided = hideDecided });
             return row is null ? null : MapRow(row);
+        }
+
+        public async Task<IReadOnlyCollection<BibDupePairAction>> GetValidActionsAsync(int leftBibId, int rightBibId, string userEmail)
+        {
+            if (string.IsNullOrWhiteSpace(userEmail))
+            {
+                return Enum.GetValues<BibDupePairAction>();
+            }
+
+            const string sql = "SELECT ActionId FROM BibDedupe.GetValidPairActions(@UserEmail, @LeftBibId, @RightBibId);";
+            var actions = await _db.QueryAsync<int>(
+                sql,
+                new
+                {
+                    UserEmail = userEmail,
+                    LeftBibId = leftBibId,
+                    RightBibId = rightBibId
+                });
+
+            return actions
+                .Where(a => Enum.IsDefined(typeof(BibDupePairAction), a))
+                .Select(a => (BibDupePairAction)a)
+                .ToList();
         }
 
         public Task MergeAsync(int keepBibId, int deleteBibId, string userEmail, BibDupePairAction action) =>

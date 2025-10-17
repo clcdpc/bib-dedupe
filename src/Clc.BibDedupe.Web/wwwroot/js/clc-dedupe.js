@@ -327,13 +327,51 @@
     const rightTitle = page ? page.dataset.rightTitle : '';
 
     const actionButtons = Array.from(document.querySelectorAll('.controls button'));
+
+    function isActionAvailable(btn) {
+        return (btn.dataset.available || 'true') !== 'false';
+    }
+
+    function ensureUnavailableTooltip(btn) {
+        if (typeof bootstrap !== 'undefined' && bootstrap.Tooltip) {
+            const existing = bootstrap.Tooltip.getInstance(btn);
+            if (existing) {
+                existing.dispose();
+            }
+        }
+
+        if (isActionAvailable(btn)) {
+            btn.removeAttribute('data-bs-toggle');
+            btn.removeAttribute('data-bs-title');
+            btn.removeAttribute('data-bs-original-title');
+            btn.removeAttribute('title');
+            return;
+        }
+
+        const reason = btn.dataset.unavailableReason || 'This action conflicts with another decision in your queue.';
+        btn.dataset.unavailableReason = reason;
+        btn.setAttribute('title', reason);
+        btn.setAttribute('data-bs-toggle', 'tooltip');
+        btn.setAttribute('data-bs-title', reason);
+
+        if (typeof bootstrap !== 'undefined' && bootstrap.Tooltip) {
+            new bootstrap.Tooltip(btn, { title: reason });
+        }
+    }
+
     if (actionButtons.length) {
         actionButtons.forEach(btn => {
+            ensureUnavailableTooltip(btn);
+            const available = isActionAvailable(btn);
             btn.disabled = true;
+            if (!available) {
+                btn.dataset.locked = 'true';
+            }
         });
         setTimeout(() => {
             actionButtons.forEach(btn => {
-                if (btn.dataset.locked === 'true') {
+                ensureUnavailableTooltip(btn);
+                if (btn.dataset.locked === 'true' || !isActionAvailable(btn)) {
                     return;
                 }
                 btn.disabled = false;
@@ -343,6 +381,14 @@
 
     function setButtonsLocked(isLocked) {
         actionButtons.forEach(btn => {
+            ensureUnavailableTooltip(btn);
+            const available = isActionAvailable(btn);
+            if (!available) {
+                btn.dataset.locked = 'true';
+                btn.disabled = true;
+                return;
+            }
+
             if (isLocked) {
                 btn.dataset.locked = 'true';
                 btn.disabled = true;

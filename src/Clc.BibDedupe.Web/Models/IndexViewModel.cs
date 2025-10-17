@@ -16,6 +16,7 @@ namespace Clc.BibDedupe.Web.Models
         public int LeftHoldCount { get; set; }
         public int RightHoldCount { get; set; }
         public int TotalHoldCount { get; set; }
+        public HashSet<BibDupePairAction> ValidActions { get; set; } = new();
         public List<ItemField> ItemFields { get; set; } = new()
         {
             new("AssignedBranch", "Assigned Branch"),
