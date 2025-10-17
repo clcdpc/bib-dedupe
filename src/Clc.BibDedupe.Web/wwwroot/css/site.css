@@ -56,10 +56,20 @@ body {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.menu-signout {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex: 1 1 0;
+  min-width: 0;
 }
 
 .menu-summary {
-  flex: 1 1 auto;
+  flex: 0 1 auto;
   min-width: 0;
   display: flex;
   align-items: center;
@@ -69,6 +79,7 @@ body {
   font-size: 0.85rem;
   color: #495057;
   text-align: center;
+  margin: 0 1rem;
 }
 
 .menu-match-summary {
@@ -119,10 +130,6 @@ body {
   gap: 0.25rem;
 }
 
-.menu.menu--with-summary a.signout {
-  margin-left: 0;
-}
-
 .menu .disabled {
   display: inline-flex;
   align-items: center;
@@ -147,7 +154,6 @@ body {
 }
 
 .menu a.signout {
-  margin-left: auto;
   background-color: #dc3545;
   color: #ffffff;
   border-color: #b02a37;
