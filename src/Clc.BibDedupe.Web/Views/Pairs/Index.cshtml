@@ -5,7 +5,6 @@
 @model PairsListViewModel
 @{
     ViewData["Title"] = "Pairs";
-    ViewBag.ContainerClass = "container-fluid";
     var visiblePairs = Model.Items.ToList();
     var totalPages = System.Math.Max(Model.TotalPages, 1);
     var currentPage = System.Math.Min(System.Math.Max(Model.Page, 1), totalPages);
@@ -135,23 +134,5 @@
 </div>
 
 @section Scripts {
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const filterForm = document.getElementById('pairsFilters');
-            if (!filterForm) {
-                return;
-            }
-
-            const filterInputs = filterForm.querySelectorAll('select');
-            filterInputs.forEach(function (select) {
-                select.addEventListener('change', function () {
-                    if (typeof filterForm.requestSubmit === 'function') {
-                        filterForm.requestSubmit();
-                    } else {
-                        filterForm.submit();
-                    }
-                });
-            });
-        });
-    </script>
+    <script src="~/js/pairs-filters.js" asp-append-version="true"></script>
 }

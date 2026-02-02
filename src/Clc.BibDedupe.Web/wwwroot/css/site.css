@@ -21,6 +21,14 @@ body {
   margin-bottom: 60px;
 }
 
+.action-toast-container-position {
+  z-index: 1080;
+}
+
+.token-form {
+  display: none;
+}
+
 
 .menu {
   background-color: #ffffff;

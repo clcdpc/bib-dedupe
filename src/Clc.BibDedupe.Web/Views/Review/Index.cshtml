@@ -35,7 +35,7 @@
         ViewData["HoldSummary"] = new HoldSummary(Model.LeftHoldCount, Model.TotalHoldCount, Model.RightHoldCount);
     }
     @await Html.PartialAsync("_Menu")
-    <form id="token-form" method="post" asp-antiforgery="true" style="display:none"></form>
+    <form id="token-form" method="post" asp-antiforgery="true" class="token-form"></form>
     <div class="frames">
         <div class="frame">
             <div class="tab-buttons">
@@ -110,4 +110,3 @@
 <script src="~/js/clc-dedupe.js" asp-append-version="true"></script>
 </body>
 </html>
-

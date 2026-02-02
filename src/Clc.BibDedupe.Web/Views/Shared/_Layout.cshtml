@@ -1,4 +1,6 @@
-﻿<!DOCTYPE html>
+﻿@using Clc.BibDedupe.Web.Models
+@model LayoutViewModel
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
@@ -9,8 +11,8 @@
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
 </head>
 <body>
-@{ 
-    var containerClass = ViewBag.ContainerClass as string ?? "container";
+@{
+    var containerClass = Model?.ContainerClass ?? "container";
 }
 <div class="action-toast-container" aria-live="polite" aria-atomic="true"></div>
 @await Html.PartialAsync("_Menu")
@@ -19,7 +21,7 @@
         @RenderBody()
     </main>
 </div>
-    <div class="position-fixed top-0 start-50 translate-middle-x p-3" style="z-index: 1080;" aria-live="polite" aria-atomic="true">
+    <div class="position-fixed top-0 start-50 translate-middle-x p-3 action-toast-container-position" aria-live="polite" aria-atomic="true">
         <div class="toast align-items-center border-0 d-none" id="match-copy-toast" role="status" aria-live="polite" aria-atomic="true">
             <div class="d-flex">
                 <div class="toast-body">

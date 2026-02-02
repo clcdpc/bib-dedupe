@@ -3,7 +3,7 @@ using System.Linq;
 
 namespace Clc.BibDedupe.Web.Models;
 
-public class DecisionIndexViewModel
+public class DecisionIndexViewModel : LayoutViewModel
 {
     public IReadOnlyList<PairDecision> Decisions { get; init; } = new List<PairDecision>();
     public DecisionBatchStatus? BatchStatus { get; init; }
