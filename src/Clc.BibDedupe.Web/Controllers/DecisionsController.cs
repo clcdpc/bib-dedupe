@@ -25,6 +25,7 @@ public class DecisionsController(
             : Enumerable.Empty<PairDecision>();
 
         var model = DecisionIndexViewModel.Create(items, batch);
+        model.ContainerClass = "container-fluid";
 
         return View(model);
     }
@@ -36,7 +37,8 @@ public class DecisionsController(
 
         var model = new DecisionBatchHistoryViewModel
         {
-            Batches = history
+            Batches = history,
+            ContainerClass = "container-fluid"
         };
 
         return View(model);

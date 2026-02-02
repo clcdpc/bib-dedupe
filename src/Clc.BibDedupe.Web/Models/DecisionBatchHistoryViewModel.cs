@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace Clc.BibDedupe.Web.Models;
 
-public class DecisionBatchHistoryViewModel
+public class DecisionBatchHistoryViewModel : LayoutViewModel
 {
     public IReadOnlyList<DecisionBatchHistory> Batches { get; init; } = Array.Empty<DecisionBatchHistory>();
 

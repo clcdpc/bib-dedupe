@@ -64,7 +64,8 @@ public class PairsController(IBibDupePairRepository repository, IPairFilterStore
             MatchTypeOptions = result.MatchTypeOptions,
             SelectedTomId = sanitizedTom,
             SelectedMatchType = sanitizedMatchType,
-            SelectedHasHolds = sanitizedHasHolds
+            SelectedHasHolds = sanitizedHasHolds,
+            ContainerClass = "container-fluid"
         };
         return View(model);
     }
