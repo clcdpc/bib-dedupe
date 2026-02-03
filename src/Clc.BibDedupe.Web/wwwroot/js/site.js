@@ -333,7 +333,18 @@ function showActionToast(data) {
     toast.appendChild(actions);
     container.appendChild(toast);
 
-    const hideToast = () => {
+    const hideToast = (force = false) => {
+        if (!force) {
+            if (toast.matches(':hover')) {
+                hideTimer = null;
+                return;
+            }
+            if (document.activeElement && toast.contains(document.activeElement)) {
+                hideTimer = null;
+                return;
+            }
+        }
+
         toast.classList.remove('show');
         setTimeout(() => toast.remove(), 200);
     };
@@ -354,6 +365,10 @@ function showActionToast(data) {
             }
         }
 
+        if (toast.matches(':hover')) {
+            return;
+        }
+
         if (document.activeElement && toast.contains(document.activeElement)) {
             return;
         }
@@ -365,7 +380,7 @@ function showActionToast(data) {
 
     dismissButton.addEventListener('click', () => {
         pauseHideTimer();
-        hideToast();
+        hideToast(true);
     });
 
     const pauseEvents = ['mouseenter', 'pointerenter', 'focusin'];
