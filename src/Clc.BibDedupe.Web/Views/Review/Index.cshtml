@@ -1,4 +1,5 @@
 @using Clc.BibDedupe.Web.Models
+@using Microsoft.AspNetCore.Mvc.Rendering
 @model IndexViewModel
 @functions {
     private sealed class ActionButton
@@ -15,6 +16,33 @@
         public string Label { get; }
         public string Text { get; }
         public bool Available { get; }
+    }
+
+    private static IHtmlContent RenderActionButton(ActionButton actionButton, string unavailableActionReason)
+    {
+        var tagBuilder = new TagBuilder("button");
+        tagBuilder.Attributes["data-action"] = actionButton.Action.ToString();
+        tagBuilder.Attributes["data-label"] = actionButton.Label;
+        tagBuilder.Attributes["type"] = "button";
+        var availabilityValue = "true";
+        if (!actionButton.Available)
+        {
+            availabilityValue = "false";
+        }
+        tagBuilder.Attributes["data-available"] = availabilityValue;
+
+        if (!actionButton.Available)
+        {
+            tagBuilder.Attributes["disabled"] = "disabled";
+            tagBuilder.Attributes["aria-disabled"] = "true";
+            tagBuilder.Attributes["title"] = unavailableActionReason;
+            tagBuilder.Attributes["data-bs-toggle"] = "tooltip";
+            tagBuilder.Attributes["data-bs-title"] = unavailableActionReason;
+            tagBuilder.Attributes["data-unavailable-reason"] = unavailableActionReason;
+        }
+
+        tagBuilder.InnerHtml.Append(actionButton.Text);
+        return tagBuilder;
     }
 }
 @{ 
@@ -89,26 +117,7 @@
     <div class="controls">
         @foreach (var actionButton in actionButtons)
         {
-            if (actionButton.Available)
-            {
-                <button data-action="@actionButton.Action.ToString()"
-                        data-label="@actionButton.Label"
-                        data-available="true"
-                        type="button">@actionButton.Text</button>
-            }
-            else
-            {
-                <button data-action="@actionButton.Action.ToString()"
-                        data-label="@actionButton.Label"
-                        data-available="false"
-                        type="button"
-                        disabled="disabled"
-                        aria-disabled="true"
-                        title="@unavailableActionReason"
-                        data-bs-toggle="tooltip"
-                        data-bs-title="@unavailableActionReason"
-                        data-unavailable-reason="@unavailableActionReason">@actionButton.Text</button>
-            }
+            @RenderActionButton(actionButton, unavailableActionReason)
         }
     </div>
 </div>
