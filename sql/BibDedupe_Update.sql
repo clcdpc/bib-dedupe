@@ -369,8 +369,10 @@ RETURN (
                 SELECT 1
                 FROM BibDedupe.DecisionQueue dq
                 WHERE dq.UserEmail = @UserEmail
-                  AND dq.LeftBibId = p.LeftBibId
-                  AND dq.RightBibId = p.RightBibId
+                  AND (
+                      (dq.LeftBibId = p.LeftBibId AND dq.RightBibId = p.RightBibId)
+                      OR (dq.LeftBibId = p.RightBibId AND dq.RightBibId = p.LeftBibId)
+                  )
             )
         )
         AND (
