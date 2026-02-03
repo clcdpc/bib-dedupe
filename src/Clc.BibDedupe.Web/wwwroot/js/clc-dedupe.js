@@ -295,17 +295,80 @@
         toast.appendChild(actions);
         toastContainer.appendChild(toast);
 
+        const hideDelay = 6000;
+        let hideTimer = null;
+
         const hideToast = () => {
+            if (toast.matches(':hover')) {
+                hideTimer = null;
+                return;
+            }
+            if (document.activeElement && toast.contains(document.activeElement)) {
+                hideTimer = null;
+                return;
+            }
+
             toast.classList.remove('show');
             setTimeout(() => toast.remove(), 200);
         };
 
-        let hideTimer = setTimeout(hideToast, 6000);
+        const pauseHideTimer = () => {
+            clearTimeout(hideTimer);
+            hideTimer = null;
+        };
+
+        const resumeHideTimer = (event) => {
+            if (event && event.type === 'focusout') {
+                const nextFocused = event.relatedTarget || document.activeElement;
+                if (nextFocused && toast.contains(nextFocused)) {
+                    return;
+                }
+            }
+
+            if (toast.matches(':hover')) {
+                return;
+            }
+
+            if (document.activeElement && toast.contains(document.activeElement)) {
+                return;
+            }
+
+            if (hideTimer === null) {
+                hideTimer = setTimeout(hideToast, hideDelay);
+            }
+        };
+
+        hideTimer = setTimeout(hideToast, hideDelay);
 
         dismissButton.addEventListener('click', () => {
-            clearTimeout(hideTimer);
+            pauseHideTimer();
             hideToast();
         });
+
+        const pauseEvents = ['mouseenter', 'pointerenter', 'focusin'];
+        const resumeEvents = ['mouseleave', 'pointerleave', 'focusout'];
+
+        pauseEvents.forEach((eventName) => {
+            toast.addEventListener(eventName, pauseHideTimer);
+        });
+
+        resumeEvents.forEach((eventName) => {
+            toast.addEventListener(eventName, resumeHideTimer);
+        });
+
+        const handlePointerOut = (event) => {
+            const nextTarget = event.relatedTarget;
+            if (nextTarget && toast.contains(nextTarget)) {
+                return;
+            }
+
+            resumeHideTimer(event);
+        };
+
+        toast.addEventListener('mouseover', pauseHideTimer);
+        toast.addEventListener('mouseout', handlePointerOut);
+        toast.addEventListener('pointerover', pauseHideTimer);
+        toast.addEventListener('pointerout', handlePointerOut);
 
         requestAnimationFrame(() => toast.classList.add('show'));
     }

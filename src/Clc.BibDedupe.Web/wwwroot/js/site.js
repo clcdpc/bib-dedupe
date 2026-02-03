@@ -334,6 +334,15 @@ function showActionToast(data) {
     container.appendChild(toast);
 
     const hideToast = () => {
+        if (toast.matches(':hover')) {
+            hideTimer = null;
+            return;
+        }
+        if (document.activeElement && toast.contains(document.activeElement)) {
+            hideTimer = null;
+            return;
+        }
+
         toast.classList.remove('show');
         setTimeout(() => toast.remove(), 200);
     };
@@ -352,6 +361,10 @@ function showActionToast(data) {
             if (nextFocused && toast.contains(nextFocused)) {
                 return;
             }
+        }
+
+        if (toast.matches(':hover')) {
+            return;
         }
 
         if (document.activeElement && toast.contains(document.activeElement)) {
