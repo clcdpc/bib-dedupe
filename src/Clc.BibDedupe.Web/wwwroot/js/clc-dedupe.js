@@ -298,14 +298,16 @@
         const hideDelay = 6000;
         let hideTimer = null;
 
-        const hideToast = () => {
-            if (toast.matches(':hover')) {
-                hideTimer = null;
-                return;
-            }
-            if (document.activeElement && toast.contains(document.activeElement)) {
-                hideTimer = null;
-                return;
+        const hideToast = (force = false) => {
+            if (!force) {
+                if (toast.matches(':hover')) {
+                    hideTimer = null;
+                    return;
+                }
+                if (document.activeElement && toast.contains(document.activeElement)) {
+                    hideTimer = null;
+                    return;
+                }
             }
 
             toast.classList.remove('show');
@@ -342,7 +344,7 @@
 
         dismissButton.addEventListener('click', () => {
             pauseHideTimer();
-            hideToast();
+            hideToast(true);
         });
 
         const pauseEvents = ['mouseenter', 'pointerenter', 'focusin'];
