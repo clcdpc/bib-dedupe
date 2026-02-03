@@ -1,5 +1,51 @@
 @using Clc.BibDedupe.Web.Models
+@using Microsoft.AspNetCore.Html
+@using Microsoft.AspNetCore.Mvc.Rendering
 @model IndexViewModel
+@functions {
+    private sealed class ActionButton
+    {
+        public ActionButton(BibDupePairAction action, string label, string text, bool available)
+        {
+            Action = action;
+            Label = label;
+            Text = text;
+            Available = available;
+        }
+
+        public BibDupePairAction Action { get; }
+        public string Label { get; }
+        public string Text { get; }
+        public bool Available { get; }
+    }
+
+    private static IHtmlContent RenderActionButton(ActionButton actionButton, string unavailableActionReason)
+    {
+        var tagBuilder = new TagBuilder("button");
+        tagBuilder.Attributes["data-action"] = actionButton.Action.ToString();
+        tagBuilder.Attributes["data-label"] = actionButton.Label;
+        tagBuilder.Attributes["type"] = "button";
+        var availabilityValue = "true";
+        if (!actionButton.Available)
+        {
+            availabilityValue = "false";
+        }
+        tagBuilder.Attributes["data-available"] = availabilityValue;
+
+        if (!actionButton.Available)
+        {
+            tagBuilder.Attributes["disabled"] = "disabled";
+            tagBuilder.Attributes["aria-disabled"] = "true";
+            tagBuilder.Attributes["title"] = unavailableActionReason;
+            tagBuilder.Attributes["data-bs-toggle"] = "tooltip";
+            tagBuilder.Attributes["data-bs-title"] = unavailableActionReason;
+            tagBuilder.Attributes["data-unavailable-reason"] = unavailableActionReason;
+        }
+
+        tagBuilder.InnerHtml.Append(actionButton.Text);
+        return tagBuilder;
+    }
+}
 @{ 
     Layout = null;
     var validActions = Model.ValidActions;
@@ -8,6 +54,13 @@
     var skipAvailable = validActions.Contains(BibDupePairAction.Skip);
     var keepRightAvailable = validActions.Contains(BibDupePairAction.KeepRight);
     const string unavailableActionReason = "This action conflicts with another decision in your queue.";
+    var actionButtons = new[]
+    {
+        new ActionButton(BibDupePairAction.KeepLeft, "Keep Left", "⬅️ Keep Left", keepLeftAvailable),
+        new ActionButton(BibDupePairAction.NotDuplicate, "Not Duplicate", "↔️ Not Duplicate", notDuplicateAvailable),
+        new ActionButton(BibDupePairAction.Skip, "Pass", "⏭️ Pass", skipAvailable),
+        new ActionButton(BibDupePairAction.KeepRight, "Keep Right", "➡️ Keep Right", keepRightAvailable)
+    };
 }
 <!DOCTYPE html>
 <html lang="en">
@@ -63,46 +116,10 @@
         </div>
     </div>
     <div class="controls">
-        <button data-action="@nameof(BibDupePairAction.KeepLeft)"
-                data-label="Keep Left"
-                data-available="@(keepLeftAvailable ? "true" : "false")"
-                type="button"
-                disabled="@(keepLeftAvailable ? null : "disabled")"
-                aria-disabled="@(keepLeftAvailable ? null : "true")"
-                title="@(keepLeftAvailable ? null : unavailableActionReason)"
-                data-bs-toggle="@(keepLeftAvailable ? null : "tooltip")"
-                data-bs-title="@(keepLeftAvailable ? null : unavailableActionReason)"
-                data-unavailable-reason="@(keepLeftAvailable ? null : unavailableActionReason)">⬅️ Keep Left</button>
-        <button data-action="@nameof(BibDupePairAction.NotDuplicate)"
-                data-label="Not Duplicate"
-                data-available="@(notDuplicateAvailable ? "true" : "false")"
-                type="button"
-                disabled="@(notDuplicateAvailable ? null : "disabled")"
-                aria-disabled="@(notDuplicateAvailable ? null : "true")"
-                title="@(notDuplicateAvailable ? null : unavailableActionReason)"
-                data-bs-toggle="@(notDuplicateAvailable ? null : "tooltip")"
-                data-bs-title="@(notDuplicateAvailable ? null : unavailableActionReason)"
-                data-unavailable-reason="@(notDuplicateAvailable ? null : unavailableActionReason)">↔️ Not Duplicate</button>
-        <button data-action="@nameof(BibDupePairAction.Skip)"
-                data-label="Pass"
-                data-available="@(skipAvailable ? "true" : "false")"
-                type="button"
-                disabled="@(skipAvailable ? null : "disabled")"
-                aria-disabled="@(skipAvailable ? null : "true")"
-                title="@(skipAvailable ? null : unavailableActionReason)"
-                data-bs-toggle="@(skipAvailable ? null : "tooltip")"
-                data-bs-title="@(skipAvailable ? null : unavailableActionReason)"
-                data-unavailable-reason="@(skipAvailable ? null : unavailableActionReason)">⏭️ Pass</button>
-        <button data-action="@nameof(BibDupePairAction.KeepRight)"
-                data-label="Keep Right"
-                data-available="@(keepRightAvailable ? "true" : "false")"
-                type="button"
-                disabled="@(keepRightAvailable ? null : "disabled")"
-                aria-disabled="@(keepRightAvailable ? null : "true")"
-                title="@(keepRightAvailable ? null : unavailableActionReason)"
-                data-bs-toggle="@(keepRightAvailable ? null : "tooltip")"
-                data-bs-title="@(keepRightAvailable ? null : unavailableActionReason)"
-                data-unavailable-reason="@(keepRightAvailable ? null : unavailableActionReason)">➡️ Keep Right</button>
+        @foreach (var actionButton in actionButtons)
+        {
+            @RenderActionButton(actionButton, unavailableActionReason)
+        }
     </div>
 </div>
 <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
