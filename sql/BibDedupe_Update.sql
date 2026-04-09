@@ -432,6 +432,7 @@ RETURN (
                       AND shr.SysHoldStatusID IN (1, 3, 4)
                 )
             )
+        )
 );
 GO
 
