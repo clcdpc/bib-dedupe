@@ -245,6 +245,15 @@ BEGIN
 END
 ELSE
 BEGIN
+    IF EXISTS (
+        SELECT 1
+        FROM sys.foreign_keys
+        WHERE name = 'FK_DecisionBatchResults_Batch'
+          AND parent_object_id = OBJECT_ID('BibDedupe.DecisionBatchResults')
+    )
+        ALTER TABLE BibDedupe.DecisionBatchResults
+            DROP CONSTRAINT FK_DecisionBatchResults_Batch;
+
     IF NOT EXISTS (
         SELECT 1 FROM sys.foreign_keys WHERE name = 'FK_DecisionBatchResults_Batches' AND parent_object_id = OBJECT_ID('BibDedupe.DecisionBatchResults')
     )
