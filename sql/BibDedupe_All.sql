@@ -507,6 +507,6 @@ CREATE TABLE BibDedupe.UserClaims
 (
     UserEmail NVARCHAR(256) NOT NULL,
     Claim NVARCHAR(256) NOT NULL,
-    CONSTRAINT PK_UserClaims PRIMARY KEY (UserEmail, Claim)
+    CONSTRAINT PK_UserClaims PRIMARY KEY NONCLUSTERED (UserEmail, Claim)
 );
 GO
