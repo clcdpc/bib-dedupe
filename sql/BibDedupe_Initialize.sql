@@ -554,15 +554,17 @@ BEGIN
     EXEC Polaris.Cat_RetainBibRecordDataByID
         @DeleteBibId, NULL, @LogonBranchId, @LogonUserId, @LogonWorkstationId;
 
-    EXEC Polaris.UnIndexBib @KeepBibId;
-
     DECLARE @tagId INT;
+    DECLARE @isUnindexed BIT = 0;
     DECLARE tagCursor CURSOR LOCAL FAST_FORWARD FOR
     SELECT DISTINCT rt.BibliographicTagID
     FROM @retainedTags rt
     ORDER BY rt.BibliographicTagID;
 
     BEGIN TRY
+        EXEC Polaris.UnIndexBib @KeepBibId;
+        SET @isUnindexed = 1;
+
         BEGIN TRANSACTION;
 
         OPEN tagCursor;
@@ -570,7 +572,7 @@ BEGIN
         WHILE @@FETCH_STATUS = 0
         BEGIN
             DECLARE @newSequence INT;
-            SELECT @newSequence = MAX(bt.Sequence) + 1
+            SELECT @newSequence = ISNULL(MAX(bt.Sequence), 0) + 1
             FROM @retainedTags rt
             JOIN Polaris.Polaris.BibliographicTags bt
                 ON bt.TagNumber = rt.TagNumber
@@ -647,10 +649,21 @@ BEGIN
         IF @@TRANCOUNT > 0
             ROLLBACK TRANSACTION;
 
+        IF @isUnindexed = 1
+        BEGIN
+            BEGIN TRY
+                EXEC Polaris.IndexBib @KeepBibId;
+            END TRY
+            BEGIN CATCH
+                -- keep original merge error as the thrown error
+            END CATCH
+        END
+
         THROW;
     END CATCH
 
-    EXEC Polaris.IndexBib @KeepBibId;
+    IF @isUnindexed = 1
+        EXEC Polaris.IndexBib @KeepBibId;
 END
 GO
 
