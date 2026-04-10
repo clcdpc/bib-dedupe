@@ -1,3 +1,6 @@
+-- Idempotent initialization/upgrade script for BibDedupe schema and objects.
+-- Safe to run repeatedly without dropping existing data.
+
 IF SCHEMA_ID('BibDedupe') IS NULL
     EXEC('CREATE SCHEMA BibDedupe');
 GO
