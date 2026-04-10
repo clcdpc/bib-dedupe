@@ -597,13 +597,25 @@ BEGIN
         FETCH NEXT FROM tagCursor INTO @tagId;
         WHILE @@FETCH_STATUS = 0
         BEGIN
+            DECLARE @tagNumber INT;
             DECLARE @newSequence INT;
-            SELECT @newSequence = ISNULL(MAX(bt.Sequence), 0) + 1
+            DECLARE @matchingTagMaxSequence INT;
+            DECLARE @recordMaxSequence INT;
+
+            SELECT TOP 1 @tagNumber = rt.TagNumber
             FROM @retainedTags rt
-            JOIN Polaris.Polaris.BibliographicTags bt
-                ON bt.TagNumber = rt.TagNumber
+            WHERE rt.BibliographicTagID = @tagId;
+
+            SELECT @matchingTagMaxSequence = MAX(bt.Sequence)
+            FROM Polaris.Polaris.BibliographicTags bt
             WHERE bt.BibliographicRecordID = @KeepBibId
-              AND rt.BibliographicTagID = @tagId;
+              AND bt.TagNumber = @tagNumber;
+
+            SELECT @recordMaxSequence = MAX(bt.Sequence)
+            FROM Polaris.Polaris.BibliographicTags bt
+            WHERE bt.BibliographicRecordID = @KeepBibId;
+
+            SET @newSequence = COALESCE(@matchingTagMaxSequence + 1, @recordMaxSequence + 1, 1);
 
             UPDATE Polaris.Polaris.BibliographicTags
             SET Sequence = Sequence + 1
@@ -611,7 +623,7 @@ BEGIN
               AND Sequence >= @newSequence;
 
             INSERT INTO Polaris.Polaris.BibliographicTags
-            SELECT TOP 1 @KeepBibId, @newSequence, rt.TagNumber, rt.IndicatorOne, rt.IndicatorTwo, rt.TagNumber
+            SELECT TOP 1 @KeepBibId, @newSequence, rt.TagNumber, rt.IndicatorOne, rt.IndicatorTwo, rt.AuthorizingRecordID
             FROM @retainedTags rt
             WHERE rt.BibliographicTagID = @tagId;
 
