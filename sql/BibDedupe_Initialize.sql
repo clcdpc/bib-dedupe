@@ -672,15 +672,21 @@ BEGIN
         COMMIT TRANSACTION;
     END TRY
     BEGIN CATCH
-        IF CURSOR_STATUS('local', 'subfieldCursor') >= -1
+        IF CURSOR_STATUS('local', 'subfieldCursor') > -1
         BEGIN
             CLOSE subfieldCursor;
+        END
+        IF CURSOR_STATUS('local', 'subfieldCursor') > -2
+        BEGIN
             DEALLOCATE subfieldCursor;
         END
 
-        IF CURSOR_STATUS('local', 'tagCursor') >= -1
+        IF CURSOR_STATUS('local', 'tagCursor') > -1
         BEGIN
             CLOSE tagCursor;
+        END
+        IF CURSOR_STATUS('local', 'tagCursor') > -2
+        BEGIN
             DEALLOCATE tagCursor;
         END
 
