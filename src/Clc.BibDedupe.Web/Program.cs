@@ -51,7 +51,6 @@ namespace Clc.BibDedupe.Web
             }
 
             var bibDedupeConn = builder.Configuration.GetConnectionString("BibDedupeDb");
-            var bibDedupeBatchConn = builder.Configuration.GetConnectionString("BibDedupeBatchDb");
 
             builder.Services.Configure<PairAssignmentCleanupOptions>(
                 builder.Configuration.GetSection("PairAssignmentCleanup"));
@@ -76,17 +75,11 @@ namespace Clc.BibDedupe.Web
             }
             else
             {
-                if (string.IsNullOrWhiteSpace(bibDedupeBatchConn))
-                {
-                    throw new InvalidOperationException(
-                        "ConnectionStrings:BibDedupeBatchDb is required when ConnectionStrings:BibDedupeDb is configured.");
-                }
-
                 builder.Services
                     .AddScoped<IDbConnection>(sp => new SqlConnection(bibDedupeConn))
                     .AddSingleton<IDbConnectionFactory>(new SqlDbConnectionFactory(bibDedupeConn))
                     .AddSingleton<IDecisionProcessingDbConnectionFactory>(
-                        new SqlDbConnectionFactory(bibDedupeBatchConn))
+                        new SqlDbConnectionFactory(bibDedupeConn))
                     .AddScoped<IBibDupePairRepository, BibDupePairRepository>()
                     .AddScoped<IDecisionStore, SqlDecisionStore>()
                     .AddScoped<IPairAssignmentStore, SqlPairAssignmentStore>()

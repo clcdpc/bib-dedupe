@@ -49,7 +49,6 @@ Then edit `settings.json` with your values:
 
 - `AzureAd`: Tenant/client settings for authentication.
 - `ConnectionStrings.BibDedupeDb`: SQL Server connection string for the app's main data access and Hangfire persistence.
-- `ConnectionStrings.BibDedupeBatchDb`: SQL Server connection string used specifically for batch/stored-procedure execution. This is required whenever `BibDedupeDb` is configured.
 - `PairAssignmentCleanup.MinimumAssignmentAge`: Age threshold for cleaning stale assignments.
 - `AuthorizedUsers`: Optional list of allowed user emails (if omitted/empty, SQL-based auth service is used).
 - `LeapBibLinkFormat`: URL format for rendering bib links.
@@ -95,7 +94,6 @@ dotnet test src/Clc.BibDedupe.sln
 ## Configuration behavior notes
 
 - **No DB connection string**: app uses in-memory/session services and test pair data.
-- **No batch DB connection string while `BibDedupeDb` is configured**: app startup fails with an invalid configuration error.
 - **No PAPI settings**: app uses local test XML records instead of Polaris API.
 - **Authorized users list empty**: app uses SQL-backed authorization service.
 
