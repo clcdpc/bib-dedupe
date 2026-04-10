@@ -8,6 +8,20 @@ GO
 USE [clcdb];
 GO
 
+-- Polaris compatibility shim:
+-- Some Polaris indexing procedures reference IDX_AssignBibliographicRecordsPrimaryTypeOfMaterial
+-- without schema qualification. Ensure a dbo synonym exists in Polaris DB so unqualified calls resolve.
+EXEC [Polaris].sys.sp_executesql N'
+IF OBJECT_ID(N''dbo.IDX_AssignBibliographicRecordsPrimaryTypeOfMaterial'', N''P'') IS NULL
+   AND OBJECT_ID(N''dbo.IDX_AssignBibliographicRecordsPrimaryTypeOfMaterial'', N''SN'') IS NULL
+   AND OBJECT_ID(N''Polaris.IDX_AssignBibliographicRecordsPrimaryTypeOfMaterial'', N''P'') IS NOT NULL
+BEGIN
+    CREATE SYNONYM dbo.IDX_AssignBibliographicRecordsPrimaryTypeOfMaterial
+        FOR Polaris.IDX_AssignBibliographicRecordsPrimaryTypeOfMaterial;
+END
+';
+GO
+
 IF SCHEMA_ID('BibDedupe') IS NULL
     EXEC('CREATE SCHEMA BibDedupe');
 GO
