@@ -558,6 +558,7 @@ BEGIN
 
     DECLARE @retainedTags TABLE
     (
+        RetainedTagRowId INT IDENTITY(1,1) NOT NULL,
         BibliographicTagID INT,
         TagNumber INT,
         IndicatorOne CHAR(1),
@@ -622,7 +623,8 @@ BEGIN
             DECLARE subfieldCursor CURSOR LOCAL FAST_FORWARD FOR
             SELECT rt.Subfield, rt.Data
             FROM @retainedTags rt
-            WHERE rt.BibliographicTagID = @tagId;
+            WHERE rt.BibliographicTagID = @tagId
+            ORDER BY rt.RetainedTagRowId;
 
             OPEN subfieldCursor;
             FETCH NEXT FROM subfieldCursor INTO @subfield, @data;
