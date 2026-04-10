@@ -551,8 +551,13 @@ BEGIN
     );
 
     INSERT INTO @retainedTags
-    EXEC [Polaris].[Polaris].[Cat_RetainBibRecordDataByID]
-        @DeleteBibId, NULL, @LogonBranchId, @LogonUserId, @LogonWorkstationId;
+    EXEC [Polaris].sys.sp_executesql
+        N'EXEC Polaris.Cat_RetainBibRecordDataByID @deleteBibRecordId, NULL, @logonBranchId, @logonUserId, @logonWorkstationId;',
+        N'@deleteBibRecordId INT, @logonBranchId INT, @logonUserId INT, @logonWorkstationId INT',
+        @deleteBibRecordId = @DeleteBibId,
+        @logonBranchId = @LogonBranchId,
+        @logonUserId = @LogonUserId,
+        @logonWorkstationId = @LogonWorkstationId;
 
     DECLARE @tagId INT;
     DECLARE @isUnindexed BIT = 0;
@@ -562,7 +567,10 @@ BEGIN
     ORDER BY rt.BibliographicTagID;
 
     BEGIN TRY
-        EXEC [Polaris].[Polaris].[UnIndexBib] @KeepBibId;
+        EXEC [Polaris].sys.sp_executesql
+            N'EXEC Polaris.UnIndexBib @keepBibRecordId;',
+            N'@keepBibRecordId INT',
+            @keepBibRecordId = @KeepBibId;
         SET @isUnindexed = 1;
 
         BEGIN TRANSACTION;
@@ -617,16 +625,32 @@ BEGIN
         CLOSE tagCursor;
         DEALLOCATE tagCursor;
 
-        EXEC [Polaris].[Polaris].[Cat_ReassignBibRecordLinks]
-            @KeepBibId, @DeleteBibId, @LogonBranchId, @LogonUserId, @LogonWorkstationId;
+        EXEC [Polaris].sys.sp_executesql
+            N'EXEC Polaris.Cat_ReassignBibRecordLinks @keepBibRecordId, @deleteBibRecordId, @logonBranchId, @logonUserId, @logonWorkstationId;',
+            N'@keepBibRecordId INT, @deleteBibRecordId INT, @logonBranchId INT, @logonUserId INT, @logonWorkstationId INT',
+            @keepBibRecordId = @KeepBibId,
+            @deleteBibRecordId = @DeleteBibId,
+            @logonBranchId = @LogonBranchId,
+            @logonUserId = @LogonUserId,
+            @logonWorkstationId = @LogonWorkstationId;
 
         DECLARE @recordDeleted BIT;
         DECLARE @recordMarkedForDeletion BIT;
         DECLARE @widowList NVARCHAR(MAX);
 
-        EXEC [Polaris].[Polaris].[Cat_DeleteBibRecordProcessing]
-            @DeleteBibId, @LogonBranchId, @LogonUserId, @LogonWorkstationId,
-            @KeepBibId, NULL, @recordDeleted OUTPUT, @recordMarkedForDeletion OUTPUT, @widowList OUTPUT;
+        EXEC [Polaris].sys.sp_executesql
+            N'EXEC Polaris.Cat_DeleteBibRecordProcessing
+                @deleteBibRecordId, @logonBranchId, @logonUserId, @logonWorkstationId,
+                @keepBibRecordId, NULL, @recordDeleted OUTPUT, @recordMarkedForDeletion OUTPUT, @widowList OUTPUT;',
+            N'@deleteBibRecordId INT, @logonBranchId INT, @logonUserId INT, @logonWorkstationId INT, @keepBibRecordId INT, @recordDeleted BIT OUTPUT, @recordMarkedForDeletion BIT OUTPUT, @widowList NVARCHAR(MAX) OUTPUT',
+            @deleteBibRecordId = @DeleteBibId,
+            @logonBranchId = @LogonBranchId,
+            @logonUserId = @LogonUserId,
+            @logonWorkstationId = @LogonWorkstationId,
+            @keepBibRecordId = @KeepBibId,
+            @recordDeleted = @recordDeleted OUTPUT,
+            @recordMarkedForDeletion = @recordMarkedForDeletion OUTPUT,
+            @widowList = @widowList OUTPUT;
 
         INSERT INTO BibDedupe.PairDecisions (DecisionTimestamp, UserEmail, KeptBibId, DeletedBibId, ActionId)
         VALUES (SYSDATETIME(), @UserEmail, @KeepBibId, @DeleteBibId, @ActionId);
@@ -652,7 +676,10 @@ BEGIN
         IF @isUnindexed = 1
         BEGIN
             BEGIN TRY
-                EXEC [Polaris].[Polaris].[IndexBib] @KeepBibId;
+                EXEC [Polaris].sys.sp_executesql
+                    N'EXEC Polaris.IndexBib @keepBibRecordId;',
+                    N'@keepBibRecordId INT',
+                    @keepBibRecordId = @KeepBibId;
             END TRY
             BEGIN CATCH
                 -- keep original merge error as the thrown error
@@ -667,7 +694,10 @@ BEGIN
     END CATCH
 
     IF @isUnindexed = 1
-        EXEC [Polaris].[Polaris].[IndexBib] @KeepBibId;
+        EXEC [Polaris].sys.sp_executesql
+            N'EXEC Polaris.IndexBib @keepBibRecordId;',
+            N'@keepBibRecordId INT',
+            @keepBibRecordId = @KeepBibId;
 END
 GO
 
