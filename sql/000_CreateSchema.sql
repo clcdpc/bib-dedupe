@@ -1,3 +1,0 @@
-IF SCHEMA_ID('BibDedupe') IS NULL
-    EXEC('CREATE SCHEMA BibDedupe');
-GO
