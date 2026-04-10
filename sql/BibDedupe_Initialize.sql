@@ -551,7 +551,7 @@ BEGIN
     );
 
     INSERT INTO @retainedTags
-    EXEC Polaris.Cat_RetainBibRecordDataByID
+    EXEC [Polaris].[Polaris].[Cat_RetainBibRecordDataByID]
         @DeleteBibId, NULL, @LogonBranchId, @LogonUserId, @LogonWorkstationId;
 
     DECLARE @tagId INT;
@@ -562,7 +562,7 @@ BEGIN
     ORDER BY rt.BibliographicTagID;
 
     BEGIN TRY
-        EXEC Polaris.UnIndexBib @KeepBibId;
+        EXEC [Polaris].[Polaris].[UnIndexBib] @KeepBibId;
         SET @isUnindexed = 1;
 
         BEGIN TRANSACTION;
@@ -617,14 +617,14 @@ BEGIN
         CLOSE tagCursor;
         DEALLOCATE tagCursor;
 
-        EXEC Polaris.Cat_ReassignBibRecordLinks
+        EXEC [Polaris].[Polaris].[Cat_ReassignBibRecordLinks]
             @KeepBibId, @DeleteBibId, @LogonBranchId, @LogonUserId, @LogonWorkstationId;
 
         DECLARE @recordDeleted BIT;
         DECLARE @recordMarkedForDeletion BIT;
         DECLARE @widowList NVARCHAR(MAX);
 
-        EXEC Polaris.Cat_DeleteBibRecordProcessing
+        EXEC [Polaris].[Polaris].[Cat_DeleteBibRecordProcessing]
             @DeleteBibId, @LogonBranchId, @LogonUserId, @LogonWorkstationId,
             @KeepBibId, NULL, @recordDeleted OUTPUT, @recordMarkedForDeletion OUTPUT, @widowList OUTPUT;
 
@@ -652,7 +652,7 @@ BEGIN
         IF @isUnindexed = 1
         BEGIN
             BEGIN TRY
-                EXEC Polaris.IndexBib @KeepBibId;
+                EXEC [Polaris].[Polaris].[IndexBib] @KeepBibId;
             END TRY
             BEGIN CATCH
                 -- keep original merge error as the thrown error
@@ -667,7 +667,7 @@ BEGIN
     END CATCH
 
     IF @isUnindexed = 1
-        EXEC Polaris.IndexBib @KeepBibId;
+        EXEC [Polaris].[Polaris].[IndexBib] @KeepBibId;
 END
 GO
 
