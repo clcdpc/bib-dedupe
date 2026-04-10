@@ -11,6 +11,19 @@
     "DecisionProcessingDb": "YOUR_DECISION_PROCESSING_DB_CONNECTION",
     "AuthorizedUsersDb": "YOUR_AUTH_DB_CONNECTION"
   },
+  "PairAssignmentCleanup": {
+    "MinimumAssignmentAge": "06:00:00"
+  },
   "AuthorizedUsers": [],
-  "LeapBibLinkFormat": "https://your.catalog.example/bib/{bibId}"
+  "LeapBibLinkFormat": "https://your.catalog.example/bib/{bibId}",
+  "Papi": {
+    "AccessId": "YOUR_PAPI_ACCESS_ID",
+    "AccessKey": "YOUR_PAPI_ACCESS_KEY",
+    "Hostname": "YOUR_PAPI_HOSTNAME",
+    "PolarisOverrideAccount": {
+      "Domain": "YOUR_PAPI_OVERRIDE_DOMAIN",
+      "Username": "YOUR_PAPI_OVERRIDE_USERNAME",
+      "Password": "YOUR_PAPI_OVERRIDE_PASSWORD"
+    }
+  }
 }
