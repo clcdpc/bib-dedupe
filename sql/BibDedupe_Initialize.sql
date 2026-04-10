@@ -11,15 +11,18 @@ GO
 -- Polaris compatibility shim:
 -- Some Polaris indexing procedures reference IDX_AssignBibliographicRecordsPrimaryTypeOfMaterial
 -- without schema qualification. Ensure a dbo synonym exists in Polaris DB so unqualified calls resolve.
-EXEC [Polaris].sys.sp_executesql N'
-IF OBJECT_ID(N''dbo.IDX_AssignBibliographicRecordsPrimaryTypeOfMaterial'', N''P'') IS NULL
-   AND OBJECT_ID(N''dbo.IDX_AssignBibliographicRecordsPrimaryTypeOfMaterial'', N''SN'') IS NULL
-   AND OBJECT_ID(N''Polaris.IDX_AssignBibliographicRecordsPrimaryTypeOfMaterial'', N''P'') IS NOT NULL
+IF DB_ID(N'Polaris') IS NOT NULL
 BEGIN
-    CREATE SYNONYM dbo.IDX_AssignBibliographicRecordsPrimaryTypeOfMaterial
-        FOR Polaris.IDX_AssignBibliographicRecordsPrimaryTypeOfMaterial;
+    EXEC [Polaris].sys.sp_executesql N'
+    IF OBJECT_ID(N''dbo.IDX_AssignBibliographicRecordsPrimaryTypeOfMaterial'', N''P'') IS NULL
+       AND OBJECT_ID(N''dbo.IDX_AssignBibliographicRecordsPrimaryTypeOfMaterial'', N''SN'') IS NULL
+       AND OBJECT_ID(N''Polaris.IDX_AssignBibliographicRecordsPrimaryTypeOfMaterial'', N''P'') IS NOT NULL
+    BEGIN
+        CREATE SYNONYM dbo.IDX_AssignBibliographicRecordsPrimaryTypeOfMaterial
+            FOR Polaris.IDX_AssignBibliographicRecordsPrimaryTypeOfMaterial;
+    END
+    ';
 END
-';
 GO
 
 IF SCHEMA_ID('BibDedupe') IS NULL
@@ -714,10 +717,18 @@ BEGIN
     END CATCH
 
     IF @isUnindexed = 1
-        EXEC [Polaris].sys.sp_executesql
-            N'EXEC Polaris.IndexBib @keepBibRecordId;',
-            N'@keepBibRecordId INT',
-            @keepBibRecordId = @KeepBibId;
+    BEGIN
+        BEGIN TRY
+            EXEC [Polaris].sys.sp_executesql
+                N'EXEC Polaris.IndexBib @keepBibRecordId;',
+                N'@keepBibRecordId INT',
+                @keepBibRecordId = @KeepBibId;
+        END TRY
+        BEGIN CATCH
+            -- Merge has already committed at this point; do not rethrow and report a false merge failure.
+            PRINT CONCAT('Warning: Polaris.IndexBib failed after merge commit for bib ', @KeepBibId, '. Error: ', ERROR_MESSAGE());
+        END CATCH
+    END
 END
 GO
 
