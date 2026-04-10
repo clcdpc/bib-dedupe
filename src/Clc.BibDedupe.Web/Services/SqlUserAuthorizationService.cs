@@ -9,8 +9,7 @@ namespace Clc.BibDedupe.Web.Services;
 
 public class SqlUserAuthorizationService(IConfiguration config) : IUserAuthorizationService
 {
-    private readonly string? _connectionString =
-        config.GetConnectionString("AuthorizedUsersDb") ?? config.GetConnectionString("BibDedupeDb");
+    private readonly string? _connectionString = config.GetConnectionString("BibDedupeDb");
 
     private const string Query =
         "SELECT Claim FROM BibDedupe.UserClaims WHERE UserEmail = @Email";

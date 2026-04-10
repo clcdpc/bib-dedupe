@@ -51,7 +51,6 @@ namespace Clc.BibDedupe.Web
             }
 
             var bibDedupeConn = builder.Configuration.GetConnectionString("BibDedupeDb");
-            var decisionProcessingConn = builder.Configuration.GetConnectionString("DecisionProcessingDb");
 
             builder.Services.Configure<PairAssignmentCleanupOptions>(
                 builder.Configuration.GetSection("PairAssignmentCleanup"));
@@ -80,7 +79,7 @@ namespace Clc.BibDedupe.Web
                     .AddScoped<IDbConnection>(sp => new SqlConnection(bibDedupeConn))
                     .AddSingleton<IDbConnectionFactory>(new SqlDbConnectionFactory(bibDedupeConn))
                     .AddSingleton<IDecisionProcessingDbConnectionFactory>(
-                        new SqlDbConnectionFactory(decisionProcessingConn!))
+                        new SqlDbConnectionFactory(bibDedupeConn))
                     .AddScoped<IBibDupePairRepository, BibDupePairRepository>()
                     .AddScoped<IDecisionStore, SqlDecisionStore>()
                     .AddScoped<IPairAssignmentStore, SqlPairAssignmentStore>()

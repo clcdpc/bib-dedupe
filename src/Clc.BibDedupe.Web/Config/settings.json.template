@@ -7,9 +7,7 @@
     "CallbackPath": "/signin-oidc"
   },
   "ConnectionStrings": {
-    "BibDedupeDb": "YOUR_BIB_DEDUPE_DB_CONNECTION",
-    "DecisionProcessingDb": "YOUR_DECISION_PROCESSING_DB_CONNECTION",
-    "AuthorizedUsersDb": "YOUR_AUTH_DB_CONNECTION"
+    "BibDedupeDb": "YOUR_BIB_DEDUPE_DB_CONNECTION"
   },
   "PairAssignmentCleanup": {
     "MinimumAssignmentAge": "06:00:00"
