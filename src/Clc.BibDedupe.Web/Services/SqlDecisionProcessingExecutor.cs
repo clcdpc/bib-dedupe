@@ -13,7 +13,7 @@ public class SqlDecisionProcessingExecutor(IDecisionProcessingDbConnectionFactor
     {
         using var connection = factory.Create();
         await connection.ExecuteAsync(
-            "BibDedupe.ProcessDecisionBatch",
+            "clcdb.BibDedupe.ProcessDecisionBatch",
             new { UserEmail = userEmail },
             commandType: CommandType.StoredProcedure,
             commandTimeout: 0);
