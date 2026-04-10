@@ -176,7 +176,7 @@ CREATE TABLE BibDedupe.DecisionBatchResults
     Succeeded BIT NOT NULL,
     ErrorMessage NVARCHAR(1024) NULL,
     ProcessedAt DATETIME2 NOT NULL CONSTRAINT DF_DecisionBatchResults_ProcessedAt DEFAULT SYSUTCDATETIME(),
-    CONSTRAINT FK_DecisionBatchResults_Batch FOREIGN KEY (BatchId)
+    CONSTRAINT FK_DecisionBatchResults_Batches FOREIGN KEY (BatchId)
         REFERENCES BibDedupe.DecisionBatches(BatchId),
     CONSTRAINT FK_DecisionBatchResults_Action FOREIGN KEY (ActionId)
         REFERENCES BibDedupe.Actions(ActionId)
@@ -203,18 +203,36 @@ RETURN (
     SELECT TOP (@Top)
         p.PairId,
         p.PrimaryMARCTOMID,
+        mtom.Description AS TOM,
         p.LeftBibId,
+        br_l.BrowseTitle AS LeftTitle,
+        br_l.BrowseAuthor AS LeftAuthor,
         p.RightBibId,
-        LeftTitle = CAST(NULL AS NVARCHAR(512)),
-        LeftAuthor = CAST(NULL AS NVARCHAR(256)),
-        RightTitle = CAST(NULL AS NVARCHAR(512)),
-        RightAuthor = CAST(NULL AS NVARCHAR(256)),
-        TOM = CAST(NULL AS NVARCHAR(256)),
+        br_r.BrowseTitle AS RightTitle,
+        br_r.BrowseAuthor AS RightAuthor,
         MatchesJson = ISNULL(pm.MatchesJson, '[]'),
-        LeftHoldCount = CAST(0 AS INT),
-        RightHoldCount = CAST(0 AS INT),
-        TotalHoldCount = CAST(0 AS INT)
+        ISNULL(leftHolds.HoldCount, 0) AS LeftHoldCount,
+        ISNULL(rightHolds.HoldCount, 0) AS RightHoldCount,
+        ISNULL(leftHolds.HoldCount, 0) + ISNULL(rightHolds.HoldCount, 0) AS TotalHoldCount
     FROM BibDedupe.Pairs p
+    JOIN polaris.polaris.BibliographicRecords br_l
+        ON br_l.BibliographicRecordID = p.LeftBibId
+    JOIN polaris.polaris.BibliographicRecords br_r
+        ON br_r.BibliographicRecordID = p.RightBibId
+    JOIN polaris.polaris.MARCTypeOfMaterial mtom
+        ON mtom.MARCTypeOfMaterialID = p.PrimaryMARCTOMID
+    OUTER APPLY (
+        SELECT COUNT(1) AS HoldCount
+        FROM polaris.polaris.SysHoldRequests shr
+        WHERE shr.BibliographicRecordID = br_l.BibliographicRecordID
+          AND shr.SysHoldStatusID IN (1, 3, 4)
+    ) leftHolds
+    OUTER APPLY (
+        SELECT COUNT(1) AS HoldCount
+        FROM polaris.polaris.SysHoldRequests shr
+        WHERE shr.BibliographicRecordID = br_r.BibliographicRecordID
+          AND shr.SysHoldStatusID IN (1, 3, 4)
+    ) rightHolds
     OUTER APPLY (
         SELECT MatchType, MatchValue
         FROM BibDedupe.PairMatches m
@@ -228,11 +246,8 @@ RETURN (
             OR NOT EXISTS (
                 SELECT 1
                 FROM BibDedupe.PairDecisions pd
-                WHERE (
-                    (pd.KeptBibId = p.LeftBibId AND pd.DeletedBibId = p.RightBibId)
-                    OR (pd.KeptBibId = p.RightBibId AND pd.DeletedBibId = p.LeftBibId)
-                )
-                  AND (@UserEmail IS NULL OR pd.UserEmail = @UserEmail)
+                WHERE (pd.KeptBibId = p.LeftBibId AND pd.DeletedBibId = p.RightBibId)
+                   OR (pd.KeptBibId = p.RightBibId AND pd.DeletedBibId = p.LeftBibId)
             )
         )
         AND (
@@ -255,7 +270,10 @@ RETURN (
                   AND pa.UserEmail <> @UserEmail
             )
         )
-        AND (@TomId IS NULL)
+        AND (
+            @TomId IS NULL
+            OR p.PrimaryMARCTOMID = @TomId
+        )
         AND (
             @MatchType IS NULL
             OR EXISTS (
@@ -270,36 +288,17 @@ RETURN (
             OR (
                 @HasHolds = 1
                 AND (
-                    EXISTS (
-                        SELECT 1
-                        FROM polaris.polaris.SysHoldRequests shr
-                        WHERE shr.BibliographicRecordID = p.LeftBibId
-                          AND shr.SysHoldStatusID IN (1, 3, 4)
-                    )
-                    OR EXISTS (
-                        SELECT 1
-                        FROM polaris.polaris.SysHoldRequests shr
-                        WHERE shr.BibliographicRecordID = p.RightBibId
-                          AND shr.SysHoldStatusID IN (1, 3, 4)
-                    )
+                    ISNULL(leftHolds.HoldCount, 0) > 0
+                    OR ISNULL(rightHolds.HoldCount, 0) > 0
                 )
             )
             OR (
                 @HasHolds = 0
-                AND NOT EXISTS (
-                    SELECT 1
-                    FROM polaris.polaris.SysHoldRequests shr
-                    WHERE shr.BibliographicRecordID = p.LeftBibId
-                      AND shr.SysHoldStatusID IN (1, 3, 4)
-                )
-                AND NOT EXISTS (
-                    SELECT 1
-                    FROM polaris.polaris.SysHoldRequests shr
-                    WHERE shr.BibliographicRecordID = p.RightBibId
-                      AND shr.SysHoldStatusID IN (1, 3, 4)
-                )
+                AND ISNULL(leftHolds.HoldCount, 0) = 0
+                AND ISNULL(rightHolds.HoldCount, 0) = 0
             )
         )
+    ORDER BY br_l.BrowseTitle, br_r.BrowseTitle
 );
 GO
 
@@ -508,6 +507,6 @@ CREATE TABLE BibDedupe.UserClaims
 (
     UserEmail NVARCHAR(256) NOT NULL,
     Claim NVARCHAR(256) NOT NULL,
-    CONSTRAINT PK_UserClaims PRIMARY KEY (UserEmail, Claim)
+    CONSTRAINT PK_UserClaims PRIMARY KEY NONCLUSTERED (UserEmail, Claim)
 );
 GO
