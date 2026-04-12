@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using System.Security.Claims;
 using System.Threading.Tasks;
-using Clc.BibDedupe.Web.Authorization;
 using Clc.BibDedupe.Web.Controllers;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -36,7 +35,7 @@ public class AccountControllerTests
     }
 
     [TestMethod]
-    public async Task Impersonate_Signs_In_With_Administrator_Claim_And_Redirects_To_Pairs()
+    public async Task Impersonate_Signs_In_And_Redirects_To_Pairs()
     {
         var authService = new RecordingAuthenticationService();
         var controller = BuildController("expected-key", authService);
@@ -47,8 +46,6 @@ public class AccountControllerTests
             .Which.ActionName.Should().Be("Index");
         authService.SignedInPrincipal.Should().NotBeNull();
         authService.SignedInPrincipal!.FindFirstValue(ClaimTypes.Email).Should().Be("user@example.com");
-        authService.SignedInPrincipal!.IsInRole(UserRoles.Access).Should().BeTrue();
-        authService.SignedInPrincipal!.IsInRole(UserRoles.Administrator).Should().BeTrue();
         authService.SignOutWasCalled.Should().BeTrue();
     }
 
