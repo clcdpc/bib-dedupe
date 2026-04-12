@@ -121,7 +121,14 @@ namespace Clc.BibDedupe.Web
                 .AddTransient<DecisionProcessingJob>()
                 .AddTransient<PairAssignmentCleanupJob>();
 
-            builder.Services.AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
+            builder.Services
+                .AddAuthentication(options =>
+                {
+                    options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+                    options.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+                    options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+                    options.DefaultChallengeScheme = OpenIdConnectDefaults.AuthenticationScheme;
+                })
                 .AddMicrosoftIdentityWebApp(builder.Configuration.GetSection("AzureAd"));
 
             builder.Services.PostConfigure<OpenIdConnectOptions>(OpenIdConnectDefaults.AuthenticationScheme, options =>
