@@ -13,6 +13,9 @@
     "MinimumAssignmentAge": "06:00:00"
   },
   "AuthorizedUsers": [],
+  "Impersonation": {
+    "ApiKey": "SET_A_LONG_RANDOM_IMPERSONATION_KEY"
+  },
   "LeapBibLinkFormat": "https://your.catalog.example/bib/{bibId}",
   "Papi": {
     "AccessId": "YOUR_PAPI_ACCESS_ID",
