@@ -60,11 +60,13 @@ public class AccountController(IConfiguration configuration) : Controller
             new Claim(ClaimTypes.Email, email),
             new Claim("preferred_username", email),
             new Claim(ClaimTypes.Name, email),
+            new Claim(ClaimTypes.Role, UserRoles.Access),
             new Claim(ClaimTypes.Role, UserRoles.Administrator)
         };
         var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
         var principal = new ClaimsPrincipal(identity);
 
+        await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
         await HttpContext.SignInAsync(
             CookieAuthenticationDefaults.AuthenticationScheme,
             principal,

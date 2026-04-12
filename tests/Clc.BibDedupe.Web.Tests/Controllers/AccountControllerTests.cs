@@ -47,7 +47,9 @@ public class AccountControllerTests
             .Which.ActionName.Should().Be("Index");
         authService.SignedInPrincipal.Should().NotBeNull();
         authService.SignedInPrincipal!.FindFirstValue(ClaimTypes.Email).Should().Be("user@example.com");
+        authService.SignedInPrincipal!.IsInRole(UserRoles.Access).Should().BeTrue();
         authService.SignedInPrincipal!.IsInRole(UserRoles.Administrator).Should().BeTrue();
+        authService.SignOutWasCalled.Should().BeTrue();
     }
 
     private static AccountController BuildController(string apiKey, RecordingAuthenticationService? authService = null)
@@ -80,6 +82,7 @@ public class AccountControllerTests
     private sealed class RecordingAuthenticationService : IAuthenticationService
     {
         public ClaimsPrincipal? SignedInPrincipal { get; private set; }
+        public bool SignOutWasCalled { get; private set; }
 
         public Task<AuthenticateResult> AuthenticateAsync(HttpContext context, string? scheme)
             => Task.FromResult(AuthenticateResult.NoResult());
@@ -98,6 +101,9 @@ public class AccountControllerTests
         }
 
         public Task SignOutAsync(HttpContext context, string? scheme, AuthenticationProperties? properties)
-            => Task.CompletedTask;
+        {
+            SignOutWasCalled = true;
+            return Task.CompletedTask;
+        }
     }
 }
