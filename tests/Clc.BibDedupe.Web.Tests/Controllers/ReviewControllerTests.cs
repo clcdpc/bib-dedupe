@@ -70,7 +70,7 @@ public class ReviewControllerTests
         var navigationServiceMock = new Mock<IPostDecisionNavigationService>(MockBehavior.Strict);
 
         repositoryMock
-            .Setup(r => r.GetByBibIdsAsync(10, 20, UserEmail))
+            .Setup(r => r.GetByBibIdsAsync(10, 20, UserEmail, true))
             .ReturnsAsync(new BibDupePair { LeftBibId = 10, RightBibId = 20 });
         decisionStoreMock.Setup(s => s.AddAsync(UserEmail, It.IsAny<PairDecision>())).Returns(Task.CompletedTask);
         pairAssignmentStoreMock.Setup(s => s.ReleaseAsync(UserEmail, 10, 20)).Returns(Task.CompletedTask);
@@ -80,7 +80,7 @@ public class ReviewControllerTests
             .Setup(s => s.GetNavigationAsync(
                 UserEmail,
                 false,
-                (10, 20),
+                It.Is<(int leftBibId, int rightBibId)>(pair => pair.leftBibId == 10 && pair.rightBibId == 20),
                 It.IsAny<Func<int, int, string?>>(),
                 It.IsAny<Func<string?>>(),
                 It.IsAny<Func<string?>>(),
@@ -128,11 +128,11 @@ public class ReviewControllerTests
         var navigationServiceMock = new Mock<IPostDecisionNavigationService>(MockBehavior.Strict);
 
         repositoryMock
-            .Setup(r => r.GetByBibIdsAsync(10, 20, UserEmail))
+            .Setup(r => r.GetByBibIdsAsync(10, 20, UserEmail, true))
             .ReturnsAsync((BibDupePair?)null);
         decisionStoreMock
             .Setup(s => s.GetAsync(UserEmail, 10, 20))
-            .ReturnsAsync(new PairDecision { Pair = new BibDupePair { LeftBibId = 10, RightBibId = 20 }, Action = BibDupePairAction.Ignore });
+            .ReturnsAsync(new PairDecision { Pair = new BibDupePair { LeftBibId = 10, RightBibId = 20 }, Action = BibDupePairAction.Skip });
         decisionStoreMock.Setup(s => s.AddAsync(UserEmail, It.IsAny<PairDecision>())).Returns(Task.CompletedTask);
 
         pairAssignmentStoreMock.Setup(s => s.ReleaseAsync(UserEmail, 10, 20)).Returns(Task.CompletedTask);
@@ -142,7 +142,7 @@ public class ReviewControllerTests
             .Setup(s => s.GetNavigationAsync(
                 UserEmail,
                 true,
-                (10, 20),
+                It.Is<(int leftBibId, int rightBibId)>(pair => pair.leftBibId == 10 && pair.rightBibId == 20),
                 It.IsAny<Func<int, int, string?>>(),
                 It.IsAny<Func<string?>>(),
                 It.IsAny<Func<string?>>(),
@@ -182,12 +182,12 @@ public class ReviewControllerTests
         var navigationServiceMock = new Mock<IPostDecisionNavigationService>(MockBehavior.Strict);
 
         repositoryMock
-            .Setup(r => r.GetByBibIdsAsync(10, 20, UserEmail))
+            .Setup(r => r.GetByBibIdsAsync(10, 20, UserEmail, true))
             .ReturnsAsync(new BibDupePair { LeftBibId = 10, RightBibId = 20 });
 
         decisionStoreMock
             .Setup(s => s.AddAsync(UserEmail, It.IsAny<PairDecision>()))
-            .ThrowsAsync(new DecisionConflictException("conflict"));
+            .ThrowsAsync(new DecisionConflictException(10, "conflict"));
 
         pairAssignmentStoreMock.Setup(s => s.ReleaseAsync(UserEmail, 10, 20)).Returns(Task.CompletedTask);
         currentPairStoreMock.Setup(s => s.ClearAsync(UserEmail)).Returns(Task.CompletedTask);

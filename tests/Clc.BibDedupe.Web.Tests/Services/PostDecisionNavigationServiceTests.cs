@@ -18,7 +18,10 @@ public class PostDecisionNavigationServiceTests
 
         pairFilterStoreMock.Setup(s => s.GetAsync(UserEmail)).ReturnsAsync(filters);
         nextPairResolverMock
-            .Setup(r => r.GetNextPairForUserAsync(UserEmail, filters, (10, 20)))
+            .Setup(r => r.GetNextPairForUserAsync(
+                UserEmail,
+                filters,
+                It.Is<(int leftBibId, int rightBibId)?>(pair => pair.HasValue && pair.Value.leftBibId == 10 && pair.Value.rightBibId == 20)))
             .ReturnsAsync(new BibDupePair { LeftBibId = 30, RightBibId = 40 });
 
         var service = new PostDecisionNavigationService(nextPairResolverMock.Object, pairFilterStoreMock.Object);

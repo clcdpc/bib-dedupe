@@ -19,7 +19,7 @@ public class NextPairResolverTests
 
         filterStoreMock.Setup(s => s.GetAsync(UserEmail)).ReturnsAsync(filters);
         repositoryMock
-            .Setup(r => r.GetAsync(UserEmail, 7, "Isbn", true))
+            .Setup(r => r.GetAsync(UserEmail, 7, "Isbn", true, true))
             .ReturnsAsync(new[]
             {
                 new BibDupePair { LeftBibId = 1, RightBibId = 2 },
@@ -46,7 +46,7 @@ public class NextPairResolverTests
         var explicitFilters = new PairFilterOptions { MatchType = "Oclc" };
 
         repositoryMock
-            .Setup(r => r.GetAsync(UserEmail, null, "Oclc", null))
+            .Setup(r => r.GetAsync(UserEmail, null, "Oclc", null, true))
             .ReturnsAsync(new[]
             {
                 new BibDupePair { LeftBibId = 10, RightBibId = 20 },
