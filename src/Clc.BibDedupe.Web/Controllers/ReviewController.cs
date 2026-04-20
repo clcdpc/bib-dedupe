@@ -1,7 +1,5 @@
 using System;
-using System.Linq;
 using System.Threading.Tasks;
-using Clc.BibDedupe.Web;
 using Clc.BibDedupe.Web.Data;
 using Clc.BibDedupe.Web.Extensions;
 using Clc.BibDedupe.Web.Models;
@@ -14,60 +12,36 @@ namespace Clc.BibDedupe.Web.Controllers;
 [Authorize(Policy = "AuthorizedUser")]
 [Route("review")]
 public class ReviewController(
-    IRecordLoader loader,
     IBibDupePairRepository repository,
     IDecisionStore decisionStore,
     ICurrentPairStore currentPairStore,
     IPairAssignmentStore pairAssignmentStore,
-    IPairFilterStore pairFilterStore) : Controller
+    IReviewPageService reviewPageService,
+    IPostDecisionNavigationService postDecisionNavigationService) : Controller
 {
     [HttpGet]
     [HttpGet("{leftBibId:int}/{rightBibId:int}")]
     public async Task<IActionResult> Index(int? leftBibId, int? rightBibId)
     {
         var userEmail = User.GetEmail();
-        var reviewPair = await GetReviewPairAsync(userEmail, leftBibId, rightBibId);
+        var reviewPage = await reviewPageService.BuildAsync(userEmail, leftBibId, rightBibId);
 
-        if (reviewPair is null)
+        if (reviewPage is null)
         {
             await currentPairStore.ClearAsync(userEmail);
             return View(new IndexViewModel());
         }
 
-        var (leftRecord, rightRecord) = await loader.LoadAsync(reviewPair.LeftBibId, reviewPair.RightBibId);
-        var validActions = await repository.GetValidActionsAsync(reviewPair.LeftBibId, reviewPair.RightBibId, userEmail);
-
-        var existingDecisionAction = reviewPair.ExistingDecision?.Action;
-        var isReReview = existingDecisionAction is not null;
-
-        var model = new IndexViewModel
-        {
-            LeftBibId = reviewPair.LeftBibId,
-            RightBibId = reviewPair.RightBibId,
-            LeftTitle = reviewPair.Pair.LeftTitle,
-            RightTitle = reviewPair.Pair.RightTitle,
-            LeftBibXml = MarcXmlRenderer.TransformFile(leftRecord.BibXml, "marc-to-html.xslt"),
-            RightBibXml = MarcXmlRenderer.TransformFile(rightRecord.BibXml, "marc-to-html.xslt"),
-            LeftItems = leftRecord.Items,
-            RightItems = rightRecord.Items,
-            Matches = PairMatch.CloneList(reviewPair.Pair.Matches),
-            LeftHoldCount = reviewPair.Pair.LeftHoldCount,
-            RightHoldCount = reviewPair.Pair.RightHoldCount,
-            TotalHoldCount = reviewPair.Pair.TotalHoldCount,
-            ValidActions = validActions.ToHashSet(),
-            IsReReview = isReReview,
-            ExistingDecisionAction = existingDecisionAction
-        };
-
+        // Keep session/assignment lifecycle explicit at the controller boundary.
         await currentPairStore.SetAsync(userEmail, new CurrentPair
         {
-            LeftBibId = model.LeftBibId,
-            RightBibId = model.RightBibId
+            LeftBibId = reviewPage.LeftBibId,
+            RightBibId = reviewPage.RightBibId
         });
 
-        await pairAssignmentStore.AssignAsync(userEmail, model.LeftBibId, model.RightBibId);
+        await pairAssignmentStore.AssignAsync(userEmail, reviewPage.LeftBibId, reviewPage.RightBibId);
 
-        return View(model);
+        return View(reviewPage.Model);
     }
 
     [HttpPost("resolve")]
@@ -81,10 +55,9 @@ public class ReviewController(
         {
             return BadRequest();
         }
+
         var userEmail = User.GetEmail();
         var pair = await repository.GetByBibIdsAsync(leftBibId, rightBibId, userEmail);
-
-        var isReReview = false;
         var decision = pair is not null
             ? CreateDecisionFromPair(pair, parsed)
             : await decisionStore.GetAsync(userEmail, leftBibId, rightBibId);
@@ -96,12 +69,9 @@ public class ReviewController(
             return Conflict(new { error = "Pair is not available for this user." });
         }
 
-        if (pair is null)
-        {
-            isReReview = true;
-        }
-
+        var isReReview = pair is null;
         decision.Action = parsed;
+
         try
         {
             await decisionStore.AddAsync(userEmail, decision);
@@ -116,82 +86,21 @@ public class ReviewController(
             await currentPairStore.ClearAsync(userEmail);
         }
 
-        string? nextPairUrl = null;
-        bool hasNextPair = false;
-
-        if (isReReview)
-        {
-            nextPairUrl = Url.Action("Index", "Decisions");
-        }
-        else
-        {
-            var filters = await pairFilterStore.GetAsync(userEmail);
-            var nextPair = (await repository.GetAsync(
-                    userEmail,
-                    filters?.TomId,
-                    filters?.MatchType,
-                    filters?.HasHolds))
-                .FirstOrDefault(p => p.LeftBibId != leftBibId || p.RightBibId != rightBibId);
-
-            nextPairUrl = nextPair is not null
-                ? Url.Action(
-                    nameof(Index),
-                    new
-                    {
-                        leftBibId = nextPair.LeftBibId,
-                        rightBibId = nextPair.RightBibId
-                    })
-                : Url.Action(nameof(Index));
-
-            hasNextPair = nextPair is not null;
-        }
-
-        nextPairUrl ??= Url.Action("Index", "Pairs");
-        nextPairUrl ??= "/";
+        var navigation = await postDecisionNavigationService.GetNavigationAsync(
+            userEmail,
+            isReReview,
+            (leftBibId, rightBibId),
+            (nextLeftBibId, nextRightBibId) => Url.Action(nameof(Index), new { leftBibId = nextLeftBibId, rightBibId = nextRightBibId }),
+            () => Url.Action(nameof(Index)),
+            () => Url.Action("Index", "Decisions"),
+            () => Url.Action("Index", "Pairs"));
 
         return Ok(new
         {
-            nextPairUrl,
-            hasNextPair,
-            reReview = isReReview
+            nextPairUrl = navigation.NextPairUrl,
+            hasNextPair = navigation.HasNextPair,
+            reReview = navigation.ReReview
         });
-    }
-
-    private async Task<ReviewPair?> GetReviewPairAsync(string userEmail, int? leftBibId, int? rightBibId)
-    {
-        if (leftBibId is null || rightBibId is null)
-        {
-            var filters = await pairFilterStore.GetAsync(userEmail);
-            var nextPair = (await repository.GetAsync(
-                    userEmail,
-                    filters?.TomId,
-                    filters?.MatchType,
-                    filters?.HasHolds))
-                .FirstOrDefault();
-
-            return nextPair is null
-                ? null
-                : new ReviewPair(
-                    nextPair.LeftBibId,
-                    nextPair.RightBibId,
-                    nextPair.Clone(),
-                    null);
-        }
-
-        var pair = await repository.GetByBibIdsAsync(leftBibId.Value, rightBibId.Value, userEmail);
-        if (pair is not null)
-        {
-            return new ReviewPair(leftBibId.Value, rightBibId.Value, pair.Clone(), null);
-        }
-
-        var existingDecision = await decisionStore.GetAsync(userEmail, leftBibId.Value, rightBibId.Value);
-        return existingDecision is null
-            ? null
-            : new ReviewPair(
-                leftBibId.Value,
-                rightBibId.Value,
-                existingDecision.Pair.Clone(),
-                new ReviewDecision(existingDecision.Action));
     }
 
     private static PairDecision CreateDecisionFromPair(BibDupePair pair, BibDupePairAction action) => new()
@@ -199,12 +108,4 @@ public class ReviewController(
         Pair = pair.Clone(),
         Action = action
     };
-
-    private sealed record ReviewPair(
-        int LeftBibId,
-        int RightBibId,
-        BibDupePair Pair,
-        ReviewDecision? ExistingDecision);
-
-    private sealed record ReviewDecision(BibDupePairAction Action);
 }
