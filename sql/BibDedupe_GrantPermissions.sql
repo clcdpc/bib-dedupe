@@ -25,6 +25,7 @@ DECLARE @ContainedUserPassword NVARCHAR(256) = N'ChangeMe_StrongPassword!'; -- u
 DECLARE @GrantHangfireSchemaManagement BIT = 0; -- set to 1 only when this principal must run Hangfire schema bootstrap/upgrade
 DECLARE @PolarisDatabaseName SYSNAME = N'Polaris';
 DECLARE @ContainedUserSid VARBINARY(85) = NULL;
+DECLARE @ContainedPasswordLiteral NVARCHAR(520) = N'N''' + REPLACE(@ContainedUserPassword, '''', '''''') + N'''';
 
 IF DB_ID(@DatabaseName) IS NULL
     THROW 50001, 'Target database does not exist.', 1;
@@ -38,7 +39,7 @@ BEGIN
     ELSE IF @PrincipalType = N''EXTERNAL''
         EXEC(N''CREATE USER '' + QUOTENAME(@PrincipalName) + N'' FROM EXTERNAL PROVIDER'');
     ELSE IF @PrincipalType = N''CONTAINED''
-        EXEC(N''CREATE USER '' + QUOTENAME(@PrincipalName) + N'' WITH PASSWORD = N'''''' + REPLACE(@ContainedUserPassword, '''''''', '''''''''''') + N'''''''');
+        EXEC(N''CREATE USER '' + QUOTENAME(@PrincipalName) + N'' WITH PASSWORD = '' + @ContainedPasswordLiteral);
     ELSE
         THROW 50002, ''Unsupported @PrincipalType. Use LOGIN, EXTERNAL, or CONTAINED.'', 1;
 END
@@ -67,12 +68,12 @@ IF @GrantHangfireSchemaManagement = 1 AND IS_ROLEMEMBER(N''db_ddladmin'', @Princ
 
 EXEC sys.sp_executesql
     @Sql,
-    N'@PrincipalName SYSNAME, @PrincipalType NVARCHAR(20), @ContainedUserPassword NVARCHAR(256), @GrantHangfireSchemaManagement BIT, @ContainedUserSidOut VARBINARY(85) OUTPUT',
+    N'@PrincipalName SYSNAME, @PrincipalType NVARCHAR(20), @GrantHangfireSchemaManagement BIT, @ContainedUserSidOut VARBINARY(85) OUTPUT, @ContainedPasswordLiteral NVARCHAR(520)',
     @PrincipalName = @PrincipalName,
     @PrincipalType = @PrincipalType,
-    @ContainedUserPassword = @ContainedUserPassword,
     @GrantHangfireSchemaManagement = @GrantHangfireSchemaManagement,
-    @ContainedUserSidOut = @ContainedUserSid OUTPUT;
+    @ContainedUserSidOut = @ContainedUserSid OUTPUT,
+    @ContainedPasswordLiteral = @ContainedPasswordLiteral;
 
 IF DB_ID(@PolarisDatabaseName) IS NULL
     THROW 50003, 'Polaris database does not exist.', 1;
@@ -91,8 +92,7 @@ BEGIN
             THROW 50005, ''Contained user SID could not be resolved from target database.'', 1;
 
         EXEC(N''CREATE USER '' + QUOTENAME(@PrincipalName)
-            + N'' WITH PASSWORD = N'''''' + REPLACE(@ContainedUserPassword, '''''''', '''''''''''') + N'''''''', SID = ''
-            + CONVERT(NVARCHAR(170), @ContainedUserSid, 1));
+            + N'' WITH PASSWORD = '' + @ContainedPasswordLiteral + N'', SID = '' + CONVERT(NVARCHAR(170), @ContainedUserSid, 1));
     END
     ELSE
         THROW 50004, ''Unsupported @PrincipalType. Use LOGIN, EXTERNAL, or CONTAINED.'', 1;
@@ -161,8 +161,8 @@ DEALLOCATE nested_module_cursor;
 
 EXEC sys.sp_executesql
     @PolarisSql,
-    N'@PrincipalName SYSNAME, @PrincipalType NVARCHAR(20), @ContainedUserPassword NVARCHAR(256), @ContainedUserSid VARBINARY(85)',
+    N'@PrincipalName SYSNAME, @PrincipalType NVARCHAR(20), @ContainedUserSid VARBINARY(85), @ContainedPasswordLiteral NVARCHAR(520)',
     @PrincipalName = @PrincipalName,
     @PrincipalType = @PrincipalType,
-    @ContainedUserPassword = @ContainedUserPassword,
-    @ContainedUserSid = @ContainedUserSid;
+    @ContainedUserSid = @ContainedUserSid,
+    @ContainedPasswordLiteral = @ContainedPasswordLiteral;
