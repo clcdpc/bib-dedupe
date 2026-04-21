@@ -11,8 +11,7 @@ public class SqlUserAuthorizationService(IConfiguration config) : IUserAuthoriza
 {
     private readonly string? _connectionString = config.GetConnectionString("BibDedupeDb");
 
-    private const string Query =
-        "SELECT Claim FROM BibDedupe.UserClaims WHERE UserEmail = @Email";
+    private const string Query = "exec clcdb.BibDedupe.GetClaims @Email";
 
     public async Task<bool> IsAuthorizedAsync(string email)
     {
