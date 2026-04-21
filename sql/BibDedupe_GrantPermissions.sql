@@ -90,7 +90,7 @@ WITH SeedModules AS (
     SELECT sm.ObjectId
     FROM SeedModules sm
     WHERE sm.ObjectId IS NOT NULL
-    UNION
+    UNION ALL
     SELECT sed.referenced_id
     FROM DependencyTree dt
     JOIN sys.sql_expression_dependencies sed ON sed.referencing_id = dt.ObjectId
@@ -100,7 +100,8 @@ WITH SeedModules AS (
 )
 SELECT DISTINCT QUOTENAME(OBJECT_SCHEMA_NAME(dt.ObjectId)) + N''.'' + QUOTENAME(OBJECT_NAME(dt.ObjectId))
 FROM DependencyTree dt
-WHERE dt.ObjectId IS NOT NULL;
+WHERE dt.ObjectId IS NOT NULL
+OPTION (MAXRECURSION 100);
 
 OPEN nested_module_cursor;
 FETCH NEXT FROM nested_module_cursor INTO @ModuleName;
