@@ -82,6 +82,8 @@ END
 
 -- Per-object permissions used by BibDedupe cross-database queries and merge workflow.
 EXEC(N''GRANT SELECT ON OBJECT::[Polaris].[BibliographicRecords] TO '' + QUOTENAME(@PrincipalName));
+EXEC(N''GRANT SELECT ON OBJECT::[Polaris].[MARCTypeOfMaterial] TO '' + QUOTENAME(@PrincipalName));
+EXEC(N''GRANT SELECT ON OBJECT::[Polaris].[SysHoldRequests] TO '' + QUOTENAME(@PrincipalName));
 EXEC(N''GRANT SELECT ON OBJECT::[Polaris].[PolarisUsers] TO '' + QUOTENAME(@PrincipalName));
 EXEC(N''GRANT SELECT ON OBJECT::[Polaris].[GroupUsers] TO '' + QUOTENAME(@PrincipalName));
 EXEC(N''GRANT SELECT ON OBJECT::[Polaris].[Groups] TO '' + QUOTENAME(@PrincipalName));
