@@ -114,9 +114,13 @@ namespace Clc.BibDedupe.Web
                 .AddSingleton<IHttpContextAccessor, HttpContextAccessor>()
                 .AddSingleton<ICurrentPairStore, SessionCurrentPairStore>()
                 .AddSingleton<IPairFilterStore, SessionPairFilterStore>()
-                .AddSingleton<IBibliographicLinkBuilder, BibliographicLinkBuilder>();
+                .AddSingleton<IBibliographicLinkBuilder, BibliographicLinkBuilder>()
+                .AddScoped<IUserRoleClaimsAugmenter, UserRoleClaimsAugmenter>();
 
             builder.Services
+                .AddScoped<INextPairResolver, NextPairResolver>()
+                .AddScoped<IReviewPageService, ReviewPageService>()
+                .AddScoped<IPostDecisionNavigationService, PostDecisionNavigationService>()
                 .AddScoped<IDecisionSubmissionService, DecisionSubmissionService>()
                 .AddTransient<DecisionProcessingJob>()
                 .AddTransient<PairAssignmentCleanupJob>();
@@ -126,13 +130,13 @@ namespace Clc.BibDedupe.Web
 
             builder.Services.PostConfigure<OpenIdConnectOptions>(OpenIdConnectDefaults.AuthenticationScheme, options =>
             {
-                var previous = options.Events.OnRedirectToIdentityProvider;
+                var previousRedirect = options.Events.OnRedirectToIdentityProvider;
 
                 options.Events.OnRedirectToIdentityProvider = async context =>
                 {
-                    if (previous is not null)
+                    if (previousRedirect is not null)
                     {
-                        await previous(context);
+                        await previousRedirect(context);
                     }
 
                     if (context.Properties?.Items.TryGetValue("prompt", out var prompt) == true)
@@ -140,6 +144,7 @@ namespace Clc.BibDedupe.Web
                         context.ProtocolMessage.Prompt = prompt;
                     }
                 };
+
             });
 
             builder.Services.Configure<CookieAuthenticationOptions>(CookieAuthenticationDefaults.AuthenticationScheme, options =>
