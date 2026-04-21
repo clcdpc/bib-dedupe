@@ -48,7 +48,7 @@ Copy-Item src/Clc.BibDedupe.Web/Config/settings.json.template src/Clc.BibDedupe.
 Then edit `settings.json` with your values:
 
 - `AzureAd`: Tenant/client settings for authentication.
-- `ConnectionStrings.BibDedupeDb`: SQL Server connection string.
+- `ConnectionStrings.BibDedupeDb`: SQL Server connection string for the app's main data access and Hangfire persistence.
 - `PairAssignmentCleanup.MinimumAssignmentAge`: Age threshold for cleaning stale assignments.
 - `AuthorizedUsers`: Optional list of allowed user emails (if omitted/empty, SQL-based auth service is used).
 - `LeapBibLinkFormat`: URL format for rendering bib links.
@@ -60,10 +60,10 @@ Run the initialization script against your SQL Server database:
 
 ```powershell
 # Example using sqlcmd
-sqlcmd -S <server> -d <database> -i sql/BibDedupe_Initialize.sql
+sqlcmd -S <server> -i sql/BibDedupe_Initialize.sql
 ```
 
-This script creates/updates the `BibDedupe` schema, tables, constraints, and indexes in an idempotent way.
+This script creates the `clcdb` database if needed, switches context to `clcdb`, and then creates/updates the `BibDedupe` schema, tables, constraints, and indexes in an idempotent way.
 
 ### 4) (Optional) Populate candidate pairs
 

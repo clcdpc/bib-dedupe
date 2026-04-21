@@ -1,6 +1,30 @@
 -- Idempotent initialization/upgrade script for BibDedupe schema and objects.
 -- Safe to run repeatedly without dropping existing data.
 
+IF DB_ID('clcdb') IS NULL
+    CREATE DATABASE [clcdb];
+GO
+
+USE [clcdb];
+GO
+
+-- Polaris compatibility shim:
+-- Some Polaris indexing procedures reference IDX_AssignBibliographicRecordsPrimaryTypeOfMaterial
+-- without schema qualification. Ensure a dbo synonym exists in Polaris DB so unqualified calls resolve.
+IF DB_ID(N'Polaris') IS NOT NULL
+BEGIN
+    EXEC [Polaris].sys.sp_executesql N'
+    IF OBJECT_ID(N''dbo.IDX_AssignBibliographicRecordsPrimaryTypeOfMaterial'', N''P'') IS NULL
+       AND OBJECT_ID(N''dbo.IDX_AssignBibliographicRecordsPrimaryTypeOfMaterial'', N''SN'') IS NULL
+       AND OBJECT_ID(N''Polaris.IDX_AssignBibliographicRecordsPrimaryTypeOfMaterial'', N''P'') IS NOT NULL
+    BEGIN
+        CREATE SYNONYM dbo.IDX_AssignBibliographicRecordsPrimaryTypeOfMaterial
+            FOR Polaris.IDX_AssignBibliographicRecordsPrimaryTypeOfMaterial;
+    END
+    ';
+END
+GO
+
 IF SCHEMA_ID('BibDedupe') IS NULL
     EXEC('CREATE SCHEMA BibDedupe');
 GO
@@ -524,13 +548,201 @@ CREATE OR ALTER PROCEDURE BibDedupe.MergePair
     @KeepBibId INT,
     @DeleteBibId INT,
     @UserEmail NVARCHAR(256),
-    @ActionId INT
+    @ActionId INT,
+    @LogonBranchId INT = 1,
+    @LogonUserId INT = 1,
+    @LogonWorkstationId INT = 1
 AS
 BEGIN
     SET NOCOUNT ON;
 
-    INSERT INTO BibDedupe.PairDecisions (DecisionTimestamp, UserEmail, KeptBibId, DeletedBibId, ActionId)
-    VALUES (SYSDATETIME(), @UserEmail, @KeepBibId, @DeleteBibId, @ActionId);
+    DECLARE @retainedTags TABLE
+    (
+        RetainedTagRowId INT IDENTITY(1,1) NOT NULL,
+        BibliographicTagID INT,
+        TagNumber INT,
+        IndicatorOne CHAR(1),
+        IndicatorTwo CHAR(1),
+        Subfield CHAR(1),
+        Data NVARCHAR(MAX),
+        AuthorizingRecordID INT
+    );
+
+    INSERT INTO @retainedTags
+    EXEC [Polaris].sys.sp_executesql
+        N'EXEC Polaris.Cat_RetainBibRecordDataByID @deleteBibRecordId, NULL, @logonBranchId, @logonUserId, @logonWorkstationId;',
+        N'@deleteBibRecordId INT, @logonBranchId INT, @logonUserId INT, @logonWorkstationId INT',
+        @deleteBibRecordId = @DeleteBibId,
+        @logonBranchId = @LogonBranchId,
+        @logonUserId = @LogonUserId,
+        @logonWorkstationId = @LogonWorkstationId;
+
+    DECLARE @tagId INT;
+    DECLARE @isUnindexed BIT = 0;
+    DECLARE tagCursor CURSOR LOCAL FAST_FORWARD FOR
+    SELECT DISTINCT rt.BibliographicTagID
+    FROM @retainedTags rt
+    ORDER BY rt.BibliographicTagID;
+
+    BEGIN TRY
+        EXEC [Polaris].sys.sp_executesql
+            N'EXEC Polaris.UnIndexBib @keepBibRecordId;',
+            N'@keepBibRecordId INT',
+            @keepBibRecordId = @KeepBibId;
+        SET @isUnindexed = 1;
+
+        BEGIN TRANSACTION;
+
+        OPEN tagCursor;
+        FETCH NEXT FROM tagCursor INTO @tagId;
+        WHILE @@FETCH_STATUS = 0
+        BEGIN
+            DECLARE @tagNumber INT;
+            DECLARE @newSequence INT;
+            DECLARE @matchingTagMaxSequence INT;
+            DECLARE @recordMaxSequence INT;
+
+            SELECT TOP 1 @tagNumber = rt.TagNumber
+            FROM @retainedTags rt
+            WHERE rt.BibliographicTagID = @tagId;
+
+            SELECT @matchingTagMaxSequence = MAX(bt.Sequence)
+            FROM Polaris.Polaris.BibliographicTags bt
+            WHERE bt.BibliographicRecordID = @KeepBibId
+              AND bt.TagNumber = @tagNumber;
+
+            SELECT @recordMaxSequence = MAX(bt.Sequence)
+            FROM Polaris.Polaris.BibliographicTags bt
+            WHERE bt.BibliographicRecordID = @KeepBibId;
+
+            SET @newSequence = COALESCE(@matchingTagMaxSequence + 1, @recordMaxSequence + 1, 1);
+
+            UPDATE Polaris.Polaris.BibliographicTags
+            SET Sequence = Sequence + 1
+            WHERE BibliographicRecordID = @KeepBibId
+              AND Sequence >= @newSequence;
+
+            INSERT INTO Polaris.Polaris.BibliographicTags
+            SELECT TOP 1 @KeepBibId, @newSequence, rt.TagNumber, rt.IndicatorOne, rt.IndicatorTwo, rt.AuthorizingRecordID
+            FROM @retainedTags rt
+            WHERE rt.BibliographicTagID = @tagId;
+
+            DECLARE @newTagId INT = CAST(SCOPE_IDENTITY() AS INT);
+            DECLARE @subfield CHAR(1);
+            DECLARE @data NVARCHAR(MAX);
+            DECLARE @subfieldSequence INT = 1;
+
+            DECLARE subfieldCursor CURSOR LOCAL FAST_FORWARD FOR
+            SELECT rt.Subfield, rt.Data
+            FROM @retainedTags rt
+            WHERE rt.BibliographicTagID = @tagId
+            ORDER BY rt.RetainedTagRowId;
+
+            OPEN subfieldCursor;
+            FETCH NEXT FROM subfieldCursor INTO @subfield, @data;
+            WHILE @@FETCH_STATUS = 0
+            BEGIN
+                INSERT INTO Polaris.Polaris.BibliographicSubfields
+                SELECT @newTagId, @subfieldSequence, @subfield, @data, 0;
+
+                SET @subfieldSequence = @subfieldSequence + 1;
+                FETCH NEXT FROM subfieldCursor INTO @subfield, @data;
+            END
+            CLOSE subfieldCursor;
+            DEALLOCATE subfieldCursor;
+
+            FETCH NEXT FROM tagCursor INTO @tagId;
+        END
+        CLOSE tagCursor;
+        DEALLOCATE tagCursor;
+
+        EXEC [Polaris].sys.sp_executesql
+            N'EXEC Polaris.Cat_ReassignBibRecordLinks @keepBibRecordId, @deleteBibRecordId, @logonBranchId, @logonUserId, @logonWorkstationId;',
+            N'@keepBibRecordId INT, @deleteBibRecordId INT, @logonBranchId INT, @logonUserId INT, @logonWorkstationId INT',
+            @keepBibRecordId = @KeepBibId,
+            @deleteBibRecordId = @DeleteBibId,
+            @logonBranchId = @LogonBranchId,
+            @logonUserId = @LogonUserId,
+            @logonWorkstationId = @LogonWorkstationId;
+
+        DECLARE @recordDeleted BIT;
+        DECLARE @recordMarkedForDeletion BIT;
+        DECLARE @widowList NVARCHAR(MAX);
+
+        EXEC [Polaris].sys.sp_executesql
+            N'EXEC Polaris.Cat_DeleteBibRecordProcessing
+                @deleteBibRecordId, @logonBranchId, @logonUserId, @logonWorkstationId,
+                @keepBibRecordId, NULL, @recordDeleted OUTPUT, @recordMarkedForDeletion OUTPUT, @widowList OUTPUT;',
+            N'@deleteBibRecordId INT, @logonBranchId INT, @logonUserId INT, @logonWorkstationId INT, @keepBibRecordId INT, @recordDeleted BIT OUTPUT, @recordMarkedForDeletion BIT OUTPUT, @widowList NVARCHAR(MAX) OUTPUT',
+            @deleteBibRecordId = @DeleteBibId,
+            @logonBranchId = @LogonBranchId,
+            @logonUserId = @LogonUserId,
+            @logonWorkstationId = @LogonWorkstationId,
+            @keepBibRecordId = @KeepBibId,
+            @recordDeleted = @recordDeleted OUTPUT,
+            @recordMarkedForDeletion = @recordMarkedForDeletion OUTPUT,
+            @widowList = @widowList OUTPUT;
+
+        INSERT INTO BibDedupe.PairDecisions (DecisionTimestamp, UserEmail, KeptBibId, DeletedBibId, ActionId)
+        VALUES (SYSDATETIME(), @UserEmail, @KeepBibId, @DeleteBibId, @ActionId);
+
+        COMMIT TRANSACTION;
+    END TRY
+    BEGIN CATCH
+        IF CURSOR_STATUS('local', 'subfieldCursor') > -1
+        BEGIN
+            CLOSE subfieldCursor;
+        END
+        IF CURSOR_STATUS('local', 'subfieldCursor') > -2
+        BEGIN
+            DEALLOCATE subfieldCursor;
+        END
+
+        IF CURSOR_STATUS('local', 'tagCursor') > -1
+        BEGIN
+            CLOSE tagCursor;
+        END
+        IF CURSOR_STATUS('local', 'tagCursor') > -2
+        BEGIN
+            DEALLOCATE tagCursor;
+        END
+
+        IF @@TRANCOUNT > 0
+            ROLLBACK TRANSACTION;
+
+        IF @isUnindexed = 1
+        BEGIN
+            BEGIN TRY
+                EXEC [Polaris].sys.sp_executesql
+                    N'EXEC Polaris.IndexBib @keepBibRecordId;',
+                    N'@keepBibRecordId INT',
+                    @keepBibRecordId = @KeepBibId;
+            END TRY
+            BEGIN CATCH
+                -- keep original merge error as the thrown error
+            END CATCH
+        END
+
+        DECLARE @ErrorMessage NVARCHAR(4000) = ERROR_MESSAGE();
+        DECLARE @ErrorSeverity INT = ERROR_SEVERITY();
+        DECLARE @ErrorState INT = ERROR_STATE();
+        RAISERROR(@ErrorMessage, @ErrorSeverity, @ErrorState);
+        RETURN;
+    END CATCH
+
+    IF @isUnindexed = 1
+    BEGIN
+        BEGIN TRY
+            EXEC [Polaris].sys.sp_executesql
+                N'EXEC Polaris.IndexBib @keepBibRecordId;',
+                N'@keepBibRecordId INT',
+                @keepBibRecordId = @KeepBibId;
+        END TRY
+        BEGIN CATCH
+            -- Merge has already committed at this point; do not rethrow and report a false merge failure.
+            PRINT CONCAT('Warning: Polaris.IndexBib failed after merge commit for bib ', @KeepBibId, '. Error: ', ERROR_MESSAGE());
+        END CATCH
+    END
 END
 GO
 
