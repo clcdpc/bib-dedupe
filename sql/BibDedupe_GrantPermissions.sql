@@ -22,7 +22,9 @@ DECLARE @DatabaseName SYSNAME = N'clcdb';
 DECLARE @PrincipalName SYSNAME = N'REPLACE_ME';
 DECLARE @PrincipalType NVARCHAR(20) = N'LOGIN'; -- LOGIN | EXTERNAL | CONTAINED
 DECLARE @ContainedUserPassword NVARCHAR(256) = N'ChangeMe_StrongPassword!'; -- used only for CONTAINED
+DECLARE @GrantHangfireSchemaManagement BIT = 0; -- set to 1 only when this principal must run Hangfire schema bootstrap/upgrade
 DECLARE @PolarisDatabaseName SYSNAME = N'Polaris';
+DECLARE @ContainedUserSid VARBINARY(85) = NULL;
 
 IF DB_ID(@DatabaseName) IS NULL
     THROW 50001, 'Target database does not exist.', 1;
@@ -36,9 +38,16 @@ BEGIN
     ELSE IF @PrincipalType = N''EXTERNAL''
         EXEC(N''CREATE USER '' + QUOTENAME(@PrincipalName) + N'' FROM EXTERNAL PROVIDER'');
     ELSE IF @PrincipalType = N''CONTAINED''
-        EXEC(N''CREATE USER '' + QUOTENAME(@PrincipalName) + N'' WITH PASSWORD = '' + QUOTENAME(@ContainedUserPassword, ''''''''));
+        EXEC(N''CREATE USER '' + QUOTENAME(@PrincipalName) + N'' WITH PASSWORD = N'''''' + REPLACE(@ContainedUserPassword, '''''''', '''''''''''') + N'''''''');
     ELSE
         THROW 50002, ''Unsupported @PrincipalType. Use LOGIN, EXTERNAL, or CONTAINED.'', 1;
+END
+
+IF @PrincipalType = N''CONTAINED''
+BEGIN
+    SELECT @ContainedUserSidOut = dp.sid
+    FROM sys.database_principals dp
+    WHERE dp.name = @PrincipalName;
 END
 
 -- Core runtime access for BibDedupe + Hangfire tables.
@@ -51,17 +60,19 @@ IF IS_ROLEMEMBER(N''db_datawriter'', @PrincipalName) <> 1
 -- Table-valued functions and any stored procedures in BibDedupe schema.
 EXEC(N''GRANT EXECUTE ON SCHEMA::[BibDedupe] TO '' + QUOTENAME(@PrincipalName));
 
--- Hangfire SQL storage initial schema creation/upgrade requires elevated DDL rights.
-IF IS_ROLEMEMBER(N''db_ddladmin'', @PrincipalName) <> 1
+-- Optional: Hangfire SQL storage initial schema creation/upgrade requires elevated DDL rights.
+IF @GrantHangfireSchemaManagement = 1 AND IS_ROLEMEMBER(N''db_ddladmin'', @PrincipalName) <> 1
     EXEC(N''ALTER ROLE [db_ddladmin] ADD MEMBER '' + QUOTENAME(@PrincipalName));
 ';
 
 EXEC sys.sp_executesql
     @Sql,
-    N'@PrincipalName SYSNAME, @PrincipalType NVARCHAR(20), @ContainedUserPassword NVARCHAR(256)',
+    N'@PrincipalName SYSNAME, @PrincipalType NVARCHAR(20), @ContainedUserPassword NVARCHAR(256), @GrantHangfireSchemaManagement BIT, @ContainedUserSidOut VARBINARY(85) OUTPUT',
     @PrincipalName = @PrincipalName,
     @PrincipalType = @PrincipalType,
-    @ContainedUserPassword = @ContainedUserPassword;
+    @ContainedUserPassword = @ContainedUserPassword,
+    @GrantHangfireSchemaManagement = @GrantHangfireSchemaManagement,
+    @ContainedUserSidOut = @ContainedUserSid OUTPUT;
 
 IF DB_ID(@PolarisDatabaseName) IS NULL
     THROW 50003, 'Polaris database does not exist.', 1;
@@ -75,7 +86,14 @@ BEGIN
     ELSE IF @PrincipalType = N''EXTERNAL''
         EXEC(N''CREATE USER '' + QUOTENAME(@PrincipalName) + N'' FROM EXTERNAL PROVIDER'');
     ELSE IF @PrincipalType = N''CONTAINED''
-        EXEC(N''CREATE USER '' + QUOTENAME(@PrincipalName) + N'' WITH PASSWORD = '' + QUOTENAME(@ContainedUserPassword, ''''''''));
+    BEGIN
+        IF @ContainedUserSid IS NULL
+            THROW 50005, ''Contained user SID could not be resolved from target database.'', 1;
+
+        EXEC(N''CREATE USER '' + QUOTENAME(@PrincipalName)
+            + N'' WITH PASSWORD = N'''''' + REPLACE(@ContainedUserPassword, '''''''', '''''''''''') + N'''''''', SID = ''
+            + CONVERT(NVARCHAR(170), @ContainedUserSid, 1));
+    END
     ELSE
         THROW 50004, ''Unsupported @PrincipalType. Use LOGIN, EXTERNAL, or CONTAINED.'', 1;
 END
@@ -101,49 +119,50 @@ EXEC(N''GRANT EXECUTE ON OBJECT::[Polaris].[IndexBib] TO '' + QUOTENAME(@Princip
 -- Also grant EXECUTE on nested modules referenced by the seeded entry procedures.
 DECLARE @ModuleName NVARCHAR(517);
 
-    DECLARE nested_module_cursor CURSOR LOCAL FAST_FORWARD FOR
-    WITH SeedModules AS (
-        SELECT OBJECT_ID(N''[Polaris].[Cat_RetainBibRecordDataByID]'') AS ObjectId
-        UNION ALL SELECT OBJECT_ID(N''[Polaris].[UnIndexBib]'')
-        UNION ALL SELECT OBJECT_ID(N''[Polaris].[Cat_ReassignBibRecordLinks]'')
-        UNION ALL SELECT OBJECT_ID(N''[Polaris].[Cat_DeleteBibRecordProcessing]'')
-        UNION ALL SELECT OBJECT_ID(N''[Polaris].[IndexBib]'')
-    ), DependencyTree AS (
-        SELECT sm.ObjectId
-        FROM SeedModules sm
-        WHERE sm.ObjectId IS NOT NULL
+DECLARE nested_module_cursor CURSOR LOCAL FAST_FORWARD FOR
+WITH SeedModules AS (
+    SELECT OBJECT_ID(N''[Polaris].[Cat_RetainBibRecordDataByID]'') AS ObjectId
+    UNION ALL SELECT OBJECT_ID(N''[Polaris].[UnIndexBib]'')
+    UNION ALL SELECT OBJECT_ID(N''[Polaris].[Cat_ReassignBibRecordLinks]'')
+    UNION ALL SELECT OBJECT_ID(N''[Polaris].[Cat_DeleteBibRecordProcessing]'')
+    UNION ALL SELECT OBJECT_ID(N''[Polaris].[IndexBib]'')
+), DependencyTree AS (
+    SELECT sm.ObjectId
+    FROM SeedModules sm
+    WHERE sm.ObjectId IS NOT NULL
 
-        UNION
+    UNION
 
-        SELECT sed.referenced_id
-        FROM DependencyTree dt
-        JOIN sys.sql_expression_dependencies sed
-            ON sed.referencing_id = dt.ObjectId
-        JOIN sys.objects o
-            ON o.object_id = sed.referenced_id
-        WHERE sed.referenced_id IS NOT NULL
-          AND o.type IN (N''P'', N''PC'', N''FN'', N''IF'', N''TF'', N''FS'', N''FT'')
-    )
-    SELECT DISTINCT QUOTENAME(OBJECT_SCHEMA_NAME(dt.ObjectId)) + N''.'' + QUOTENAME(OBJECT_NAME(dt.ObjectId)) AS ModuleName
+    SELECT sed.referenced_id
     FROM DependencyTree dt
-    WHERE dt.ObjectId IS NOT NULL;
+    JOIN sys.sql_expression_dependencies sed
+        ON sed.referencing_id = dt.ObjectId
+    JOIN sys.objects o
+        ON o.object_id = sed.referenced_id
+    WHERE sed.referenced_id IS NOT NULL
+      AND o.type IN (N''P'', N''PC'', N''FN'', N''IF'', N''TF'', N''FS'', N''FT'')
+)
+SELECT DISTINCT QUOTENAME(OBJECT_SCHEMA_NAME(dt.ObjectId)) + N''.'' + QUOTENAME(OBJECT_NAME(dt.ObjectId)) AS ModuleName
+FROM DependencyTree dt
+WHERE dt.ObjectId IS NOT NULL;
 
-    OPEN nested_module_cursor;
+OPEN nested_module_cursor;
 
+FETCH NEXT FROM nested_module_cursor INTO @ModuleName;
+WHILE @@FETCH_STATUS = 0
+BEGIN
+    EXEC(N''GRANT EXECUTE ON OBJECT::'' + @ModuleName + N'' TO '' + QUOTENAME(@PrincipalName));
     FETCH NEXT FROM nested_module_cursor INTO @ModuleName;
-    WHILE @@FETCH_STATUS = 0
-    BEGIN
-        EXEC(N''GRANT EXECUTE ON OBJECT::'' + @ModuleName + N'' TO '' + QUOTENAME(@PrincipalName));
-        FETCH NEXT FROM nested_module_cursor INTO @ModuleName;
-    END
+END
 
-    CLOSE nested_module_cursor;
-    DEALLOCATE nested_module_cursor;
+CLOSE nested_module_cursor;
+DEALLOCATE nested_module_cursor;
 ';
 
-    EXEC sys.sp_executesql
-        @PolarisSql,
-        N'@PrincipalName SYSNAME, @PrincipalType NVARCHAR(20), @ContainedUserPassword NVARCHAR(256)',
-        @PrincipalName = @PrincipalName,
-        @PrincipalType = @PrincipalType,
-        @ContainedUserPassword = @ContainedUserPassword;
+EXEC sys.sp_executesql
+    @PolarisSql,
+    N'@PrincipalName SYSNAME, @PrincipalType NVARCHAR(20), @ContainedUserPassword NVARCHAR(256), @ContainedUserSid VARBINARY(85)',
+    @PrincipalName = @PrincipalName,
+    @PrincipalType = @PrincipalType,
+    @ContainedUserPassword = @ContainedUserPassword,
+    @ContainedUserSid = @ContainedUserSid;
