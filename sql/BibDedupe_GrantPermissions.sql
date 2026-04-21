@@ -22,7 +22,6 @@ DECLARE @DatabaseName SYSNAME = N'clcdb';
 DECLARE @PrincipalName SYSNAME = N'REPLACE_ME';
 DECLARE @PrincipalType NVARCHAR(20) = N'LOGIN'; -- LOGIN | EXTERNAL | CONTAINED
 DECLARE @ContainedUserPassword NVARCHAR(256) = N'ChangeMe_StrongPassword!'; -- used only for CONTAINED
-DECLARE @GrantHangfireSchemaManagement BIT = 0; -- set to 1 only when this principal must run Hangfire auto-schema setup
 DECLARE @PolarisDatabaseName SYSNAME = N'Polaris';
 
 IF DB_ID(@DatabaseName) IS NULL
@@ -52,18 +51,17 @@ IF IS_ROLEMEMBER(N''db_datawriter'', @PrincipalName) <> 1
 -- Table-valued functions and any stored procedures in BibDedupe schema.
 EXEC(N''GRANT EXECUTE ON SCHEMA::[BibDedupe] TO '' + QUOTENAME(@PrincipalName));
 
--- Optional: Hangfire SQL storage initial schema creation/upgrade requires elevated DDL rights.
-IF @GrantHangfireSchemaManagement = 1 AND IS_ROLEMEMBER(N''db_ddladmin'', @PrincipalName) <> 1
+-- Hangfire SQL storage initial schema creation/upgrade requires elevated DDL rights.
+IF IS_ROLEMEMBER(N''db_ddladmin'', @PrincipalName) <> 1
     EXEC(N''ALTER ROLE [db_ddladmin] ADD MEMBER '' + QUOTENAME(@PrincipalName));
 ';
 
 EXEC sys.sp_executesql
     @Sql,
-    N'@PrincipalName SYSNAME, @PrincipalType NVARCHAR(20), @ContainedUserPassword NVARCHAR(256), @GrantHangfireSchemaManagement BIT',
+    N'@PrincipalName SYSNAME, @PrincipalType NVARCHAR(20), @ContainedUserPassword NVARCHAR(256)',
     @PrincipalName = @PrincipalName,
     @PrincipalType = @PrincipalType,
-    @ContainedUserPassword = @ContainedUserPassword,
-    @GrantHangfireSchemaManagement = @GrantHangfireSchemaManagement;
+    @ContainedUserPassword = @ContainedUserPassword;
 
 IF DB_ID(@PolarisDatabaseName) IS NULL
     THROW 50003, 'Polaris database does not exist.', 1;
