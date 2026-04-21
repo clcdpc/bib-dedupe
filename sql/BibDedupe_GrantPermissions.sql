@@ -1,21 +1,17 @@
 /*
 Assign runtime permissions for BibDedupe + Polaris access.
+
+Prerequisite: the database user must already exist in both databases
+(e.g., created by DBA/staff before running this script).
 */
 
 DECLARE @DatabaseName SYSNAME = N'clcdb';
 DECLARE @PolarisDatabaseName SYSNAME = N'Polaris';
 DECLARE @PrincipalName SYSNAME = N'REPLACE_ME';
-DECLARE @PrincipalType NVARCHAR(20) = N'LOGIN'; -- LOGIN | EXTERNAL | CONTAINED
-DECLARE @ContainedUserPassword NVARCHAR(256) = N'ChangeMe_StrongPassword!'; -- only for CONTAINED
 DECLARE @GrantHangfireSchemaManagement BIT = 0; -- set to 1 for Hangfire schema bootstrap/upgrade
 
 DECLARE @PrincipalNameQuoted NVARCHAR(258) = QUOTENAME(@PrincipalName);
 DECLARE @PrincipalNameLiteral NVARCHAR(520) = N'N''' + REPLACE(@PrincipalName, '''', '''''') + N'''';
-DECLARE @ContainedPasswordLiteral NVARCHAR(520) = N'N''' + REPLACE(@ContainedUserPassword, '''', '''''') + N'''';
-DECLARE @ContainedUserSid VARBINARY(85) = NULL;
-
-IF @PrincipalType NOT IN (N'LOGIN', N'EXTERNAL', N'CONTAINED')
-    THROW 50000, 'Unsupported @PrincipalType. Use LOGIN, EXTERNAL, or CONTAINED.', 1;
 
 IF DB_ID(@DatabaseName) IS NULL
     THROW 50001, 'Target database does not exist.', 1;
@@ -28,14 +24,7 @@ DECLARE @Sql NVARCHAR(MAX);
 SET @Sql = N'USE ' + QUOTENAME(@DatabaseName) + N';
 
 IF USER_ID(' + @PrincipalNameLiteral + N') IS NULL
-BEGIN
-    IF @PrincipalType = N''LOGIN''
-        EXEC(N''CREATE USER ' + @PrincipalNameQuoted + N' FOR LOGIN ' + @PrincipalNameQuoted + N''');
-    ELSE IF @PrincipalType = N''EXTERNAL''
-        EXEC(N''CREATE USER ' + @PrincipalNameQuoted + N' FROM EXTERNAL PROVIDER'');
-    ELSE
-        EXEC(N''CREATE USER ' + @PrincipalNameQuoted + N' WITH PASSWORD = ' + @ContainedPasswordLiteral + N''');
-END
+    THROW 50002, ''Principal was not found in target database. Create the user first.'', 1;
 
 IF IS_ROLEMEMBER(N''db_datareader'', ' + @PrincipalNameLiteral + N') <> 1
     ALTER ROLE [db_datareader] ADD MEMBER ' + @PrincipalNameQuoted + N';
@@ -50,37 +39,13 @@ IF @GrantHangfireSchemaManagement = 1 AND IS_ROLEMEMBER(N''db_ddladmin'', ' + @P
 
 EXEC sys.sp_executesql
     @Sql,
-    N'@PrincipalType NVARCHAR(20), @GrantHangfireSchemaManagement BIT',
-    @PrincipalType = @PrincipalType,
+    N'@GrantHangfireSchemaManagement BIT',
     @GrantHangfireSchemaManagement = @GrantHangfireSchemaManagement;
-
-IF @PrincipalType = N'CONTAINED'
-BEGIN
-    SET @Sql = N'USE ' + QUOTENAME(@DatabaseName) + N';
-    SELECT @ContainedUserSidOut = dp.sid
-    FROM sys.database_principals dp
-    WHERE dp.name = ' + @PrincipalNameLiteral + N';';
-
-    EXEC sys.sp_executesql
-        @Sql,
-        N'@ContainedUserSidOut VARBINARY(85) OUTPUT',
-        @ContainedUserSidOut = @ContainedUserSid OUTPUT;
-
-    IF @ContainedUserSid IS NULL
-        THROW 50005, 'Contained user SID could not be resolved from target database.', 1;
-END
 
 SET @Sql = N'USE ' + QUOTENAME(@PolarisDatabaseName) + N';
 
 IF USER_ID(' + @PrincipalNameLiteral + N') IS NULL
-BEGIN
-    IF @PrincipalType = N''LOGIN''
-        EXEC(N''CREATE USER ' + @PrincipalNameQuoted + N' FOR LOGIN ' + @PrincipalNameQuoted + N''');
-    ELSE IF @PrincipalType = N''EXTERNAL''
-        EXEC(N''CREATE USER ' + @PrincipalNameQuoted + N' FROM EXTERNAL PROVIDER'');
-    ELSE
-        EXEC(N''CREATE USER ' + @PrincipalNameQuoted + N' WITH PASSWORD = ' + @ContainedPasswordLiteral + N', SID = '' + CONVERT(NVARCHAR(170), @ContainedUserSid, 1));
-END
+    THROW 50004, ''Principal was not found in Polaris database. Create the user first.'', 1;
 
 GRANT SELECT ON OBJECT::[Polaris].[BibliographicRecords] TO ' + @PrincipalNameQuoted + N';
 GRANT SELECT ON OBJECT::[Polaris].[MARCTypeOfMaterial] TO ' + @PrincipalNameQuoted + N';
@@ -131,8 +96,4 @@ END
 CLOSE nested_module_cursor;
 DEALLOCATE nested_module_cursor;';
 
-EXEC sys.sp_executesql
-    @Sql,
-    N'@PrincipalType NVARCHAR(20), @ContainedUserSid VARBINARY(85)',
-    @PrincipalType = @PrincipalType,
-    @ContainedUserSid = @ContainedUserSid;
+EXEC sys.sp_executesql @Sql;
