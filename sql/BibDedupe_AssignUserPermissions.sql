@@ -41,9 +41,30 @@ BEGIN
     SET @Sql = N'
 USE ' + QUOTENAME(@DatabaseName) + N';
 
-IF USER_ID(@LoginName) IS NULL
+DECLARE @ExistingUserSid varbinary(85) = (
+    SELECT dp.sid
+    FROM sys.database_principals dp
+    WHERE dp.name = @LoginName
+);
+DECLARE @LoginSid varbinary(85) = SUSER_SID(@LoginName);
+
+IF @ExistingUserSid IS NULL
 BEGIN
     CREATE USER ' + @QuotedLoginName + N' FOR LOGIN ' + @QuotedLoginName + N';
+END
+ELSE IF @ExistingUserSid <> @LoginSid
+BEGIN
+    IF EXISTS (
+        SELECT 1
+        FROM sys.database_principals dp
+        WHERE dp.name = @LoginName
+          AND dp.authentication_type_desc = N''DATABASE''
+    )
+    BEGIN
+        THROW 50001, ''Contained database user exists with the same name. Drop/rename that user before mapping this server login.'', 1;
+    END;
+
+    ALTER USER ' + @QuotedLoginName + N' WITH LOGIN = ' + @QuotedLoginName + N';
 END;
 
 IF IS_ROLEMEMBER(N''db_datareader'', @LoginName) <> 1
