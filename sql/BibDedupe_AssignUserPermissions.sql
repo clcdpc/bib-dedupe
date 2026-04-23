@@ -13,7 +13,11 @@
 
 DECLARE @ServerLoginName sysname = N'REPLACE_WITH_LOGIN_NAME';
 
-IF SUSER_ID(@ServerLoginName) IS NULL
+IF NOT EXISTS (
+    SELECT 1
+    FROM sys.server_principals sp
+    WHERE sp.name = @ServerLoginName
+)
 BEGIN
     THROW 50000, 'Server login not found. Create the login first, then rerun this script.', 1;
 END;
