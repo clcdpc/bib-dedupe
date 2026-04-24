@@ -13,13 +13,16 @@
 
 DECLARE @ServerLoginName sysname = N'REPLACE_WITH_LOGIN_NAME';
 
+SET @ServerLoginName = LTRIM(RTRIM(@ServerLoginName));
+SET @ServerLoginName = REPLACE(@ServerLoginName, N'\\', N'\');
+
 IF NOT EXISTS (
     SELECT 1
     FROM sys.server_principals sp
     WHERE sp.name = @ServerLoginName
 )
 BEGIN
-    THROW 50000, 'Server login not found. Create the login first, then rerun this script.', 1;
+    THROW 50000, 'Server login not found in sys.server_principals. Use the exact login name as stored on the SQL Server instance, then rerun this script.', 1;
 END;
 
 DECLARE @QuotedLoginName nvarchar(258) = QUOTENAME(@ServerLoginName);
