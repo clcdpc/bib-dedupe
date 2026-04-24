@@ -631,7 +631,7 @@ BEGIN
               AND Sequence >= @newSequence;
 
             INSERT INTO Polaris.Polaris.BibliographicTags
-            SELECT TOP 1 @KeepBibId, @newSequence, rt.TagNumber, rt.IndicatorOne, rt.IndicatorTwo, rt.TagNumber
+            SELECT TOP 1 @KeepBibId, @newSequence, rt.TagNumber, rt.IndicatorOne, rt.IndicatorTwo, rt.AuthorizingRecordID
             FROM @retainedTags rt
             WHERE rt.BibliographicTagID = @tagId;
 
@@ -693,15 +693,21 @@ BEGIN
         COMMIT TRANSACTION;
     END TRY
     BEGIN CATCH
-        IF CURSOR_STATUS('local', 'subfieldCursor') >= -1
+        IF CURSOR_STATUS('local', 'subfieldCursor') >= 0
         BEGIN
             CLOSE subfieldCursor;
+        END
+        IF CURSOR_STATUS('local', 'subfieldCursor') >= -1
+        BEGIN
             DEALLOCATE subfieldCursor;
         END
 
-        IF CURSOR_STATUS('local', 'tagCursor') >= -1
+        IF CURSOR_STATUS('local', 'tagCursor') >= 0
         BEGIN
             CLOSE tagCursor;
+        END
+        IF CURSOR_STATUS('local', 'tagCursor') >= -1
+        BEGIN
             DEALLOCATE tagCursor;
         END
 
@@ -818,8 +824,18 @@ BEGIN
             IF (@ErrorMessage IS NULL)
             BEGIN
                 SET @Succeeded = 1;
-                INSERT INTO BibDedupe.PairDecisions (DecisionTimestamp, UserEmail, KeptBibId, DeletedBibId, ActionId)
-                VALUES (SYSDATETIME(), @UserEmail, @LeftBibId, @RightBibId, @ActionId);
+
+                IF (@ActionId IN (1, 4))
+                BEGIN
+                    INSERT INTO BibDedupe.PairDecisions (DecisionTimestamp, UserEmail, KeptBibId, DeletedBibId, ActionId)
+                    VALUES (
+                        SYSDATETIME(),
+                        @UserEmail,
+                        CASE WHEN @ActionId = 4 THEN @RightBibId ELSE @LeftBibId END,
+                        CASE WHEN @ActionId = 4 THEN @LeftBibId ELSE @RightBibId END,
+                        @ActionId
+                    );
+                END
             END
         END TRY
         BEGIN CATCH
