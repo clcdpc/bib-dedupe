@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
 using Clc.BibDedupe.Web.Models;
@@ -7,12 +8,11 @@ using Dapper;
 
 namespace Clc.BibDedupe.Web.Services;
 
-public class SqlDecisionBatchHistoryService(IDbConnectionFactory factory) : IDecisionBatchHistoryService
+public class SqlDecisionBatchHistoryService(IDbConnection db) : IDecisionBatchHistoryService
 {
     public async Task<IReadOnlyList<DecisionBatchHistory>> GetHistoryAsync(string userEmail)
     {
-        using var connection = factory.Create();
-        var rows = (await connection.QueryAsync<BatchResultRow>(
+        var rows = (await db.QueryAsync<BatchResultRow>(
             @"SELECT b.BatchId, b.StartedAt, b.CompletedAt, b.FailedAt, b.FailureMessage,
                      r.ResultId, r.LeftBibId, r.RightBibId, r.ActionId, r.Succeeded, r.ErrorMessage, r.ProcessedAt
               FROM BibDedupe.DecisionBatches b
