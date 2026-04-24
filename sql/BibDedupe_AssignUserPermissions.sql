@@ -9,6 +9,7 @@
       - This script assumes the server login already exists in master.
       - It creates the corresponding database user when missing.
       - Role grants are guarded so the script can be rerun safely.
+      - Includes db_ddladmin so Hangfire can bootstrap schema objects when PrepareSchemaIfNecessary = true.
 */
 
 DECLARE @ServerLoginName sysname = N'REPLACE_WITH_LOGIN_NAME';
@@ -96,6 +97,18 @@ IF NOT EXISTS (
 )
 BEGIN
     ALTER ROLE db_datawriter ADD MEMBER ' + @QuotedLoginName + N';
+END;
+
+IF NOT EXISTS (
+    SELECT 1
+    FROM sys.database_role_members drm
+    INNER JOIN sys.database_principals roles ON roles.principal_id = drm.role_principal_id
+    INNER JOIN sys.database_principals members ON members.principal_id = drm.member_principal_id
+    WHERE roles.name = N''db_ddladmin''
+      AND members.name = @LoginName
+)
+BEGIN
+    ALTER ROLE db_ddladmin ADD MEMBER ' + @QuotedLoginName + N';
 END;
 
 GRANT EXECUTE TO ' + @QuotedLoginName + N';
