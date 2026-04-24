@@ -544,21 +544,41 @@ RETURN (
 );
 GO
 
-CREATE OR ALTER PROCEDURE BibDedupe.MergePair
+CREATE OR ALTER PROCEDURE [BibDedupe].[MergeBibs]
     @KeepBibId INT,
     @DeleteBibId INT,
     @UserEmail NVARCHAR(256),
-    @ActionId INT,
-    @LogonBranchId INT = 1,
-    @LogonUserId INT = 1,
     @LogonWorkstationId INT = 1
 AS
 BEGIN
     SET NOCOUNT ON;
 
+    declare @LogonUserId int = (
+        select pu.PolarisUserID
+        from polaris.polaris.PolarisUsers pu
+        where pu.ExternalID = @UserEmail
+    )
+
+    if (@LogonUserId is null) throw 50000, 'user email not found', 1;
+
+    declare @logonBranchId int = (
+        select branch.OrganizationID
+        from polaris.polaris.PolarisUsers pu
+        join polaris.polaris.Organizations o
+            on o.OrganizationID = pu.OrganizationID
+        join polaris.polaris.Organizations o2
+            on o2.OrganizationID = case o.OrganizationCodeID when 2 then o.OrganizationID when 3 then o.ParentOrganizationID end
+        cross apply (
+            select top 1 o3.*
+            from polaris.polaris.Organizations o3
+            where (o.OrganizationCodeID = 3 and o3.OrganizationID = o.OrganizationID) or (o.OrganizationCodeID = 2 and o3.ParentOrganizationID = o2.OrganizationID)
+            order by o3.OrganizationID
+        ) branch
+        where pu.PolarisUserID = @LogonUserId
+    )
+
     DECLARE @retainedTags TABLE
     (
-        RetainedTagRowId INT IDENTITY(1,1) NOT NULL,
         BibliographicTagID INT,
         TagNumber INT,
         IndicatorOne CHAR(1),
@@ -597,25 +617,13 @@ BEGIN
         FETCH NEXT FROM tagCursor INTO @tagId;
         WHILE @@FETCH_STATUS = 0
         BEGIN
-            DECLARE @tagNumber INT;
             DECLARE @newSequence INT;
-            DECLARE @matchingTagMaxSequence INT;
-            DECLARE @recordMaxSequence INT;
-
-            SELECT TOP 1 @tagNumber = rt.TagNumber
+            SELECT @newSequence = ISNULL(MAX(bt.Sequence), 0) + 1
             FROM @retainedTags rt
-            WHERE rt.BibliographicTagID = @tagId;
-
-            SELECT @matchingTagMaxSequence = MAX(bt.Sequence)
-            FROM Polaris.Polaris.BibliographicTags bt
+            JOIN Polaris.Polaris.BibliographicTags bt
+                ON bt.TagNumber = rt.TagNumber
             WHERE bt.BibliographicRecordID = @KeepBibId
-              AND bt.TagNumber = @tagNumber;
-
-            SELECT @recordMaxSequence = MAX(bt.Sequence)
-            FROM Polaris.Polaris.BibliographicTags bt
-            WHERE bt.BibliographicRecordID = @KeepBibId;
-
-            SET @newSequence = COALESCE(@matchingTagMaxSequence + 1, @recordMaxSequence + 1, 1);
+              AND rt.BibliographicTagID = @tagId;
 
             UPDATE Polaris.Polaris.BibliographicTags
             SET Sequence = Sequence + 1
@@ -623,7 +631,7 @@ BEGIN
               AND Sequence >= @newSequence;
 
             INSERT INTO Polaris.Polaris.BibliographicTags
-            SELECT TOP 1 @KeepBibId, @newSequence, rt.TagNumber, rt.IndicatorOne, rt.IndicatorTwo, rt.AuthorizingRecordID
+            SELECT TOP 1 @KeepBibId, @newSequence, rt.TagNumber, rt.IndicatorOne, rt.IndicatorTwo, rt.TagNumber
             FROM @retainedTags rt
             WHERE rt.BibliographicTagID = @tagId;
 
@@ -635,8 +643,7 @@ BEGIN
             DECLARE subfieldCursor CURSOR LOCAL FAST_FORWARD FOR
             SELECT rt.Subfield, rt.Data
             FROM @retainedTags rt
-            WHERE rt.BibliographicTagID = @tagId
-            ORDER BY rt.RetainedTagRowId;
+            WHERE rt.BibliographicTagID = @tagId;
 
             OPEN subfieldCursor;
             FETCH NEXT FROM subfieldCursor INTO @subfield, @data;
@@ -683,27 +690,18 @@ BEGIN
             @recordMarkedForDeletion = @recordMarkedForDeletion OUTPUT,
             @widowList = @widowList OUTPUT;
 
-        INSERT INTO BibDedupe.PairDecisions (DecisionTimestamp, UserEmail, KeptBibId, DeletedBibId, ActionId)
-        VALUES (SYSDATETIME(), @UserEmail, @KeepBibId, @DeleteBibId, @ActionId);
-
         COMMIT TRANSACTION;
     END TRY
     BEGIN CATCH
-        IF CURSOR_STATUS('local', 'subfieldCursor') > -1
+        IF CURSOR_STATUS('local', 'subfieldCursor') >= -1
         BEGIN
             CLOSE subfieldCursor;
-        END
-        IF CURSOR_STATUS('local', 'subfieldCursor') > -2
-        BEGIN
             DEALLOCATE subfieldCursor;
         END
 
-        IF CURSOR_STATUS('local', 'tagCursor') > -1
+        IF CURSOR_STATUS('local', 'tagCursor') >= -1
         BEGIN
             CLOSE tagCursor;
-        END
-        IF CURSOR_STATUS('local', 'tagCursor') > -2
-        BEGIN
             DEALLOCATE tagCursor;
         END
 
@@ -731,18 +729,10 @@ BEGIN
     END CATCH
 
     IF @isUnindexed = 1
-    BEGIN
-        BEGIN TRY
-            EXEC [Polaris].sys.sp_executesql
-                N'EXEC Polaris.IndexBib @keepBibRecordId;',
-                N'@keepBibRecordId INT',
-                @keepBibRecordId = @KeepBibId;
-        END TRY
-        BEGIN CATCH
-            -- Merge has already committed at this point; do not rethrow and report a false merge failure.
-            PRINT CONCAT('Warning: Polaris.IndexBib failed after merge commit for bib ', @KeepBibId, '. Error: ', ERROR_MESSAGE());
-        END CATCH
-    END
+        EXEC [Polaris].sys.sp_executesql
+            N'EXEC Polaris.IndexBib @keepBibRecordId;',
+            N'@keepBibRecordId INT',
+            @keepBibRecordId = @KeepBibId;
 END
 GO
 
@@ -806,19 +796,19 @@ BEGIN
         BEGIN TRY
             IF (@ActionId = 1)
             BEGIN
-                EXEC BibDedupe.MergePair @KeepBibId = @LeftBibId, @DeleteBibId = @RightBibId, @UserEmail = @UserEmail, @ActionId = @ActionId;
+                EXEC BibDedupe.MergeBibs @LeftBibId, @RightBibId, @UserEmail
             END
             ELSE IF (@ActionId = 2)
             BEGIN
-                EXEC BibDedupe.MarkNotDuplicate @LeftBibId = @LeftBibId, @RightBibId = @RightBibId, @UserEmail = @UserEmail;
+                EXEC BibDedupe.MarkNotDuplicate @LeftBibId, @RightBibId, @UserEmail;
             END
             ELSE IF (@ActionId = 3)
             BEGIN
-                EXEC BibDedupe.Skip @LeftBibId = @LeftBibId, @RightBibId = @RightBibId, @UserEmail = @UserEmail;
+                EXEC BibDedupe.Skip @LeftBibId, @RightBibId, @UserEmail;
             END
             ELSE IF (@ActionId = 4)
             BEGIN
-                EXEC BibDedupe.MergePair @KeepBibId = @RightBibId, @DeleteBibId = @LeftBibId, @UserEmail = @UserEmail, @ActionId = @ActionId;
+                EXEC BibDedupe.MergeBibs @RightBibId, @LeftBibId, @UserEmail
             END
             ELSE
             BEGIN
@@ -828,6 +818,8 @@ BEGIN
             IF (@ErrorMessage IS NULL)
             BEGIN
                 SET @Succeeded = 1;
+                INSERT INTO BibDedupe.PairDecisions (DecisionTimestamp, UserEmail, KeptBibId, DeletedBibId, ActionId)
+                VALUES (SYSDATETIME(), @UserEmail, @LeftBibId, @RightBibId, @ActionId);
             END
         END TRY
         BEGIN CATCH
@@ -862,6 +854,7 @@ BEGIN
 
     DELETE FROM BibDedupe.DecisionQueue WHERE UserEmail = @UserEmail;
 END
+
 GO
 
 CREATE OR ALTER PROCEDURE [BibDedupe].[GetClaims]
