@@ -77,9 +77,6 @@ namespace Clc.BibDedupe.Web
             {
                 builder.Services
                     .AddScoped<IDbConnection>(sp => new SqlConnection(bibDedupeConn))
-                    .AddSingleton<IDbConnectionFactory>(new SqlDbConnectionFactory(bibDedupeConn))
-                    .AddSingleton<IDecisionProcessingDbConnectionFactory>(
-                        new SqlDbConnectionFactory(bibDedupeConn))
                     .AddScoped<IBibDupePairRepository, BibDupePairRepository>()
                     .AddScoped<IDecisionStore, SqlDecisionStore>()
                     .AddScoped<IPairAssignmentStore, SqlPairAssignmentStore>()
