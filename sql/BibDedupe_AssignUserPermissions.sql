@@ -8,7 +8,7 @@
     Notes:
       - This script assumes the server login already exists in master.
       - It creates the corresponding database user when missing.
-      - Includes db_ddladmin so Hangfire can bootstrap schema objects when PrepareSchemaIfNecessary = true.
+      - Grants db_ddladmin only on clcdb so Hangfire can bootstrap schema objects when PrepareSchemaIfNecessary = true.
 */
 
 DECLARE @ServerLoginName sysname = N'REPLACE_WITH_LOGIN_NAME';
@@ -33,7 +33,8 @@ DECLARE @TargetDatabases TABLE (DatabaseName sysname PRIMARY KEY);
 INSERT INTO @TargetDatabases (DatabaseName)
 VALUES
     (N'clcdb'),
-    (N'Polaris');
+    (N'Polaris'),
+    (N'PolarisTransactions');
 
 DECLARE db_cursor CURSOR LOCAL FAST_FORWARD FOR
 SELECT d.DatabaseName
@@ -76,7 +77,10 @@ END;
 
 ALTER ROLE db_datareader ADD MEMBER ' + @QuotedLoginName + N';
 ALTER ROLE db_datawriter ADD MEMBER ' + @QuotedLoginName + N';
-ALTER ROLE db_ddladmin ADD MEMBER ' + @QuotedLoginName + N';
+' + CASE WHEN @DatabaseName = N'clcdb'
+         THEN N'ALTER ROLE db_ddladmin ADD MEMBER ' + @QuotedLoginName + N';'
+         ELSE N''
+    END + N'
 
 GRANT EXECUTE TO ' + @QuotedLoginName + N';
 ';
