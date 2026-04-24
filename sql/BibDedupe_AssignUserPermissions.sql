@@ -3,7 +3,7 @@
 
     Supports either:
       - SQL login names (e.g., bibdedupe_app)
-      - Windows/AD login names (e.g., CONTOSO\\svc-bibdedupe)
+      - Windows/AD login names (e.g., CONTOSO\svc-bibdedupe)
 
     Notes:
       - This script assumes the server login already exists in master.
@@ -12,6 +12,7 @@
 */
 
 DECLARE @ServerLoginName sysname = N'REPLACE_WITH_LOGIN_NAME';
+-- Use the login name exactly as shown in sys.server_principals (single backslash for AD logins).
 
 SET @ServerLoginName = LTRIM(RTRIM(@ServerLoginName));
 
