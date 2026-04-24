@@ -14,7 +14,6 @@
 DECLARE @ServerLoginName sysname = N'REPLACE_WITH_LOGIN_NAME';
 
 SET @ServerLoginName = LTRIM(RTRIM(@ServerLoginName));
-SET @ServerLoginName = REPLACE(@ServerLoginName, N'\\', N'\');
 
 IF NOT EXISTS (
     SELECT 1
@@ -74,12 +73,26 @@ BEGIN
     ALTER USER ' + @QuotedLoginName + N' WITH LOGIN = ' + @QuotedLoginName + N';
 END;
 
-IF IS_ROLEMEMBER(N''db_datareader'', @LoginName) <> 1
+IF NOT EXISTS (
+    SELECT 1
+    FROM sys.database_role_members drm
+    INNER JOIN sys.database_principals roles ON roles.principal_id = drm.role_principal_id
+    INNER JOIN sys.database_principals members ON members.principal_id = drm.member_principal_id
+    WHERE roles.name = N''db_datareader''
+      AND members.name = @LoginName
+)
 BEGIN
     ALTER ROLE db_datareader ADD MEMBER ' + @QuotedLoginName + N';
 END;
 
-IF IS_ROLEMEMBER(N''db_datawriter'', @LoginName) <> 1
+IF NOT EXISTS (
+    SELECT 1
+    FROM sys.database_role_members drm
+    INNER JOIN sys.database_principals roles ON roles.principal_id = drm.role_principal_id
+    INNER JOIN sys.database_principals members ON members.principal_id = drm.member_principal_id
+    WHERE roles.name = N''db_datawriter''
+      AND members.name = @LoginName
+)
 BEGIN
     ALTER ROLE db_datawriter ADD MEMBER ' + @QuotedLoginName + N';
 END;
