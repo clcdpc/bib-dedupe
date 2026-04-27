@@ -54,7 +54,15 @@ Then edit `settings.json` with your values:
 - `LeapBibLinkFormat`: URL format for rendering bib links.
 - `Papi`: Polaris API credentials/settings (optional; if missing, app falls back to bundled XML test records).
 
-### 3) Initialize the database schema
+### 3) Assign user permissions
+The application uses Polaris Permission Groups to control access. Access is granted by the group name so the groups don't need any Polaris Permissions assigned.
+
+* BibDedupe.Administrator
+* BibDedupe.Access
+
+These are essentially equivalent at this point, but this will likely be fleshed out more in the future.
+
+### 4) Initialize the database schema
 
 Run the initialization script against your SQL Server database:
 
@@ -65,13 +73,11 @@ sqlcmd -S <server> -i sql/BibDedupe_Initialize.sql
 
 This script creates the `clcdb` database if needed, switches context to `clcdb`, and then creates/updates the `BibDedupe` schema, tables, constraints, and indexes in an idempotent way.
 
-### 4) (Optional) Populate candidate pairs
+### 5) Populate candidate pairs
 
 Use `sql/populate_pairs.sql` to generate duplicate candidate pairs from Polaris bibliographic tables.
 
-> Note: this script expects a Polaris SQL schema and source bibliographic tables to be available.
-
-### 5) Restore dependencies and run
+### 6) Restore dependencies and run
 
 ```powershell
 dotnet restore src/Clc.BibDedupe.sln
@@ -80,7 +86,6 @@ dotnet run --project src/Clc.BibDedupe.Web/Clc.BibDedupe.Web.csproj
 
 By default, development profiles run on:
 
-- `http://localhost:5119`
 - `https://localhost:7077`
 
 Open the app in your browser and sign in with an authorized account.
