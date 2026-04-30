@@ -14,9 +14,14 @@ public class PostmarkEmailSender(
         var serverToken = postmarkOptions.Value.ServerToken;
         var senderEmail = notificationOptions.Value.SenderEmail;
 
-        if (string.IsNullOrWhiteSpace(serverToken) || string.IsNullOrWhiteSpace(senderEmail))
+        if (string.IsNullOrWhiteSpace(serverToken))
         {
-            return;
+            throw new InvalidOperationException("Postmark ServerToken is required to send decision batch notifications.");
+        }
+
+        if (string.IsNullOrWhiteSpace(senderEmail))
+        {
+            throw new InvalidOperationException("DecisionBatchNotifications SenderEmail is required to send decision batch notifications.");
         }
 
         var client = new PostmarkClient(serverToken);

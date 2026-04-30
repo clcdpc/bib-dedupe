@@ -34,7 +34,12 @@ public class DecisionProcessingJob(
             }
 
             await tracker.FailAsync(userEmail, failedAt, failureMessage);
-            await TryNotifyFailedAsync(userEmail, summary?.TotalDecisions ?? 0, failedAt, failureMessage);
+            await TryNotifyFailedAsync(userEmail, summary ?? new DecisionProcessingSummary
+            {
+                TotalDecisions = 0,
+                SucceededCount = 0,
+                FailedCount = 0
+            }, failedAt, failureMessage);
             throw;
         }
     }
@@ -51,11 +56,11 @@ public class DecisionProcessingJob(
         }
     }
 
-    private async Task TryNotifyFailedAsync(string userEmail, int totalDecisions, DateTimeOffset failedAt, string failureMessage)
+    private async Task TryNotifyFailedAsync(string userEmail, DecisionProcessingSummary summary, DateTimeOffset failedAt, string failureMessage)
     {
         try
         {
-            await notificationService.NotifyFailedAsync(userEmail, totalDecisions, failedAt, failureMessage);
+            await notificationService.NotifyFailedAsync(userEmail, summary, failedAt, failureMessage);
         }
         catch (Exception ex)
         {
