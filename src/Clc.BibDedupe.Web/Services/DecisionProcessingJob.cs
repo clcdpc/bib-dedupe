@@ -20,7 +20,7 @@ public class DecisionProcessingJob(
             summary = await executor.ExecuteAsync(userEmail);
             var completedAt = DateTimeOffset.UtcNow;
             await tracker.CompleteAsync(userEmail, completedAt);
-            await notificationService.NotifyCompletedAsync(userEmail, summary, completedAt);
+            await TryNotifyCompletedAsync(userEmail, summary, completedAt);
         }
         catch (Exception ex)
         {
@@ -34,8 +34,32 @@ public class DecisionProcessingJob(
             }
 
             await tracker.FailAsync(userEmail, failedAt, failureMessage);
-            await notificationService.NotifyFailedAsync(userEmail, summary?.TotalDecisions ?? 0, failedAt, failureMessage);
+            await TryNotifyFailedAsync(userEmail, summary?.TotalDecisions ?? 0, failedAt, failureMessage);
             throw;
+        }
+    }
+
+    private async Task TryNotifyCompletedAsync(string userEmail, DecisionProcessingSummary summary, DateTimeOffset completedAt)
+    {
+        try
+        {
+            await notificationService.NotifyCompletedAsync(userEmail, summary, completedAt);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to send completion notification for {UserEmail}", userEmail);
+        }
+    }
+
+    private async Task TryNotifyFailedAsync(string userEmail, int totalDecisions, DateTimeOffset failedAt, string failureMessage)
+    {
+        try
+        {
+            await notificationService.NotifyFailedAsync(userEmail, totalDecisions, failedAt, failureMessage);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to send failure notification for {UserEmail}", userEmail);
         }
     }
 }
