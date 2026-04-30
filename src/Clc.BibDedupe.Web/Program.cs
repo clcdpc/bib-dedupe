@@ -56,6 +56,8 @@ namespace Clc.BibDedupe.Web
                 builder.Configuration.GetSection("PairAssignmentCleanup"));
             builder.Services.Configure<BibliographicRecordLinkOptions>(options =>
                 options.UrlTemplate = builder.Configuration.GetValue<string>(BibliographicRecordLinkOptions.ConfigurationKey));
+            builder.Services.Configure<DecisionBatchNotificationOptions>(builder.Configuration.GetSection(DecisionBatchNotificationOptions.SectionName));
+            builder.Services.Configure<PostmarkOptions>(builder.Configuration.GetSection(PostmarkOptions.SectionName));
 
             if (string.IsNullOrWhiteSpace(bibDedupeConn))
             {
@@ -65,7 +67,8 @@ namespace Clc.BibDedupe.Web
                     .AddSingleton<IPairAssignmentStore, InMemoryPairAssignmentStore>()
                     .AddSingleton<IDecisionBatchTracker, InMemoryDecisionBatchTracker>()
                     .AddSingleton<IDecisionBatchHistoryService, InMemoryDecisionBatchHistoryService>()
-                    .AddSingleton<IDecisionProcessingExecutor, NoOpDecisionProcessingExecutor>();
+                    .AddSingleton<IDecisionProcessingExecutor, NoOpDecisionProcessingExecutor>()
+                    .AddSingleton<IEmailSender, NoOpEmailSender>();
 
                 builder.Services.AddHangfire(configuration => configuration
                     .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
@@ -82,7 +85,8 @@ namespace Clc.BibDedupe.Web
                     .AddScoped<IPairAssignmentStore, SqlPairAssignmentStore>()
                     .AddScoped<IDecisionBatchTracker, SqlDecisionBatchTracker>()
                     .AddScoped<IDecisionBatchHistoryService, SqlDecisionBatchHistoryService>()
-                    .AddScoped<IDecisionProcessingExecutor, SqlDecisionProcessingExecutor>();
+                    .AddScoped<IDecisionProcessingExecutor, SqlDecisionProcessingExecutor>()
+                    .AddScoped<IEmailSender, PostmarkEmailSender>();
 
                 builder.Services.AddHangfire(configuration => configuration
                     .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
@@ -119,6 +123,7 @@ namespace Clc.BibDedupe.Web
                 .AddScoped<IReviewPageService, ReviewPageService>()
                 .AddScoped<IPostDecisionNavigationService, PostDecisionNavigationService>()
                 .AddScoped<IDecisionSubmissionService, DecisionSubmissionService>()
+                .AddScoped<IDecisionBatchNotificationService, DecisionBatchNotificationService>()
                 .AddTransient<DecisionProcessingJob>()
                 .AddTransient<PairAssignmentCleanupJob>();
 

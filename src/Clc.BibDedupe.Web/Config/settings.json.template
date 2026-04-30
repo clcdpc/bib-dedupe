@@ -23,5 +23,12 @@
       "Username": "YOUR_PAPI_OVERRIDE_USERNAME",
       "Password": "YOUR_PAPI_OVERRIDE_PASSWORD"
     }
+  },
+  "DecisionBatchNotifications": {
+    "Enabled": false,
+    "SenderEmail": "noreply@example.org"
+  },
+  "Postmark": {
+    "ServerToken": "YOUR_POSTMARK_SERVER_TOKEN"
   }
 }
