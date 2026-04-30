@@ -19,14 +19,14 @@ public class DecisionBatchNotificationService(
         await emailSender.SendAsync(userEmail, "Decision batch completed", body);
     }
 
-    public async Task NotifyFailedAsync(string userEmail, DecisionProcessingSummary summary, DateTimeOffset failedAt, string failureMessage)
+    public async Task NotifyFailedAsync(string userEmail, DecisionProcessingSummary? summary, DateTimeOffset failedAt, string failureMessage)
     {
         if (!CanSend())
         {
             return;
         }
 
-        var body = BuildSummaryBody("failed", failedAt, summary, includeError: true, errorMessage: failureMessage);
+        var body = BuildFailureBody(failedAt, summary, failureMessage);
         await emailSender.SendAsync(userEmail, "Decision batch failed", body);
     }
 
@@ -51,6 +51,32 @@ Error:
         }
 
         return body;
+    }
+
+    private static string BuildFailureBody(DateTimeOffset failedAt, DecisionProcessingSummary? summary, string failureMessage)
+    {
+        var summaryBody = summary is null
+            ? """
+Summary:
+- Total decisions: unavailable
+- Succeeded: unavailable
+- Failed: unavailable
+"""
+            : $"""
+Summary:
+- Total decisions: {summary.TotalDecisions}
+- Succeeded: {summary.SucceededCount}
+- Failed: {summary.FailedCount}
+""";
+
+        return $"""
+Decision batch processing failed at {failedAt:O}.
+
+{summaryBody}
+
+Error:
+{failureMessage}
+""";
     }
 
     private bool CanSend() => options.Value.Enabled && !string.IsNullOrWhiteSpace(options.Value.SenderEmail);
