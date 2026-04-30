@@ -773,7 +773,10 @@ END
 GO
 
 CREATE OR ALTER PROCEDURE BibDedupe.ProcessDecisionBatch
-    @UserEmail NVARCHAR(256)
+    @UserEmail NVARCHAR(256),
+    @TotalDecisions INT OUTPUT,
+    @SucceededCount INT OUTPUT,
+    @FailedCount INT OUTPUT
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -784,6 +787,9 @@ BEGIN
     DECLARE @BatchId INT = NULL;
     DECLARE @Succeeded BIT;
     DECLARE @ErrorMessage NVARCHAR(1024);
+    DECLARE @Total INT = 0;
+    DECLARE @SucceededTotal INT = 0;
+    DECLARE @FailedTotal INT = 0;
 
     DECLARE decision_cursor CURSOR LOCAL FAST_FORWARD FOR
         SELECT LeftBibId, RightBibId, ActionId
@@ -854,6 +860,17 @@ BEGIN
             ORDER BY StartedAt DESC;
         END
 
+        SET @Total = @Total + 1;
+
+        IF (@Succeeded = 1)
+        BEGIN
+            SET @SucceededTotal = @SucceededTotal + 1;
+        END
+        ELSE
+        BEGIN
+            SET @FailedTotal = @FailedTotal + 1;
+        END
+
         IF (@BatchId IS NOT NULL)
         BEGIN
             INSERT INTO BibDedupe.DecisionBatchResults
@@ -869,6 +886,10 @@ BEGIN
     DEALLOCATE decision_cursor;
 
     DELETE FROM BibDedupe.DecisionQueue WHERE UserEmail = @UserEmail;
+
+    SET @TotalDecisions = @Total;
+    SET @SucceededCount = @SucceededTotal;
+    SET @FailedCount = @FailedTotal;
 END
 
 GO
