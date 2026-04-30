@@ -631,7 +631,14 @@ BEGIN
               AND Sequence >= @newSequence;
 
             INSERT INTO Polaris.Polaris.BibliographicTags
-            SELECT TOP 1 @KeepBibId, @newSequence, rt.TagNumber, rt.IndicatorOne, rt.IndicatorTwo, rt.AuthorizingRecordID
+                (BibliographicRecordID, [Sequence], TagNumber, IndicatorOne, IndicatorTwo, EffectiveTagNumber)
+            SELECT TOP 1
+                @KeepBibId,
+                @newSequence,
+                rt.TagNumber,
+                rt.IndicatorOne,
+                rt.IndicatorTwo,
+                rt.TagNumber
             FROM @retainedTags rt
             WHERE rt.BibliographicTagID = @tagId;
 
