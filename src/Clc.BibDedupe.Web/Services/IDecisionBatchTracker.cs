@@ -7,7 +7,7 @@ public interface IDecisionBatchTracker
     Task FailOrphanedPendingAsync(DateTimeOffset staleBefore, string failureMessage);
     Task<DecisionBatchStatus?> GetCurrentAsync(string userEmail);
     Task<DecisionBatchStatus> StartAsync(string userEmail, DateTimeOffset startedAt);
-    Task<DecisionBatchStatus> SetJobIdAsync(string userEmail, DateTimeOffset startedAt, string jobId);
+    Task<DecisionBatchStatus> SetJobIdAsync(int batchId, string jobId);
     Task CompleteAsync(string userEmail, DateTimeOffset completedAt);
     Task FailAsync(string userEmail, DateTimeOffset failedAt, string errorMessage);
 }

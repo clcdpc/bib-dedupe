@@ -71,7 +71,7 @@ public class DecisionSubmissionService(
             return DecisionSubmissionResult.ProcessingUnavailable();
         }
 
-        var status = await tracker.SetJobIdAsync(userEmail, pendingBatch.StartedAt, jobId);
+        var status = await tracker.SetJobIdAsync(pendingBatch.BatchId, jobId);
         logger.LogInformation("Queued decision processing job {JobId} for {UserEmail}", jobId, userEmail);
 
         return DecisionSubmissionResult.Started(status);

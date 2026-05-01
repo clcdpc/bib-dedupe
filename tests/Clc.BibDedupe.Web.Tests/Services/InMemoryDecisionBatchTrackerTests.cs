@@ -39,10 +39,10 @@ public class InMemoryDecisionBatchTrackerTests
         const string userEmail = "user@example.com";
         var startedAt = DateTimeOffset.UtcNow;
 
-        await tracker.StartAsync(userEmail, startedAt);
+        var started = await tracker.StartAsync(userEmail, startedAt);
         await tracker.CompleteAsync(userEmail, startedAt.AddSeconds(1));
 
-        var updated = await tracker.SetJobIdAsync(userEmail, startedAt, "job-42");
+        var updated = await tracker.SetJobIdAsync(started.BatchId, "job-42");
 
         updated.JobId.Should().Be("job-42");
         updated.IsCompleted.Should().BeTrue();

@@ -172,14 +172,14 @@ public class DecisionSubmissionServiceTests
         Job? capturedJob = null;
         trackerMock.InSequence(sequence)
             .Setup(t => t.StartAsync(UserEmail, It.IsAny<DateTimeOffset>()))
-            .ReturnsAsync((string _, DateTimeOffset start) => new DecisionBatchStatus { JobId = string.Empty, StartedAt = start });
+            .ReturnsAsync((string _, DateTimeOffset start) => new DecisionBatchStatus { BatchId = 42, JobId = string.Empty, StartedAt = start });
         backgroundJobsMock.InSequence(sequence)
             .Setup(b => b.Create(It.IsAny<Job>(), It.IsAny<IState>()))
             .Callback<Job, IState>((job, _) => capturedJob = job)
             .Returns("job-123");
         trackerMock.InSequence(sequence)
-            .Setup(t => t.SetJobIdAsync(UserEmail, It.IsAny<DateTimeOffset>(), "job-123"))
-            .ReturnsAsync((string _, DateTimeOffset start, string jobId) => new DecisionBatchStatus { JobId = jobId, StartedAt = start });
+            .Setup(t => t.SetJobIdAsync(42, "job-123"))
+            .ReturnsAsync(new DecisionBatchStatus { BatchId = 42, JobId = "job-123", StartedAt = DateTimeOffset.UtcNow });
 
         var service = new DecisionSubmissionService(
             storeMock.Object,
@@ -211,7 +211,7 @@ public class DecisionSubmissionServiceTests
         executorMock.Verify(e => e.CanProcessAsync(), Times.Once);
         storeMock.Verify(s => s.CountAsync(UserEmail), Times.Once);
         trackerMock.Verify(t => t.StartAsync(UserEmail, It.IsAny<DateTimeOffset>()), Times.Once);
-        trackerMock.Verify(t => t.SetJobIdAsync(UserEmail, It.IsAny<DateTimeOffset>(), "job-123"), Times.Once);
+        trackerMock.Verify(t => t.SetJobIdAsync(42, "job-123"), Times.Once);
         backgroundJobsMock.Verify(b => b.Create(It.IsAny<Job>(), It.IsAny<IState>()), Times.Once);
     }
 
@@ -265,7 +265,7 @@ public class DecisionSubmissionServiceTests
         executorMock.Setup(e => e.CanProcessAsync()).ReturnsAsync(true);
         storeMock.Setup(s => s.CountAsync(UserEmail)).ReturnsAsync(1);
         trackerMock.Setup(t => t.StartAsync(UserEmail, It.IsAny<DateTimeOffset>()))
-            .ReturnsAsync((string _, DateTimeOffset start) => new DecisionBatchStatus { JobId = string.Empty, StartedAt = start });
+            .ReturnsAsync((string _, DateTimeOffset start) => new DecisionBatchStatus { BatchId = 50, JobId = string.Empty, StartedAt = start });
         backgroundJobsMock.Setup(b => b.Create(It.IsAny<Job>(), It.IsAny<IState>()))
             .Throws(new InvalidOperationException("hangfire offline"));
         trackerMock.Setup(t => t.FailAsync(UserEmail, It.IsAny<DateTimeOffset>(), "Failed to enqueue decision processing job."))
@@ -283,7 +283,7 @@ public class DecisionSubmissionServiceTests
         result.Success.Should().BeFalse();
         result.ErrorMessage.Should().Be("Decision processing is not available.");
         trackerMock.Verify(t => t.FailAsync(UserEmail, It.IsAny<DateTimeOffset>(), "Failed to enqueue decision processing job."), Times.Once);
-        trackerMock.Verify(t => t.SetJobIdAsync(It.IsAny<string>(), It.IsAny<DateTimeOffset>(), It.IsAny<string>()), Times.Never);
+        trackerMock.Verify(t => t.SetJobIdAsync(It.IsAny<int>(), It.IsAny<string>()), Times.Never);
     }
 
     [TestMethod]
@@ -301,7 +301,7 @@ public class DecisionSubmissionServiceTests
         executorMock.Setup(e => e.CanProcessAsync()).ReturnsAsync(true);
         storeMock.Setup(s => s.CountAsync(UserEmail)).ReturnsAsync(1);
         trackerMock.Setup(t => t.StartAsync(UserEmail, It.IsAny<DateTimeOffset>()))
-            .ReturnsAsync((string _, DateTimeOffset start) => new DecisionBatchStatus { JobId = string.Empty, StartedAt = start });
+            .ReturnsAsync((string _, DateTimeOffset start) => new DecisionBatchStatus { BatchId = 51, JobId = string.Empty, StartedAt = start });
         backgroundJobsMock.Setup(b => b.Create(It.IsAny<Job>(), It.IsAny<IState>()))
             .Returns((string)null!);
         trackerMock.Setup(t => t.FailAsync(UserEmail, It.IsAny<DateTimeOffset>(), "Decision processing job enqueue was cancelled."))
@@ -319,6 +319,6 @@ public class DecisionSubmissionServiceTests
         result.Success.Should().BeFalse();
         result.ErrorMessage.Should().Be("Decision processing is not available.");
         trackerMock.Verify(t => t.FailAsync(UserEmail, It.IsAny<DateTimeOffset>(), "Decision processing job enqueue was cancelled."), Times.Once);
-        trackerMock.Verify(t => t.SetJobIdAsync(It.IsAny<string>(), It.IsAny<DateTimeOffset>(), It.IsAny<string>()), Times.Never);
+        trackerMock.Verify(t => t.SetJobIdAsync(It.IsAny<int>(), It.IsAny<string>()), Times.Never);
     }
 }

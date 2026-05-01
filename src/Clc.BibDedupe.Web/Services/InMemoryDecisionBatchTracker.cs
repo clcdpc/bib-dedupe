@@ -6,6 +6,7 @@ namespace Clc.BibDedupe.Web.Services;
 public class InMemoryDecisionBatchTracker : IDecisionBatchTracker
 {
     private readonly ConcurrentDictionary<string, DecisionBatchStatus> batches = new();
+    private int nextBatchId;
     public Task FailOrphanedPendingAsync(DateTimeOffset staleBefore, string failureMessage)
     {
         foreach (var (userEmail, status) in batches)
@@ -53,6 +54,7 @@ public class InMemoryDecisionBatchTracker : IDecisionBatchTracker
     {
         var status = new DecisionBatchStatus
         {
+            BatchId = Interlocked.Increment(ref nextBatchId),
             JobId = string.Empty,
             StartedAt = startedAt,
             CompletedAt = null,
@@ -75,13 +77,16 @@ public class InMemoryDecisionBatchTracker : IDecisionBatchTracker
         }
     }
 
-    public Task<DecisionBatchStatus> SetJobIdAsync(string userEmail, DateTimeOffset startedAt, string jobId)
+    public Task<DecisionBatchStatus> SetJobIdAsync(int batchId, string jobId)
     {
-        if (!batches.TryGetValue(userEmail, out var status) || status.StartedAt != startedAt)
+        var batch = batches.FirstOrDefault(kvp => kvp.Value.BatchId == batchId);
+        if (batch.Equals(default(KeyValuePair<string, DecisionBatchStatus>)))
         {
-            throw new InvalidOperationException($"Unable to set JobId for active batch for {userEmail}.");
+            throw new InvalidOperationException($"Unable to set JobId for batch {batchId}.");
         }
 
+        var userEmail = batch.Key;
+        var status = batch.Value;
         var updated = string.IsNullOrWhiteSpace(status.JobId)
             ? status with { JobId = jobId }
             : status;

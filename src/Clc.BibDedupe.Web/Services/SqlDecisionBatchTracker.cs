@@ -34,7 +34,7 @@ public class SqlDecisionBatchTracker(IDbConnection db) : IDecisionBatchTracker
 
     public async Task<DecisionBatchStatus?> GetCurrentAsync(string userEmail)
     {
-        var row = await db.QueryFirstOrDefaultAsync<DecisionBatchRow>($"SELECT TOP 1 JobId, StartedAt, CompletedAt, FailedAt, FailureMessage FROM {Table} WHERE UserEmail = @UserEmail ORDER BY StartedAt DESC", new { UserEmail = userEmail });
+        var row = await db.QueryFirstOrDefaultAsync<DecisionBatchRow>($"SELECT TOP 1 BatchId, JobId, StartedAt, CompletedAt, FailedAt, FailureMessage FROM {Table} WHERE UserEmail = @UserEmail ORDER BY StartedAt DESC", new { UserEmail = userEmail });
 
         if (row is null || row.CompletedAt.HasValue || row.FailedAt.HasValue)
         {
@@ -43,6 +43,7 @@ public class SqlDecisionBatchTracker(IDbConnection db) : IDecisionBatchTracker
 
         return new DecisionBatchStatus
         {
+            BatchId = row.BatchId,
             JobId = row.JobId,
             StartedAt = new DateTimeOffset(DateTime.SpecifyKind(row.StartedAt, DateTimeKind.Utc)),
             CompletedAt = row.CompletedAt is null
@@ -59,52 +60,54 @@ public class SqlDecisionBatchTracker(IDbConnection db) : IDecisionBatchTracker
     {
         try
         {
-            await db.ExecuteAsync($"INSERT INTO {Table} (UserEmail, JobId, StartedAt) VALUES (@UserEmail, @JobId, @StartedAt)", new
+            var batchId = await db.QuerySingleAsync<int>($"INSERT INTO {Table} (UserEmail, JobId, StartedAt) OUTPUT INSERTED.BatchId VALUES (@UserEmail, @JobId, @StartedAt)", new
             {
                 UserEmail = userEmail,
                 JobId = string.Empty,
                 StartedAt = startedAt.UtcDateTime
             });
+
+            return new DecisionBatchStatus
+            {
+                BatchId = batchId,
+                JobId = string.Empty,
+                StartedAt = startedAt,
+                CompletedAt = null,
+                FailedAt = null,
+                FailureMessage = null
+            };
         }
         catch (SqlException ex) when (ex.Number is 2601 or 2627)
         {
             throw new ActiveDecisionBatchExistsException(userEmail, ex);
         }
-
-        return new DecisionBatchStatus
-        {
-            JobId = string.Empty,
-            StartedAt = startedAt,
-            CompletedAt = null,
-            FailedAt = null,
-            FailureMessage = null
-        };
     }
 
-    public async Task<DecisionBatchStatus> SetJobIdAsync(string userEmail, DateTimeOffset startedAt, string jobId)
+    public async Task<DecisionBatchStatus> SetJobIdAsync(int batchId, string jobId)
     {
         var rows = await db.ExecuteAsync(
-            $"UPDATE {Table} SET JobId = @JobId WHERE UserEmail = @UserEmail AND StartedAt = @StartedAt AND CompletedAt IS NULL AND FailedAt IS NULL",
-            new { UserEmail = userEmail, StartedAt = startedAt.UtcDateTime, JobId = jobId });
+            $"UPDATE {Table} SET JobId = @JobId WHERE BatchId = @BatchId AND CompletedAt IS NULL AND FailedAt IS NULL",
+            new { BatchId = batchId, JobId = jobId });
 
         if (rows == 0)
         {
             rows = await db.ExecuteAsync(
-                $"UPDATE {Table} SET JobId = @JobId WHERE UserEmail = @UserEmail AND StartedAt = @StartedAt AND (JobId IS NULL OR JobId = '')",
-                new { UserEmail = userEmail, StartedAt = startedAt.UtcDateTime, JobId = jobId });
+                $"UPDATE {Table} SET JobId = @JobId WHERE BatchId = @BatchId AND (JobId IS NULL OR JobId = '')",
+                new { BatchId = batchId, JobId = jobId });
         }
 
         var row = await db.QueryFirstOrDefaultAsync<DecisionBatchRow>(
-            $"SELECT TOP 1 JobId, StartedAt, CompletedAt, FailedAt, FailureMessage FROM {Table} WHERE UserEmail = @UserEmail AND StartedAt = @StartedAt",
-            new { UserEmail = userEmail, StartedAt = startedAt.UtcDateTime });
+            $"SELECT TOP 1 BatchId, JobId, StartedAt, CompletedAt, FailedAt, FailureMessage FROM {Table} WHERE BatchId = @BatchId",
+            new { BatchId = batchId });
 
         if (row is null)
         {
-            throw new InvalidOperationException($"Unable to set JobId for batch for {userEmail}.");
+            throw new InvalidOperationException($"Unable to set JobId for batch {batchId}.");
         }
 
         return new DecisionBatchStatus
         {
+            BatchId = row.BatchId,
             JobId = string.IsNullOrWhiteSpace(row.JobId) ? jobId : row.JobId,
             StartedAt = new DateTimeOffset(DateTime.SpecifyKind(row.StartedAt, DateTimeKind.Utc)),
             CompletedAt = row.CompletedAt is null ? null : new DateTimeOffset(DateTime.SpecifyKind(row.CompletedAt.Value, DateTimeKind.Utc)),
@@ -115,6 +118,7 @@ public class SqlDecisionBatchTracker(IDbConnection db) : IDecisionBatchTracker
 
     private sealed class DecisionBatchRow
     {
+        public int BatchId { get; init; }
         public string JobId { get; init; } = string.Empty;
         public DateTime StartedAt { get; init; }
         public DateTime? CompletedAt { get; init; }
