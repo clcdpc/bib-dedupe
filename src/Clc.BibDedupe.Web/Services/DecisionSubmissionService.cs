@@ -64,6 +64,12 @@ public class DecisionSubmissionService(
             logger.LogError(ex, "Failed to enqueue decision processing job for {UserEmail}", userEmail);
             return DecisionSubmissionResult.ProcessingUnavailable();
         }
+        if (string.IsNullOrWhiteSpace(jobId))
+        {
+            await tracker.FailAsync(userEmail, DateTimeOffset.UtcNow, "Decision processing job enqueue was cancelled.");
+            logger.LogWarning("Decision processing job enqueue was cancelled for {UserEmail}", userEmail);
+            return DecisionSubmissionResult.ProcessingUnavailable();
+        }
 
         var status = await tracker.SetJobIdAsync(userEmail, pendingBatch.StartedAt, jobId);
         logger.LogInformation("Queued decision processing job {JobId} for {UserEmail}", jobId, userEmail);
