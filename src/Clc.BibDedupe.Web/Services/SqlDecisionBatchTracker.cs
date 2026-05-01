@@ -84,7 +84,7 @@ public class SqlDecisionBatchTracker(IDbConnection db) : IDecisionBatchTracker
     public async Task<DecisionBatchStatus> SetJobIdAsync(string userEmail, DateTimeOffset startedAt, string jobId)
     {
         var rows = await db.ExecuteAsync(
-            $"UPDATE {Table} SET JobId = @JobId WHERE UserEmail = @UserEmail AND StartedAt = @StartedAt",
+            $"UPDATE {Table} SET JobId = @JobId WHERE UserEmail = @UserEmail AND StartedAt = @StartedAt AND CompletedAt IS NULL AND FailedAt IS NULL",
             new { UserEmail = userEmail, StartedAt = startedAt.UtcDateTime, JobId = jobId });
 
         if (rows == 0)
