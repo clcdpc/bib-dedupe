@@ -11,10 +11,23 @@ public class DecisionSubmissionService(
     IBackgroundJobClient backgroundJobs,
     ILogger<DecisionSubmissionService> logger) : IDecisionSubmissionService
 {
-    public Task<DecisionBatchStatus?> GetCurrentBatchAsync(string userEmail) => tracker.GetCurrentAsync(userEmail);
+    private static readonly TimeSpan PendingBatchStaleThreshold = TimeSpan.FromMinutes(5);
+
+    public async Task<DecisionBatchStatus?> GetCurrentBatchAsync(string userEmail)
+    {
+        await tracker.FailOrphanedPendingAsync(
+            DateTimeOffset.UtcNow.Subtract(PendingBatchStaleThreshold),
+            "Decision processing job was not enqueued.");
+
+        return await tracker.GetCurrentAsync(userEmail);
+    }
 
     public async Task<DecisionSubmissionResult> SubmitAsync(string userEmail)
     {
+        await tracker.FailOrphanedPendingAsync(
+            DateTimeOffset.UtcNow.Subtract(PendingBatchStaleThreshold),
+            "Decision processing job was not enqueued.");
+
         var current = await tracker.GetCurrentAsync(userEmail);
 
         if (current is not null)
@@ -35,9 +48,54 @@ public class DecisionSubmissionService(
         }
 
         var startedAt = DateTimeOffset.UtcNow;
-        var jobId = backgroundJobs.Enqueue<DecisionProcessingJob>(job => job.ExecuteAsync(userEmail));
+        DecisionBatchStatus pendingBatch;
+        try
+        {
+            pendingBatch = await tracker.StartAsync(userEmail, startedAt);
+        }
+        catch (ActiveDecisionBatchExistsException)
+        {
+            var activeBatch = await tracker.GetCurrentAsync(userEmail);
+            return activeBatch is not null
+                ? DecisionSubmissionResult.AlreadyInProgress(activeBatch)
+                : DecisionSubmissionResult.ProcessingUnavailable();
+        }
+        string jobId;
+        try
+        {
+            jobId = backgroundJobs.Enqueue<DecisionProcessingJob>(job => job.ExecuteAsync(userEmail));
+        }
+        catch (Exception ex)
+        {
+            await tracker.FailAsync(userEmail, DateTimeOffset.UtcNow, "Failed to enqueue decision processing job.");
+            logger.LogError(ex, "Failed to enqueue decision processing job for {UserEmail}", userEmail);
+            return DecisionSubmissionResult.ProcessingUnavailable();
+        }
+        if (string.IsNullOrWhiteSpace(jobId))
+        {
+            await tracker.FailAsync(userEmail, DateTimeOffset.UtcNow, "Decision processing job enqueue was cancelled.");
+            logger.LogWarning("Decision processing job enqueue was cancelled for {UserEmail}", userEmail);
+            return DecisionSubmissionResult.ProcessingUnavailable();
+        }
 
-        var status = await tracker.StartAsync(userEmail, startedAt, jobId);
+        DecisionBatchStatus status;
+        try
+        {
+            status = await tracker.SetJobIdAsync(pendingBatch.BatchId, jobId);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to attach job id {JobId} to decision batch {BatchId} for {UserEmail}", jobId, pendingBatch.BatchId, userEmail);
+            var persisted = await tracker.GetByBatchIdAsync(pendingBatch.BatchId);
+            if (persisted is not null)
+            {
+                return DecisionSubmissionResult.Started(
+                    string.IsNullOrWhiteSpace(persisted.JobId) ? persisted with { JobId = jobId } : persisted);
+            }
+
+            return DecisionSubmissionResult.ProcessingUnavailable();
+        }
+
         logger.LogInformation("Queued decision processing job {JobId} for {UserEmail}", jobId, userEmail);
 
         return DecisionSubmissionResult.Started(status);
