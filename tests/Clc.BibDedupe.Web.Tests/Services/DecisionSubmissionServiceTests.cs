@@ -326,7 +326,7 @@ public class DecisionSubmissionServiceTests
     }
 
     [TestMethod]
-    public async Task Submitting_When_SetJobId_Fails_Returns_Started_Without_Throwing()
+    public async Task Submitting_When_SetJobId_Fails_Returns_Processing_Unavailable()
     {
         var storeMock = new Mock<IDecisionStore>();
         var trackerMock = new Mock<IDecisionBatchTracker>();
@@ -355,8 +355,8 @@ public class DecisionSubmissionServiceTests
 
         var result = await service.SubmitAsync(UserEmail);
 
-        result.Success.Should().BeTrue();
-        result.BatchStatus.Should().NotBeNull();
-        result.BatchStatus!.JobId.Should().Be("job-77");
+        result.Success.Should().BeFalse();
+        result.ErrorMessage.Should().Be("Decision processing is not available.");
+        result.BatchStatus.Should().BeNull();
     }
 }

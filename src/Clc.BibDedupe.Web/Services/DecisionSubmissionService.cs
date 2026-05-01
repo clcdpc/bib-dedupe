@@ -86,7 +86,7 @@ public class DecisionSubmissionService(
         catch (Exception ex)
         {
             logger.LogError(ex, "Failed to attach job id {JobId} to decision batch {BatchId} for {UserEmail}", jobId, pendingBatch.BatchId, userEmail);
-            status = pendingBatch with { JobId = jobId };
+            return DecisionSubmissionResult.ProcessingUnavailable();
         }
 
         logger.LogInformation("Queued decision processing job {JobId} for {UserEmail}", jobId, userEmail);
