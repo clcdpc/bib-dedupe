@@ -31,4 +31,20 @@ public class InMemoryDecisionBatchTrackerTests
             .Should()
             .BeOfType<ActiveDecisionBatchExistsException>();
     }
+
+    [TestMethod]
+    public async Task SetJobIdAsync_Allows_Attach_After_Batch_Becomes_Terminal()
+    {
+        var tracker = new InMemoryDecisionBatchTracker();
+        const string userEmail = "user@example.com";
+        var startedAt = DateTimeOffset.UtcNow;
+
+        await tracker.StartAsync(userEmail, startedAt);
+        await tracker.CompleteAsync(userEmail, startedAt.AddSeconds(1));
+
+        var updated = await tracker.SetJobIdAsync(userEmail, startedAt, "job-42");
+
+        updated.JobId.Should().Be("job-42");
+        updated.IsCompleted.Should().BeTrue();
+    }
 }
