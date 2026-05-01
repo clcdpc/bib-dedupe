@@ -164,7 +164,15 @@ public class DecisionSubmissionServiceTests
             .Returns("job-123");
 
         trackerMock
-            .Setup(t => t.StartAsync(UserEmail, It.IsAny<DateTimeOffset>(), "job-123"))
+            .Setup(t => t.StartAsync(UserEmail, It.IsAny<DateTimeOffset>()))
+            .ReturnsAsync((string _, DateTimeOffset startedAt) => new DecisionBatchStatus
+            {
+                JobId = string.Empty,
+                StartedAt = startedAt
+            });
+
+        trackerMock
+            .Setup(t => t.SetJobIdAsync(UserEmail, It.IsAny<DateTimeOffset>(), "job-123"))
             .ReturnsAsync((string _, DateTimeOffset startedAt, string jobId) => new DecisionBatchStatus
             {
                 JobId = jobId,
@@ -199,7 +207,62 @@ public class DecisionSubmissionServiceTests
         trackerMock.Verify(t => t.GetCurrentAsync(UserEmail), Times.Once);
         executorMock.Verify(e => e.CanProcessAsync(), Times.Once);
         storeMock.Verify(s => s.CountAsync(UserEmail), Times.Once);
-        trackerMock.Verify(t => t.StartAsync(UserEmail, It.IsAny<DateTimeOffset>(), "job-123"), Times.Once);
+        trackerMock.Verify(t => t.StartAsync(UserEmail, It.IsAny<DateTimeOffset>()), Times.Once);
+        trackerMock.Verify(t => t.SetJobIdAsync(UserEmail, It.IsAny<DateTimeOffset>(), "job-123"), Times.Once);
         backgroundJobsMock.Verify(b => b.Create(It.IsAny<Job>(), It.IsAny<IState>()), Times.Once);
     }
+
+    [TestMethod]
+    public async Task Submitting_Creates_Active_Batch_Before_Enqueueing_Job()
+    {
+        var storeMock = new Mock<IDecisionStore>();
+        var trackerMock = new Mock<IDecisionBatchTracker>(MockBehavior.Strict);
+        var executorMock = new Mock<IDecisionProcessingExecutor>();
+        var backgroundJobsMock = new Mock<IBackgroundJobClient>(MockBehavior.Strict);
+        var logger = new TestLogger<DecisionSubmissionService>();
+
+        trackerMock.Setup(t => t.GetCurrentAsync(UserEmail)).ReturnsAsync((DecisionBatchStatus?)null);
+        executorMock.Setup(e => e.CanProcessAsync()).ReturnsAsync(true);
+        storeMock.Setup(s => s.CountAsync(UserEmail)).ReturnsAsync(1);
+
+        var started = false;
+        trackerMock.Setup(t => t.StartAsync(UserEmail, It.IsAny<DateTimeOffset>()))
+            .Callback(() => started = true)
+            .ReturnsAsync(new DecisionBatchStatus { JobId = string.Empty, StartedAt = DateTimeOffset.UtcNow });
+
+        backgroundJobsMock
+            .Setup(b => b.Create(It.IsAny<Job>(), It.IsAny<IState>()))
+            .Callback(() => started.Should().BeTrue())
+            .Returns("job-123");
+
+        trackerMock.Setup(t => t.SetJobIdAsync(UserEmail, It.IsAny<DateTimeOffset>(), "job-123"))
+            .ReturnsAsync(new DecisionBatchStatus { JobId = "job-123", StartedAt = DateTimeOffset.UtcNow });
+
+        var service = new DecisionSubmissionService(storeMock.Object, trackerMock.Object, executorMock.Object, backgroundJobsMock.Object, logger);
+        await service.SubmitAsync(UserEmail);
+    }
+
+    [TestMethod]
+    public async Task Double_Submit_Returns_Already_In_Progress_On_Second_Call()
+    {
+        var storeMock = new Mock<IDecisionStore>();
+        var tracker = new InMemoryDecisionBatchTracker();
+        var executorMock = new Mock<IDecisionProcessingExecutor>();
+        var backgroundJobsMock = new Mock<IBackgroundJobClient>();
+        var logger = new TestLogger<DecisionSubmissionService>();
+
+        executorMock.Setup(e => e.CanProcessAsync()).ReturnsAsync(true);
+        storeMock.Setup(s => s.CountAsync(UserEmail)).ReturnsAsync(1);
+        backgroundJobsMock.Setup(b => b.Create(It.IsAny<Job>(), It.IsAny<IState>())).Returns("job-1");
+
+        var service = new DecisionSubmissionService(storeMock.Object, tracker, executorMock.Object, backgroundJobsMock.Object, logger);
+
+        var first = await service.SubmitAsync(UserEmail);
+        var second = await service.SubmitAsync(UserEmail);
+
+        first.Success.Should().BeTrue();
+        second.Success.Should().BeFalse();
+        second.ErrorMessage.Should().Be("A batch is already being processed.");
+    }
+
 }

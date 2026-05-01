@@ -5,7 +5,8 @@ namespace Clc.BibDedupe.Web.Services;
 public interface IDecisionBatchTracker
 {
     Task<DecisionBatchStatus?> GetCurrentAsync(string userEmail);
-    Task<DecisionBatchStatus> StartAsync(string userEmail, DateTimeOffset startedAt, string jobId);
+    Task<DecisionBatchStatus> StartAsync(string userEmail, DateTimeOffset startedAt);
+    Task<DecisionBatchStatus> SetJobIdAsync(string userEmail, DateTimeOffset startedAt, string jobId);
     Task CompleteAsync(string userEmail, DateTimeOffset completedAt);
     Task FailAsync(string userEmail, DateTimeOffset failedAt, string errorMessage);
 }

@@ -40,33 +40,39 @@ public class SqlDecisionBatchTracker(IDbConnection db) : IDecisionBatchTracker
         {
             JobId = row.JobId,
             StartedAt = new DateTimeOffset(DateTime.SpecifyKind(row.StartedAt, DateTimeKind.Utc)),
-            CompletedAt = row.CompletedAt is null
-                ? null
-                : new DateTimeOffset(DateTime.SpecifyKind(row.CompletedAt.Value, DateTimeKind.Utc)),
-            FailedAt = row.FailedAt is null
-                ? null
-                : new DateTimeOffset(DateTime.SpecifyKind(row.FailedAt.Value, DateTimeKind.Utc)),
+            CompletedAt = row.CompletedAt is null ? null : new DateTimeOffset(DateTime.SpecifyKind(row.CompletedAt.Value, DateTimeKind.Utc)),
+            FailedAt = row.FailedAt is null ? null : new DateTimeOffset(DateTime.SpecifyKind(row.FailedAt.Value, DateTimeKind.Utc)),
             FailureMessage = row.FailureMessage
         };
     }
 
-    public async Task<DecisionBatchStatus> StartAsync(string userEmail, DateTimeOffset startedAt, string jobId)
+    public async Task<DecisionBatchStatus> StartAsync(string userEmail, DateTimeOffset startedAt)
     {
         await db.ExecuteAsync($"INSERT INTO {Table} (UserEmail, JobId, StartedAt) VALUES (@UserEmail, @JobId, @StartedAt)", new
         {
             UserEmail = userEmail,
-            JobId = jobId,
+            JobId = string.Empty,
             StartedAt = startedAt.UtcDateTime
         });
 
-        return new DecisionBatchStatus
+        return new DecisionBatchStatus { JobId = string.Empty, StartedAt = startedAt };
+    }
+
+    public async Task<DecisionBatchStatus> SetJobIdAsync(string userEmail, DateTimeOffset startedAt, string jobId)
+    {
+        var updatedRows = await db.ExecuteAsync($"UPDATE {Table} SET JobId = @JobId WHERE UserEmail = @UserEmail AND StartedAt = @StartedAt AND CompletedAt IS NULL AND FailedAt IS NULL", new
         {
-            JobId = jobId,
-            StartedAt = startedAt,
-            CompletedAt = null,
-            FailedAt = null,
-            FailureMessage = null
-        };
+            UserEmail = userEmail,
+            StartedAt = startedAt.UtcDateTime,
+            JobId = jobId
+        });
+
+        if (updatedRows == 0)
+        {
+            throw new InvalidOperationException($"No active decision batch found for {userEmail} at {startedAt:o}.");
+        }
+
+        return new DecisionBatchStatus { JobId = jobId, StartedAt = startedAt };
     }
 
     private sealed class DecisionBatchRow
