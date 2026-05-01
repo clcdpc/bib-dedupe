@@ -40,7 +40,7 @@ public class DecisionSubmissionService(
         {
             pendingBatch = await tracker.StartAsync(userEmail, startedAt);
         }
-        catch (InvalidOperationException)
+        catch (ActiveDecisionBatchExistsException)
         {
             var activeBatch = await tracker.GetCurrentAsync(userEmail);
             return activeBatch is not null

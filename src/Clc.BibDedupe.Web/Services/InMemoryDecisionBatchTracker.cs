@@ -41,7 +41,7 @@ public class InMemoryDecisionBatchTracker : IDecisionBatchTracker
     {
         if (batches.TryGetValue(userEmail, out var existing) && !existing.IsTerminal)
         {
-            throw new InvalidOperationException($"An active batch already exists for {userEmail}.");
+            throw new ActiveDecisionBatchExistsException(userEmail);
         }
 
         var status = new DecisionBatchStatus

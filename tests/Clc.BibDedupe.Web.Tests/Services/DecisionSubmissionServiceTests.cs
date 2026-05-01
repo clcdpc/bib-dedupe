@@ -219,7 +219,7 @@ public class DecisionSubmissionServiceTests
         executorMock.Setup(e => e.CanProcessAsync()).ReturnsAsync(true);
         storeMock.Setup(s => s.CountAsync(UserEmail)).ReturnsAsync(2);
         trackerMock.Setup(t => t.StartAsync(UserEmail, It.IsAny<DateTimeOffset>()))
-            .ThrowsAsync(new InvalidOperationException("duplicate active"));
+            .ThrowsAsync(new ActiveDecisionBatchExistsException(UserEmail));
 
         var service = new DecisionSubmissionService(
             storeMock.Object,

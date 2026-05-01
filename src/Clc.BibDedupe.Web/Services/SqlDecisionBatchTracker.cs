@@ -64,7 +64,7 @@ public class SqlDecisionBatchTracker(IDbConnection db) : IDecisionBatchTracker
         }
         catch (SqlException ex) when (ex.Number is 2601 or 2627)
         {
-            throw new InvalidOperationException($"An active batch already exists for {userEmail}.", ex);
+            throw new ActiveDecisionBatchExistsException(userEmail, ex);
         }
 
         return new DecisionBatchStatus
