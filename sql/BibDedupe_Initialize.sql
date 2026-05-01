@@ -253,6 +253,32 @@ IF NOT EXISTS (
         INCLUDE (CompletedAt, FailedAt, FailureMessage);
 GO
 
+IF NOT EXISTS (
+    SELECT 1 FROM sys.indexes WHERE name = 'UX_DecisionBatches_ActivePerUser' AND object_id = OBJECT_ID('BibDedupe.DecisionBatches')
+)
+BEGIN
+    ;WITH ActiveBatches AS (
+        SELECT
+            BatchId,
+            UserEmail,
+            ROW_NUMBER() OVER (PARTITION BY UserEmail ORDER BY StartedAt DESC, BatchId DESC) AS ActiveRank
+        FROM BibDedupe.DecisionBatches
+        WHERE CompletedAt IS NULL AND FailedAt IS NULL
+    )
+    UPDATE b
+    SET
+        FailedAt = SYSUTCDATETIME(),
+        FailureMessage = COALESCE(NULLIF(b.FailureMessage, ''), 'Superseded by newer active batch during uniqueness migration.')
+    FROM BibDedupe.DecisionBatches b
+    INNER JOIN ActiveBatches a ON a.BatchId = b.BatchId
+    WHERE a.ActiveRank > 1;
+
+    CREATE UNIQUE NONCLUSTERED INDEX UX_DecisionBatches_ActivePerUser
+        ON BibDedupe.DecisionBatches (UserEmail)
+        WHERE CompletedAt IS NULL AND FailedAt IS NULL;
+END;
+GO
+
 IF OBJECT_ID('BibDedupe.DecisionBatchResults', 'U') IS NULL
 BEGIN
     CREATE TABLE BibDedupe.DecisionBatchResults (

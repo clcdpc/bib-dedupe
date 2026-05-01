@@ -6,6 +6,19 @@ namespace Clc.BibDedupe.Web.Services;
 public class InMemoryDecisionBatchTracker : IDecisionBatchTracker
 {
     private readonly ConcurrentDictionary<string, DecisionBatchStatus> batches = new();
+    private int nextBatchId;
+    public Task FailOrphanedPendingAsync(DateTimeOffset staleBefore, string failureMessage)
+    {
+        foreach (var (userEmail, status) in batches)
+        {
+            if (!status.IsTerminal && string.IsNullOrWhiteSpace(status.JobId) && status.StartedAt < staleBefore)
+            {
+                batches[userEmail] = status with { FailedAt = DateTimeOffset.UtcNow, FailureMessage = failureMessage };
+            }
+        }
+
+        return Task.CompletedTask;
+    }
 
     public Task CompleteAsync(string userEmail, DateTimeOffset completedAt)
     {
@@ -37,18 +50,53 @@ public class InMemoryDecisionBatchTracker : IDecisionBatchTracker
         return Task.FromResult<DecisionBatchStatus?>(null);
     }
 
-    public Task<DecisionBatchStatus> StartAsync(string userEmail, DateTimeOffset startedAt, string jobId)
+    public Task<DecisionBatchStatus?> GetByBatchIdAsync(int batchId)
+    {
+        var status = batches.Values.FirstOrDefault(s => s.BatchId == batchId);
+        return Task.FromResult<DecisionBatchStatus?>(status);
+    }
+
+    public Task<DecisionBatchStatus> StartAsync(string userEmail, DateTimeOffset startedAt)
     {
         var status = new DecisionBatchStatus
         {
-            JobId = jobId,
+            BatchId = Interlocked.Increment(ref nextBatchId),
+            JobId = string.Empty,
             StartedAt = startedAt,
             CompletedAt = null,
             FailedAt = null,
             FailureMessage = null
         };
 
-        batches[userEmail] = status;
-        return Task.FromResult(status);
+        try
+        {
+            var updated = batches.AddOrUpdate(
+                userEmail,
+                status,
+                (_, existing) => existing.IsTerminal ? status : throw new ActiveDecisionBatchExistsException(userEmail));
+
+            return Task.FromResult(updated);
+        }
+        catch (ActiveDecisionBatchExistsException)
+        {
+            throw;
+        }
+    }
+
+    public Task<DecisionBatchStatus> SetJobIdAsync(int batchId, string jobId)
+    {
+        var batch = batches.FirstOrDefault(kvp => kvp.Value.BatchId == batchId);
+        if (batch.Equals(default(KeyValuePair<string, DecisionBatchStatus>)))
+        {
+            throw new InvalidOperationException($"Unable to set JobId for batch {batchId}.");
+        }
+
+        var userEmail = batch.Key;
+        var status = batch.Value;
+        var updated = string.IsNullOrWhiteSpace(status.JobId)
+            ? status with { JobId = jobId }
+            : status;
+        batches[userEmail] = updated;
+        return Task.FromResult(updated);
     }
 }
