@@ -86,6 +86,14 @@ public class DecisionSubmissionService(
         catch (Exception ex)
         {
             logger.LogError(ex, "Failed to attach job id {JobId} to decision batch {BatchId} for {UserEmail}", jobId, pendingBatch.BatchId, userEmail);
+            try
+            {
+                await tracker.SetJobIdAsync(pendingBatch.BatchId, jobId);
+            }
+            catch (Exception retryEx)
+            {
+                logger.LogWarning(retryEx, "Retry to attach job id {JobId} to decision batch {BatchId} for {UserEmail} failed", jobId, pendingBatch.BatchId, userEmail);
+            }
             var persisted = await tracker.GetByBatchIdAsync(pendingBatch.BatchId);
             if (persisted is not null)
             {

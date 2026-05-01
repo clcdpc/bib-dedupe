@@ -8,7 +8,10 @@ namespace Clc.BibDedupe.Web.Services;
 public class SqlDecisionBatchTracker(IDbConnection db) : IDecisionBatchTracker
 {
     private const string Table = "BibDedupe.DecisionBatches";
-    public Task FailOrphanedPendingAsync(DateTimeOffset staleBefore, string failureMessage) => Task.CompletedTask;
+    public Task FailOrphanedPendingAsync(DateTimeOffset staleBefore, string failureMessage) =>
+        db.ExecuteAsync(
+            $"UPDATE {Table} SET FailedAt = @FailedAt, FailureMessage = @FailureMessage WHERE CompletedAt IS NULL AND FailedAt IS NULL AND (JobId IS NULL OR JobId = '') AND StartedAt <= @StaleBefore",
+            new { FailedAt = DateTimeOffset.UtcNow.UtcDateTime, FailureMessage = failureMessage, StaleBefore = staleBefore.UtcDateTime });
 
     public async Task CompleteAsync(string userEmail, DateTimeOffset completedAt)
     {

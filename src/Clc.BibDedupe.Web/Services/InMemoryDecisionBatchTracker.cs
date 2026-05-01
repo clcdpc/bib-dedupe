@@ -7,7 +7,18 @@ public class InMemoryDecisionBatchTracker : IDecisionBatchTracker
 {
     private readonly ConcurrentDictionary<string, DecisionBatchStatus> batches = new();
     private int nextBatchId;
-    public Task FailOrphanedPendingAsync(DateTimeOffset staleBefore, string failureMessage) => Task.CompletedTask;
+    public Task FailOrphanedPendingAsync(DateTimeOffset staleBefore, string failureMessage)
+    {
+        foreach (var (userEmail, status) in batches)
+        {
+            if (!status.IsTerminal && string.IsNullOrWhiteSpace(status.JobId) && status.StartedAt <= staleBefore)
+            {
+                batches[userEmail] = status with { FailedAt = DateTimeOffset.UtcNow, FailureMessage = failureMessage };
+            }
+        }
+
+        return Task.CompletedTask;
+    }
 
     public Task CompleteAsync(string userEmail, DateTimeOffset completedAt)
     {
