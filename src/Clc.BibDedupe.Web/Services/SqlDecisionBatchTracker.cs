@@ -13,7 +13,7 @@ public class SqlDecisionBatchTracker(IDbConnection db) : IDecisionBatchTracker
         await db.ExecuteAsync($"UPDATE {Table} SET CompletedAt = @CompletedAt, FailedAt = NULL, FailureMessage = NULL WHERE UserEmail = @UserEmail AND CompletedAt IS NULL AND FailedAt IS NULL", new
         {
             UserEmail = userEmail,
-            CompletedAt = completedAt.UtcDateTime
+            CompletedAt = completedAt.LocalDateTime
         });
     }
 
@@ -22,7 +22,7 @@ public class SqlDecisionBatchTracker(IDbConnection db) : IDecisionBatchTracker
         await db.ExecuteAsync($"UPDATE {Table} SET FailedAt = @FailedAt, FailureMessage = @FailureMessage WHERE UserEmail = @UserEmail AND CompletedAt IS NULL AND FailedAt IS NULL", new
         {
             UserEmail = userEmail,
-            FailedAt = failedAt.UtcDateTime,
+            FailedAt = failedAt.LocalDateTime,
             FailureMessage = errorMessage
         });
     }
@@ -39,13 +39,13 @@ public class SqlDecisionBatchTracker(IDbConnection db) : IDecisionBatchTracker
         return new DecisionBatchStatus
         {
             JobId = row.JobId,
-            StartedAt = new DateTimeOffset(DateTime.SpecifyKind(row.StartedAt, DateTimeKind.Utc)),
+            StartedAt = new DateTimeOffset(DateTime.SpecifyKind(row.StartedAt, DateTimeKind.Local)),
             CompletedAt = row.CompletedAt is null
                 ? null
-                : new DateTimeOffset(DateTime.SpecifyKind(row.CompletedAt.Value, DateTimeKind.Utc)),
+                : new DateTimeOffset(DateTime.SpecifyKind(row.CompletedAt.Value, DateTimeKind.Local)),
             FailedAt = row.FailedAt is null
                 ? null
-                : new DateTimeOffset(DateTime.SpecifyKind(row.FailedAt.Value, DateTimeKind.Utc)),
+                : new DateTimeOffset(DateTime.SpecifyKind(row.FailedAt.Value, DateTimeKind.Local)),
             FailureMessage = row.FailureMessage
         };
     }
@@ -56,7 +56,7 @@ public class SqlDecisionBatchTracker(IDbConnection db) : IDecisionBatchTracker
         {
             UserEmail = userEmail,
             JobId = jobId,
-            StartedAt = startedAt.UtcDateTime
+            StartedAt = startedAt.LocalDateTime
         });
 
         return new DecisionBatchStatus

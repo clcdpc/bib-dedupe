@@ -263,7 +263,7 @@ BEGIN
         ActionId INT NOT NULL,
         Succeeded BIT NOT NULL,
         ErrorMessage NVARCHAR(1024) NULL,
-        ProcessedAt DATETIME2 NOT NULL CONSTRAINT DF_DecisionBatchResults_ProcessedAt DEFAULT SYSUTCDATETIME(),
+        ProcessedAt DATETIME2 NOT NULL CONSTRAINT DF_DecisionBatchResults_ProcessedAt DEFAULT SYSDATETIMEOFFSET(),
         CONSTRAINT FK_DecisionBatchResults_Batches FOREIGN KEY (BatchId)
             REFERENCES BibDedupe.DecisionBatches (BatchId),
         CONSTRAINT FK_DecisionBatchResults_Action FOREIGN KEY (ActionId)
@@ -306,7 +306,7 @@ BEGIN
     )
     BEGIN
         ALTER TABLE BibDedupe.DecisionBatchResults
-            ADD CONSTRAINT DF_DecisionBatchResults_ProcessedAt DEFAULT SYSUTCDATETIME() FOR ProcessedAt;
+            ADD CONSTRAINT DF_DecisionBatchResults_ProcessedAt DEFAULT SYSDATETIMEOFFSET() FOR ProcessedAt;
     END
 END
 GO
@@ -883,7 +883,7 @@ BEGIN
             INSERT INTO BibDedupe.DecisionBatchResults
                 (BatchId, LeftBibId, RightBibId, ActionId, Succeeded, ErrorMessage, ProcessedAt)
             VALUES
-                (@BatchId, @LeftBibId, @RightBibId, @ActionId, @Succeeded, CASE WHEN @ErrorMessage IS NULL THEN NULL ELSE LEFT(@ErrorMessage, 1024) END, SYSUTCDATETIME());
+                (@BatchId, @LeftBibId, @RightBibId, @ActionId, @Succeeded, CASE WHEN @ErrorMessage IS NULL THEN NULL ELSE LEFT(@ErrorMessage, 1024) END, SYSDATETIMEOFFSET());
         END
 
         FETCH NEXT FROM decision_cursor INTO @LeftBibId, @RightBibId, @ActionId;

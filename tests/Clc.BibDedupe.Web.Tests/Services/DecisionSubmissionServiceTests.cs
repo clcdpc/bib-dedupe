@@ -25,7 +25,7 @@ public class DecisionSubmissionServiceTests
         var backgroundJobsMock = new Mock<IBackgroundJobClient>(MockBehavior.Strict);
         var logger = new TestLogger<DecisionSubmissionService>();
 
-        var expected = new DecisionBatchStatus { JobId = "job-7", StartedAt = DateTimeOffset.UtcNow };
+        var expected = new DecisionBatchStatus { JobId = "job-7", StartedAt = DateTimeOffset.Now };
         trackerMock.Setup(t => t.GetCurrentAsync(UserEmail)).ReturnsAsync(expected);
 
         var service = new DecisionSubmissionService(
@@ -54,7 +54,7 @@ public class DecisionSubmissionServiceTests
         var backgroundJobsMock = new Mock<IBackgroundJobClient>(MockBehavior.Strict);
         var logger = new TestLogger<DecisionSubmissionService>();
 
-        var status = new DecisionBatchStatus { JobId = "existing", StartedAt = DateTimeOffset.UtcNow };
+        var status = new DecisionBatchStatus { JobId = "existing", StartedAt = DateTimeOffset.Now };
         trackerMock.Setup(t => t.GetCurrentAsync(UserEmail)).ReturnsAsync(status);
 
         var service = new DecisionSubmissionService(
@@ -184,7 +184,7 @@ public class DecisionSubmissionServiceTests
         result.ErrorMessage.Should().BeNull();
         result.BatchStatus.Should().NotBeNull();
         result.BatchStatus!.JobId.Should().Be("job-123");
-        result.BatchStatus.StartedAt.Should().BeCloseTo(DateTimeOffset.UtcNow, TimeSpan.FromSeconds(5));
+        result.BatchStatus.StartedAt.Should().BeCloseTo(DateTimeOffset.Now, TimeSpan.FromSeconds(5));
 
         logger.Entries.Should().ContainSingle(entry =>
             entry.Level == LogLevel.Information &&

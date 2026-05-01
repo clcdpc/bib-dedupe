@@ -35,12 +35,12 @@ public class SqlDecisionBatchHistoryService(IDbConnection db) : IDecisionBatchHi
                 accumulator = new BatchAccumulator
                 {
                     BatchId = row.BatchId,
-                    StartedAt = new DateTimeOffset(DateTime.SpecifyKind(row.StartedAt, DateTimeKind.Utc)),
+                    StartedAt = new DateTimeOffset(DateTime.SpecifyKind(row.StartedAt, DateTimeKind.Local)),
                     CompletedAt = row.CompletedAt.HasValue
-                        ? new DateTimeOffset(DateTime.SpecifyKind(row.CompletedAt.Value, DateTimeKind.Utc))
+                        ? new DateTimeOffset(DateTime.SpecifyKind(row.CompletedAt.Value, DateTimeKind.Local))
                         : (DateTimeOffset?)null,
                     FailedAt = row.FailedAt.HasValue
-                        ? new DateTimeOffset(DateTime.SpecifyKind(row.FailedAt.Value, DateTimeKind.Utc))
+                        ? new DateTimeOffset(DateTime.SpecifyKind(row.FailedAt.Value, DateTimeKind.Local))
                         : (DateTimeOffset?)null,
                     FailureMessage = row.FailureMessage,
                     Results = new List<DecisionBatchResult>()
@@ -51,7 +51,7 @@ public class SqlDecisionBatchHistoryService(IDbConnection db) : IDecisionBatchHi
 
             if (!accumulator.FailedAt.HasValue && row.FailedAt.HasValue)
             {
-                accumulator.FailedAt = new DateTimeOffset(DateTime.SpecifyKind(row.FailedAt.Value, DateTimeKind.Utc));
+                accumulator.FailedAt = new DateTimeOffset(DateTime.SpecifyKind(row.FailedAt.Value, DateTimeKind.Local));
             }
 
             if (string.IsNullOrWhiteSpace(accumulator.FailureMessage) && !string.IsNullOrWhiteSpace(row.FailureMessage))
@@ -73,7 +73,7 @@ public class SqlDecisionBatchHistoryService(IDbConnection db) : IDecisionBatchHi
                     Action = (BibDupePairAction)row.ActionId.Value,
                     Succeeded = row.Succeeded ?? false,
                     ErrorMessage = row.ErrorMessage,
-                    ProcessedAt = new DateTimeOffset(DateTime.SpecifyKind(row.ProcessedAt.Value, DateTimeKind.Utc))
+                    ProcessedAt = new DateTimeOffset(DateTime.SpecifyKind(row.ProcessedAt.Value, DateTimeKind.Local))
                 });
             }
         }
