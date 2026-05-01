@@ -15,9 +15,9 @@ public class InMemoryPairAssignmentStore : IPairAssignmentStore
         var key = (leftBibId, rightBibId);
         _assignments.AddOrUpdate(
             key,
-            _ => new Assignment(userId, DateTimeOffset.UtcNow),
+            _ => new Assignment(userId, DateTimeOffset.Now),
             (_, existing) => string.Equals(existing.UserEmail, userId, StringComparison.OrdinalIgnoreCase)
-                ? existing with { AssignedAt = DateTimeOffset.UtcNow }
+                ? existing with { AssignedAt = DateTimeOffset.Now }
                 : existing);
         return Task.CompletedTask;
     }

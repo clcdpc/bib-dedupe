@@ -21,7 +21,7 @@ public class PairAssignmentCleanupJob(
             return;
         }
 
-        var cutoff = DateTimeOffset.UtcNow - minimumAge;
+        var cutoff = DateTimeOffset.Now - minimumAge;
         var released = await pairAssignmentStore.ReleaseExpiredAsync(cutoff);
 
         if (released > 0)

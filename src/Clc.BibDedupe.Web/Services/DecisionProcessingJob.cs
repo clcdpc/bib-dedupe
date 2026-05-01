@@ -18,7 +18,7 @@ public class DecisionProcessingJob(
         try
         {
             summary = await executor.ExecuteAsync(userEmail);
-            var completedAt = DateTimeOffset.UtcNow;
+            var completedAt = DateTimeOffset.Now;
             await tracker.CompleteAsync(userEmail, completedAt);
             await TryNotifyCompletedAsync(userEmail, summary, completedAt);
         }
@@ -26,7 +26,7 @@ public class DecisionProcessingJob(
         {
             logger.LogError(ex, "Failed to process decision batch for {UserEmail}", userEmail);
 
-            var failedAt = DateTimeOffset.UtcNow;
+            var failedAt = DateTimeOffset.Now;
             var failureMessage = ex.ToString();
             if (failureMessage.Length > 1024)
             {

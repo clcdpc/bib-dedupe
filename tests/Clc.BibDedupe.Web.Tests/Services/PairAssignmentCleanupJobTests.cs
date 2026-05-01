@@ -44,7 +44,7 @@ public class PairAssignmentCleanupJobTests
 
         storeMock.Verify(s => s.ReleaseExpiredAsync(It.IsAny<DateTimeOffset>()), Times.Once);
         capturedCutoff.Should().NotBeNull();
-        (DateTimeOffset.UtcNow - capturedCutoff!.Value).Should().BeCloseTo(TimeSpan.FromHours(2), TimeSpan.FromSeconds(5));
+        (DateTimeOffset.Now - capturedCutoff!.Value).Should().BeCloseTo(TimeSpan.FromHours(2), TimeSpan.FromSeconds(5));
 
         logger.Entries.Should().ContainSingle(e => e.Level == Microsoft.Extensions.Logging.LogLevel.Information)
             .Which.Message.Should().Contain("Released 3 pair assignments");

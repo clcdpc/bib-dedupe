@@ -15,7 +15,7 @@ public class InMemoryPairAssignmentStoreTests
 
         await store.ReleaseAsync("user", 1, 2);
 
-        var removed = await store.ReleaseExpiredAsync(DateTimeOffset.UtcNow.AddMinutes(1));
+        var removed = await store.ReleaseExpiredAsync(DateTimeOffset.Now.AddMinutes(1));
         removed.Should().Be(0);
     }
 
@@ -27,7 +27,7 @@ public class InMemoryPairAssignmentStoreTests
 
         await store.ReleaseAsync("other", 1, 2);
 
-        var removed = await store.ReleaseExpiredAsync(DateTimeOffset.UtcNow.AddMinutes(1));
+        var removed = await store.ReleaseExpiredAsync(DateTimeOffset.Now.AddMinutes(1));
         removed.Should().Be(1);
     }
 
@@ -37,12 +37,12 @@ public class InMemoryPairAssignmentStoreTests
         var store = new InMemoryPairAssignmentStore();
         await store.AssignAsync("user", 1, 2);
 
-        var noneRemoved = await store.ReleaseExpiredAsync(DateTimeOffset.UtcNow.AddMinutes(-1));
+        var noneRemoved = await store.ReleaseExpiredAsync(DateTimeOffset.Now.AddMinutes(-1));
         noneRemoved.Should().Be(0);
 
         await store.AssignAsync("user", 3, 4);
 
-        var removed = await store.ReleaseExpiredAsync(DateTimeOffset.UtcNow.AddMinutes(1));
+        var removed = await store.ReleaseExpiredAsync(DateTimeOffset.Now.AddMinutes(1));
         removed.Should().Be(2);
     }
 }

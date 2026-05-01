@@ -34,7 +34,7 @@ public class DecisionSubmissionService(
             return DecisionSubmissionResult.NoDecisions();
         }
 
-        var startedAt = DateTimeOffset.UtcNow;
+        var startedAt = DateTimeOffset.Now;
         var jobId = backgroundJobs.Enqueue<DecisionProcessingJob>(job => job.ExecuteAsync(userEmail));
 
         var status = await tracker.StartAsync(userEmail, startedAt, jobId);
