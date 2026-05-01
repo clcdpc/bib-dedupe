@@ -395,4 +395,41 @@ public class DecisionSubmissionServiceTests
         result.BatchStatus!.BatchId.Should().Be(77);
         result.BatchStatus.JobId.Should().Be("job-77");
     }
+
+    [TestMethod]
+    public async Task Submitting_When_SetJobId_And_Reconciliation_Read_Fail_Returns_Processing_Unavailable()
+    {
+        var storeMock = new Mock<IDecisionStore>();
+        var trackerMock = new Mock<IDecisionBatchTracker>();
+        var executorMock = new Mock<IDecisionProcessingExecutor>();
+        var backgroundJobsMock = new Mock<IBackgroundJobClient>();
+        var logger = new TestLogger<DecisionSubmissionService>();
+
+        trackerMock.Setup(t => t.FailOrphanedPendingAsync(It.IsAny<DateTimeOffset>(), "Decision processing job was not enqueued."))
+            .Returns(Task.CompletedTask);
+        trackerMock.Setup(t => t.GetCurrentAsync(UserEmail)).ReturnsAsync((DecisionBatchStatus?)null);
+        executorMock.Setup(e => e.CanProcessAsync()).ReturnsAsync(true);
+        storeMock.Setup(s => s.CountAsync(UserEmail)).ReturnsAsync(1);
+        trackerMock.Setup(t => t.StartAsync(UserEmail, It.IsAny<DateTimeOffset>()))
+            .ReturnsAsync((string _, DateTimeOffset start) => new DecisionBatchStatus { BatchId = 78, JobId = string.Empty, StartedAt = start });
+        backgroundJobsMock.Setup(b => b.Create(It.IsAny<Job>(), It.IsAny<IState>()))
+            .Returns("job-78");
+        trackerMock.Setup(t => t.SetJobIdAsync(78, "job-78"))
+            .ThrowsAsync(new InvalidOperationException("transient SQL"));
+        trackerMock.Setup(t => t.GetByBatchIdAsync(78))
+            .ThrowsAsync(new InvalidOperationException("transient read SQL"));
+
+        var service = new DecisionSubmissionService(
+            storeMock.Object,
+            trackerMock.Object,
+            executorMock.Object,
+            backgroundJobsMock.Object,
+            logger);
+
+        var result = await service.SubmitAsync(UserEmail);
+
+        result.Success.Should().BeFalse();
+        result.ErrorMessage.Should().Be("Decision processing is not available.");
+        result.BatchStatus.Should().BeNull();
+    }
 }

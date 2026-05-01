@@ -94,7 +94,17 @@ public class DecisionSubmissionService(
             {
                 logger.LogWarning(retryEx, "Retry to attach job id {JobId} to decision batch {BatchId} for {UserEmail} failed", jobId, pendingBatch.BatchId, userEmail);
             }
-            var persisted = await tracker.GetByBatchIdAsync(pendingBatch.BatchId);
+            DecisionBatchStatus? persisted;
+            try
+            {
+                persisted = await tracker.GetByBatchIdAsync(pendingBatch.BatchId);
+            }
+            catch (Exception readEx)
+            {
+                logger.LogError(readEx, "Failed to read decision batch {BatchId} after job-id attach errors for {UserEmail}", pendingBatch.BatchId, userEmail);
+                return DecisionSubmissionResult.ProcessingUnavailable();
+            }
+
             if (persisted is not null)
             {
                 return DecisionSubmissionResult.Started(
