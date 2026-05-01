@@ -54,6 +54,8 @@ public class DecisionSubmissionServiceTests
         var backgroundJobsMock = new Mock<IBackgroundJobClient>(MockBehavior.Strict);
         var logger = new TestLogger<DecisionSubmissionService>();
 
+        trackerMock.Setup(t => t.FailOrphanedPendingAsync(It.IsAny<DateTimeOffset>(), "Decision processing job was not enqueued."))
+            .Returns(Task.CompletedTask);
         var status = new DecisionBatchStatus { JobId = "existing", StartedAt = DateTimeOffset.UtcNow };
         trackerMock.Setup(t => t.GetCurrentAsync(UserEmail)).ReturnsAsync(status);
 
@@ -85,6 +87,8 @@ public class DecisionSubmissionServiceTests
         var backgroundJobsMock = new Mock<IBackgroundJobClient>(MockBehavior.Strict);
         var logger = new TestLogger<DecisionSubmissionService>();
 
+        trackerMock.Setup(t => t.FailOrphanedPendingAsync(It.IsAny<DateTimeOffset>(), "Decision processing job was not enqueued."))
+            .Returns(Task.CompletedTask);
         trackerMock.Setup(t => t.GetCurrentAsync(UserEmail)).ReturnsAsync((DecisionBatchStatus?)null);
         executorMock.Setup(e => e.CanProcessAsync()).ReturnsAsync(false);
 
@@ -120,6 +124,8 @@ public class DecisionSubmissionServiceTests
         var backgroundJobsMock = new Mock<IBackgroundJobClient>(MockBehavior.Strict);
         var logger = new TestLogger<DecisionSubmissionService>();
 
+        trackerMock.Setup(t => t.FailOrphanedPendingAsync(It.IsAny<DateTimeOffset>(), "Decision processing job was not enqueued."))
+            .Returns(Task.CompletedTask);
         trackerMock.Setup(t => t.GetCurrentAsync(UserEmail)).ReturnsAsync((DecisionBatchStatus?)null);
         executorMock.Setup(e => e.CanProcessAsync()).ReturnsAsync(true);
         storeMock.Setup(s => s.CountAsync(UserEmail)).ReturnsAsync(0);
@@ -153,12 +159,17 @@ public class DecisionSubmissionServiceTests
         var backgroundJobsMock = new Mock<IBackgroundJobClient>();
         var logger = new TestLogger<DecisionSubmissionService>();
 
-        trackerMock.Setup(t => t.GetCurrentAsync(UserEmail)).ReturnsAsync((DecisionBatchStatus?)null);
+        var sequence = new MockSequence();
+        trackerMock.InSequence(sequence)
+            .Setup(t => t.FailOrphanedPendingAsync(It.IsAny<DateTimeOffset>(), "Decision processing job was not enqueued."))
+            .Returns(Task.CompletedTask);
+        trackerMock.InSequence(sequence)
+            .Setup(t => t.GetCurrentAsync(UserEmail))
+            .ReturnsAsync((DecisionBatchStatus?)null);
         executorMock.Setup(e => e.CanProcessAsync()).ReturnsAsync(true);
         storeMock.Setup(s => s.CountAsync(UserEmail)).ReturnsAsync(3);
 
         Job? capturedJob = null;
-        var sequence = new MockSequence();
         trackerMock.InSequence(sequence)
             .Setup(t => t.StartAsync(UserEmail, It.IsAny<DateTimeOffset>()))
             .ReturnsAsync((string _, DateTimeOffset start) => new DecisionBatchStatus { JobId = string.Empty, StartedAt = start });
@@ -196,6 +207,7 @@ public class DecisionSubmissionServiceTests
         capturedJob.Args[0].Should().Be(UserEmail);
 
         trackerMock.Verify(t => t.GetCurrentAsync(UserEmail), Times.Once);
+        trackerMock.Verify(t => t.FailOrphanedPendingAsync(It.IsAny<DateTimeOffset>(), "Decision processing job was not enqueued."), Times.Once);
         executorMock.Verify(e => e.CanProcessAsync(), Times.Once);
         storeMock.Verify(s => s.CountAsync(UserEmail), Times.Once);
         trackerMock.Verify(t => t.StartAsync(UserEmail, It.IsAny<DateTimeOffset>()), Times.Once);
@@ -212,6 +224,8 @@ public class DecisionSubmissionServiceTests
         var backgroundJobsMock = new Mock<IBackgroundJobClient>(MockBehavior.Strict);
         var logger = new TestLogger<DecisionSubmissionService>();
 
+        trackerMock.Setup(t => t.FailOrphanedPendingAsync(It.IsAny<DateTimeOffset>(), "Decision processing job was not enqueued."))
+            .Returns(Task.CompletedTask);
         var active = new DecisionBatchStatus { JobId = "job-existing", StartedAt = DateTimeOffset.UtcNow };
         trackerMock.SetupSequence(t => t.GetCurrentAsync(UserEmail))
             .ReturnsAsync((DecisionBatchStatus?)null)
@@ -245,6 +259,8 @@ public class DecisionSubmissionServiceTests
         var backgroundJobsMock = new Mock<IBackgroundJobClient>();
         var logger = new TestLogger<DecisionSubmissionService>();
 
+        trackerMock.Setup(t => t.FailOrphanedPendingAsync(It.IsAny<DateTimeOffset>(), "Decision processing job was not enqueued."))
+            .Returns(Task.CompletedTask);
         trackerMock.Setup(t => t.GetCurrentAsync(UserEmail)).ReturnsAsync((DecisionBatchStatus?)null);
         executorMock.Setup(e => e.CanProcessAsync()).ReturnsAsync(true);
         storeMock.Setup(s => s.CountAsync(UserEmail)).ReturnsAsync(1);

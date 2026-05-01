@@ -11,10 +11,16 @@ public class DecisionSubmissionService(
     IBackgroundJobClient backgroundJobs,
     ILogger<DecisionSubmissionService> logger) : IDecisionSubmissionService
 {
+    private static readonly TimeSpan PendingBatchStaleThreshold = TimeSpan.FromMinutes(5);
+
     public Task<DecisionBatchStatus?> GetCurrentBatchAsync(string userEmail) => tracker.GetCurrentAsync(userEmail);
 
     public async Task<DecisionSubmissionResult> SubmitAsync(string userEmail)
     {
+        await tracker.FailOrphanedPendingAsync(
+            DateTimeOffset.UtcNow.Subtract(PendingBatchStaleThreshold),
+            "Decision processing job was not enqueued.");
+
         var current = await tracker.GetCurrentAsync(userEmail);
 
         if (current is not null)
