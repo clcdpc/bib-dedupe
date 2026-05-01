@@ -13,7 +13,14 @@ public class DecisionSubmissionService(
 {
     private static readonly TimeSpan PendingBatchStaleThreshold = TimeSpan.FromMinutes(5);
 
-    public Task<DecisionBatchStatus?> GetCurrentBatchAsync(string userEmail) => tracker.GetCurrentAsync(userEmail);
+    public async Task<DecisionBatchStatus?> GetCurrentBatchAsync(string userEmail)
+    {
+        await tracker.FailOrphanedPendingAsync(
+            DateTimeOffset.UtcNow.Subtract(PendingBatchStaleThreshold),
+            "Decision processing job was not enqueued.");
+
+        return await tracker.GetCurrentAsync(userEmail);
+    }
 
     public async Task<DecisionSubmissionResult> SubmitAsync(string userEmail)
     {

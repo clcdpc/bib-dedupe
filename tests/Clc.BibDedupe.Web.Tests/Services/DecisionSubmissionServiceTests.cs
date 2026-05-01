@@ -26,6 +26,8 @@ public class DecisionSubmissionServiceTests
         var logger = new TestLogger<DecisionSubmissionService>();
 
         var expected = new DecisionBatchStatus { JobId = "job-7", StartedAt = DateTimeOffset.UtcNow };
+        trackerMock.Setup(t => t.FailOrphanedPendingAsync(It.IsAny<DateTimeOffset>(), "Decision processing job was not enqueued."))
+            .Returns(Task.CompletedTask);
         trackerMock.Setup(t => t.GetCurrentAsync(UserEmail)).ReturnsAsync(expected);
 
         var service = new DecisionSubmissionService(
@@ -39,6 +41,7 @@ public class DecisionSubmissionServiceTests
 
         result.Should().BeSameAs(expected);
 
+        trackerMock.Verify(t => t.FailOrphanedPendingAsync(It.IsAny<DateTimeOffset>(), "Decision processing job was not enqueued."), Times.Once);
         trackerMock.Verify(t => t.GetCurrentAsync(UserEmail), Times.Once);
         storeMock.VerifyNoOtherCalls();
         executorMock.VerifyNoOtherCalls();
