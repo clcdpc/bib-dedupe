@@ -253,6 +253,14 @@ IF NOT EXISTS (
         INCLUDE (CompletedAt, FailedAt, FailureMessage);
 GO
 
+IF NOT EXISTS (
+    SELECT 1 FROM sys.indexes WHERE name = 'UX_DecisionBatches_ActivePerUser' AND object_id = OBJECT_ID('BibDedupe.DecisionBatches')
+)
+    CREATE UNIQUE NONCLUSTERED INDEX UX_DecisionBatches_ActivePerUser
+        ON BibDedupe.DecisionBatches (UserEmail)
+        WHERE CompletedAt IS NULL AND FailedAt IS NULL;
+GO
+
 IF OBJECT_ID('BibDedupe.DecisionBatchResults', 'U') IS NULL
 BEGIN
     CREATE TABLE BibDedupe.DecisionBatchResults (

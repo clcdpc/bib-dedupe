@@ -37,11 +37,16 @@ public class InMemoryDecisionBatchTracker : IDecisionBatchTracker
         return Task.FromResult<DecisionBatchStatus?>(null);
     }
 
-    public Task<DecisionBatchStatus> StartAsync(string userEmail, DateTimeOffset startedAt, string jobId)
+    public Task<DecisionBatchStatus> StartAsync(string userEmail, DateTimeOffset startedAt)
     {
+        if (batches.TryGetValue(userEmail, out var existing) && !existing.IsTerminal)
+        {
+            throw new InvalidOperationException($"An active batch already exists for {userEmail}.");
+        }
+
         var status = new DecisionBatchStatus
         {
-            JobId = jobId,
+            JobId = string.Empty,
             StartedAt = startedAt,
             CompletedAt = null,
             FailedAt = null,
@@ -50,5 +55,17 @@ public class InMemoryDecisionBatchTracker : IDecisionBatchTracker
 
         batches[userEmail] = status;
         return Task.FromResult(status);
+    }
+
+    public Task<DecisionBatchStatus> SetJobIdAsync(string userEmail, DateTimeOffset startedAt, string jobId)
+    {
+        if (!batches.TryGetValue(userEmail, out var status) || status.IsTerminal || status.StartedAt != startedAt)
+        {
+            throw new InvalidOperationException($"Unable to set JobId for active batch for {userEmail}.");
+        }
+
+        var updated = status with { JobId = jobId };
+        batches[userEmail] = updated;
+        return Task.FromResult(updated);
     }
 }

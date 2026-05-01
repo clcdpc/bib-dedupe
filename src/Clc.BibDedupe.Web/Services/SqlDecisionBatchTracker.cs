@@ -1,6 +1,7 @@
 using System.Data;
 using Dapper;
 using Clc.BibDedupe.Web.Models;
+using Microsoft.Data.SqlClient;
 
 namespace Clc.BibDedupe.Web.Services;
 
@@ -50,14 +51,42 @@ public class SqlDecisionBatchTracker(IDbConnection db) : IDecisionBatchTracker
         };
     }
 
-    public async Task<DecisionBatchStatus> StartAsync(string userEmail, DateTimeOffset startedAt, string jobId)
+    public async Task<DecisionBatchStatus> StartAsync(string userEmail, DateTimeOffset startedAt)
     {
-        await db.ExecuteAsync($"INSERT INTO {Table} (UserEmail, JobId, StartedAt) VALUES (@UserEmail, @JobId, @StartedAt)", new
+        try
         {
-            UserEmail = userEmail,
-            JobId = jobId,
-            StartedAt = startedAt.UtcDateTime
-        });
+            await db.ExecuteAsync($"INSERT INTO {Table} (UserEmail, JobId, StartedAt) VALUES (@UserEmail, @JobId, @StartedAt)", new
+            {
+                UserEmail = userEmail,
+                JobId = string.Empty,
+                StartedAt = startedAt.UtcDateTime
+            });
+        }
+        catch (SqlException ex) when (ex.Number is 2601 or 2627)
+        {
+            throw new InvalidOperationException($"An active batch already exists for {userEmail}.", ex);
+        }
+
+        return new DecisionBatchStatus
+        {
+            JobId = string.Empty,
+            StartedAt = startedAt,
+            CompletedAt = null,
+            FailedAt = null,
+            FailureMessage = null
+        };
+    }
+
+    public async Task<DecisionBatchStatus> SetJobIdAsync(string userEmail, DateTimeOffset startedAt, string jobId)
+    {
+        var rows = await db.ExecuteAsync(
+            $"UPDATE {Table} SET JobId = @JobId WHERE UserEmail = @UserEmail AND StartedAt = @StartedAt AND CompletedAt IS NULL AND FailedAt IS NULL",
+            new { UserEmail = userEmail, StartedAt = startedAt.UtcDateTime, JobId = jobId });
+
+        if (rows == 0)
+        {
+            throw new InvalidOperationException($"Unable to set JobId for active batch for {userEmail}.");
+        }
 
         return new DecisionBatchStatus
         {

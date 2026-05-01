@@ -158,18 +158,17 @@ public class DecisionSubmissionServiceTests
         storeMock.Setup(s => s.CountAsync(UserEmail)).ReturnsAsync(3);
 
         Job? capturedJob = null;
-        backgroundJobsMock
+        var sequence = new MockSequence();
+        trackerMock.InSequence(sequence)
+            .Setup(t => t.StartAsync(UserEmail, It.IsAny<DateTimeOffset>()))
+            .ReturnsAsync((string _, DateTimeOffset start) => new DecisionBatchStatus { JobId = string.Empty, StartedAt = start });
+        backgroundJobsMock.InSequence(sequence)
             .Setup(b => b.Create(It.IsAny<Job>(), It.IsAny<IState>()))
             .Callback<Job, IState>((job, _) => capturedJob = job)
             .Returns("job-123");
-
-        trackerMock
-            .Setup(t => t.StartAsync(UserEmail, It.IsAny<DateTimeOffset>(), "job-123"))
-            .ReturnsAsync((string _, DateTimeOffset startedAt, string jobId) => new DecisionBatchStatus
-            {
-                JobId = jobId,
-                StartedAt = startedAt
-            });
+        trackerMock.InSequence(sequence)
+            .Setup(t => t.SetJobIdAsync(UserEmail, It.IsAny<DateTimeOffset>(), "job-123"))
+            .ReturnsAsync((string _, DateTimeOffset start, string jobId) => new DecisionBatchStatus { JobId = jobId, StartedAt = start });
 
         var service = new DecisionSubmissionService(
             storeMock.Object,
@@ -199,7 +198,41 @@ public class DecisionSubmissionServiceTests
         trackerMock.Verify(t => t.GetCurrentAsync(UserEmail), Times.Once);
         executorMock.Verify(e => e.CanProcessAsync(), Times.Once);
         storeMock.Verify(s => s.CountAsync(UserEmail), Times.Once);
-        trackerMock.Verify(t => t.StartAsync(UserEmail, It.IsAny<DateTimeOffset>(), "job-123"), Times.Once);
+        trackerMock.Verify(t => t.StartAsync(UserEmail, It.IsAny<DateTimeOffset>()), Times.Once);
+        trackerMock.Verify(t => t.SetJobIdAsync(UserEmail, It.IsAny<DateTimeOffset>(), "job-123"), Times.Once);
         backgroundJobsMock.Verify(b => b.Create(It.IsAny<Job>(), It.IsAny<IState>()), Times.Once);
+    }
+
+    [TestMethod]
+    public async Task Submitting_When_Concurrent_Start_Detects_Existing_Active_Batch_Returns_Already_In_Progress()
+    {
+        var storeMock = new Mock<IDecisionStore>();
+        var trackerMock = new Mock<IDecisionBatchTracker>();
+        var executorMock = new Mock<IDecisionProcessingExecutor>();
+        var backgroundJobsMock = new Mock<IBackgroundJobClient>(MockBehavior.Strict);
+        var logger = new TestLogger<DecisionSubmissionService>();
+
+        var active = new DecisionBatchStatus { JobId = "job-existing", StartedAt = DateTimeOffset.UtcNow };
+        trackerMock.SetupSequence(t => t.GetCurrentAsync(UserEmail))
+            .ReturnsAsync((DecisionBatchStatus?)null)
+            .ReturnsAsync(active);
+        executorMock.Setup(e => e.CanProcessAsync()).ReturnsAsync(true);
+        storeMock.Setup(s => s.CountAsync(UserEmail)).ReturnsAsync(2);
+        trackerMock.Setup(t => t.StartAsync(UserEmail, It.IsAny<DateTimeOffset>()))
+            .ThrowsAsync(new InvalidOperationException("duplicate active"));
+
+        var service = new DecisionSubmissionService(
+            storeMock.Object,
+            trackerMock.Object,
+            executorMock.Object,
+            backgroundJobsMock.Object,
+            logger);
+
+        var result = await service.SubmitAsync(UserEmail);
+
+        result.Success.Should().BeFalse();
+        result.ErrorMessage.Should().Be("A batch is already being processed.");
+        result.BatchStatus.Should().BeSameAs(active);
+        backgroundJobsMock.VerifyNoOtherCalls();
     }
 }

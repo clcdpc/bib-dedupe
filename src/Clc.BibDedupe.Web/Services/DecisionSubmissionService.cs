@@ -35,9 +35,20 @@ public class DecisionSubmissionService(
         }
 
         var startedAt = DateTimeOffset.UtcNow;
+        DecisionBatchStatus pendingBatch;
+        try
+        {
+            pendingBatch = await tracker.StartAsync(userEmail, startedAt);
+        }
+        catch (InvalidOperationException)
+        {
+            var activeBatch = await tracker.GetCurrentAsync(userEmail);
+            return activeBatch is not null
+                ? DecisionSubmissionResult.AlreadyInProgress(activeBatch)
+                : DecisionSubmissionResult.AlreadyInProgress(new DecisionBatchStatus { JobId = string.Empty, StartedAt = startedAt });
+        }
         var jobId = backgroundJobs.Enqueue<DecisionProcessingJob>(job => job.ExecuteAsync(userEmail));
-
-        var status = await tracker.StartAsync(userEmail, startedAt, jobId);
+        var status = await tracker.SetJobIdAsync(userEmail, pendingBatch.StartedAt, jobId);
         logger.LogInformation("Queued decision processing job {JobId} for {UserEmail}", jobId, userEmail);
 
         return DecisionSubmissionResult.Started(status);
