@@ -254,6 +254,39 @@ public class DecisionSubmissionServiceTests
     }
 
     [TestMethod]
+    public async Task Submitting_When_Concurrent_Start_Reports_Conflict_But_Current_Batch_Is_Missing_Returns_Processing_Unavailable()
+    {
+        var storeMock = new Mock<IDecisionStore>();
+        var trackerMock = new Mock<IDecisionBatchTracker>();
+        var executorMock = new Mock<IDecisionProcessingExecutor>();
+        var backgroundJobsMock = new Mock<IBackgroundJobClient>(MockBehavior.Strict);
+        var logger = new TestLogger<DecisionSubmissionService>();
+
+        trackerMock.Setup(t => t.FailOrphanedPendingAsync(It.IsAny<DateTimeOffset>(), "Decision processing job was not enqueued."))
+            .Returns(Task.CompletedTask);
+        trackerMock.SetupSequence(t => t.GetCurrentAsync(UserEmail))
+            .ReturnsAsync((DecisionBatchStatus?)null)
+            .ReturnsAsync((DecisionBatchStatus?)null);
+        executorMock.Setup(e => e.CanProcessAsync()).ReturnsAsync(true);
+        storeMock.Setup(s => s.CountAsync(UserEmail)).ReturnsAsync(1);
+        trackerMock.Setup(t => t.StartAsync(UserEmail, It.IsAny<DateTimeOffset>()))
+            .ThrowsAsync(new ActiveDecisionBatchExistsException(UserEmail));
+
+        var service = new DecisionSubmissionService(
+            storeMock.Object,
+            trackerMock.Object,
+            executorMock.Object,
+            backgroundJobsMock.Object,
+            logger);
+
+        var result = await service.SubmitAsync(UserEmail);
+
+        result.Success.Should().BeFalse();
+        result.ErrorMessage.Should().Be("Decision processing is not available.");
+        result.BatchStatus.Should().BeNull();
+    }
+
+    [TestMethod]
     public async Task Submitting_When_Enqueue_Fails_Marks_Batch_Failed_And_Returns_Processing_Unavailable()
     {
         var storeMock = new Mock<IDecisionStore>();
