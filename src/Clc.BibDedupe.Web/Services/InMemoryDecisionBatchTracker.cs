@@ -37,18 +37,32 @@ public class InMemoryDecisionBatchTracker : IDecisionBatchTracker
         return Task.FromResult<DecisionBatchStatus?>(null);
     }
 
-    public Task<DecisionBatchStatus> StartAsync(string userEmail, DateTimeOffset startedAt, string jobId)
+    public Task<DecisionBatchStatus> StartAsync(string userEmail, DateTimeOffset startedAt)
     {
         var status = new DecisionBatchStatus
         {
-            JobId = jobId,
-            StartedAt = startedAt,
-            CompletedAt = null,
-            FailedAt = null,
-            FailureMessage = null
+            JobId = string.Empty,
+            StartedAt = startedAt
         };
+
+        if (!batches.TryAdd(userEmail, status) && batches.TryGetValue(userEmail, out var current) && !current.IsTerminal)
+        {
+            throw new InvalidOperationException($"An active decision batch already exists for {userEmail}.");
+        }
 
         batches[userEmail] = status;
         return Task.FromResult(status);
+    }
+
+    public Task<DecisionBatchStatus> SetJobIdAsync(string userEmail, DateTimeOffset startedAt, string jobId)
+    {
+        if (!batches.TryGetValue(userEmail, out var status) || status.IsTerminal || status.StartedAt != startedAt)
+        {
+            throw new InvalidOperationException($"No active decision batch found for {userEmail} at {startedAt:o}.");
+        }
+
+        var updated = status with { JobId = jobId };
+        batches[userEmail] = updated;
+        return Task.FromResult(updated);
     }
 }

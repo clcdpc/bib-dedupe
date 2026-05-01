@@ -35,9 +35,10 @@ public class DecisionSubmissionService(
         }
 
         var startedAt = DateTimeOffset.UtcNow;
-        var jobId = backgroundJobs.Enqueue<DecisionProcessingJob>(job => job.ExecuteAsync(userEmail));
+        await tracker.StartAsync(userEmail, startedAt);
 
-        var status = await tracker.StartAsync(userEmail, startedAt, jobId);
+        var jobId = backgroundJobs.Enqueue<DecisionProcessingJob>(job => job.ExecuteAsync(userEmail));
+        var status = await tracker.SetJobIdAsync(userEmail, startedAt, jobId);
         logger.LogInformation("Queued decision processing job {JobId} for {UserEmail}", jobId, userEmail);
 
         return DecisionSubmissionResult.Started(status);
