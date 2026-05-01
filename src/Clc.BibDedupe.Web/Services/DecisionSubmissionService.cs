@@ -47,7 +47,18 @@ public class DecisionSubmissionService(
                 ? DecisionSubmissionResult.AlreadyInProgress(activeBatch)
                 : DecisionSubmissionResult.AlreadyInProgress(new DecisionBatchStatus { JobId = string.Empty, StartedAt = startedAt });
         }
-        var jobId = backgroundJobs.Enqueue<DecisionProcessingJob>(job => job.ExecuteAsync(userEmail));
+        string jobId;
+        try
+        {
+            jobId = backgroundJobs.Enqueue<DecisionProcessingJob>(job => job.ExecuteAsync(userEmail));
+        }
+        catch (Exception ex)
+        {
+            await tracker.FailAsync(userEmail, DateTimeOffset.UtcNow, "Failed to enqueue decision processing job.");
+            logger.LogError(ex, "Failed to enqueue decision processing job for {UserEmail}", userEmail);
+            return DecisionSubmissionResult.ProcessingUnavailable();
+        }
+
         var status = await tracker.SetJobIdAsync(userEmail, pendingBatch.StartedAt, jobId);
         logger.LogInformation("Queued decision processing job {JobId} for {UserEmail}", jobId, userEmail);
 

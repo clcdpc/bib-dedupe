@@ -235,4 +235,38 @@ public class DecisionSubmissionServiceTests
         result.BatchStatus.Should().BeSameAs(active);
         backgroundJobsMock.VerifyNoOtherCalls();
     }
+
+    [TestMethod]
+    public async Task Submitting_When_Enqueue_Fails_Marks_Batch_Failed_And_Returns_Processing_Unavailable()
+    {
+        var storeMock = new Mock<IDecisionStore>();
+        var trackerMock = new Mock<IDecisionBatchTracker>();
+        var executorMock = new Mock<IDecisionProcessingExecutor>();
+        var backgroundJobsMock = new Mock<IBackgroundJobClient>();
+        var logger = new TestLogger<DecisionSubmissionService>();
+
+        trackerMock.Setup(t => t.GetCurrentAsync(UserEmail)).ReturnsAsync((DecisionBatchStatus?)null);
+        executorMock.Setup(e => e.CanProcessAsync()).ReturnsAsync(true);
+        storeMock.Setup(s => s.CountAsync(UserEmail)).ReturnsAsync(1);
+        trackerMock.Setup(t => t.StartAsync(UserEmail, It.IsAny<DateTimeOffset>()))
+            .ReturnsAsync((string _, DateTimeOffset start) => new DecisionBatchStatus { JobId = string.Empty, StartedAt = start });
+        backgroundJobsMock.Setup(b => b.Create(It.IsAny<Job>(), It.IsAny<IState>()))
+            .Throws(new InvalidOperationException("hangfire offline"));
+        trackerMock.Setup(t => t.FailAsync(UserEmail, It.IsAny<DateTimeOffset>(), "Failed to enqueue decision processing job."))
+            .Returns(Task.CompletedTask);
+
+        var service = new DecisionSubmissionService(
+            storeMock.Object,
+            trackerMock.Object,
+            executorMock.Object,
+            backgroundJobsMock.Object,
+            logger);
+
+        var result = await service.SubmitAsync(UserEmail);
+
+        result.Success.Should().BeFalse();
+        result.ErrorMessage.Should().Be("Decision processing is not available.");
+        trackerMock.Verify(t => t.FailAsync(UserEmail, It.IsAny<DateTimeOffset>(), "Failed to enqueue decision processing job."), Times.Once);
+        trackerMock.Verify(t => t.SetJobIdAsync(It.IsAny<string>(), It.IsAny<DateTimeOffset>(), It.IsAny<string>()), Times.Never);
+    }
 }

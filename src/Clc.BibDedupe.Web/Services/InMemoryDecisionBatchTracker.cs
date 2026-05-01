@@ -59,7 +59,7 @@ public class InMemoryDecisionBatchTracker : IDecisionBatchTracker
 
     public Task<DecisionBatchStatus> SetJobIdAsync(string userEmail, DateTimeOffset startedAt, string jobId)
     {
-        if (!batches.TryGetValue(userEmail, out var status) || status.IsTerminal || status.StartedAt != startedAt)
+        if (!batches.TryGetValue(userEmail, out var status) || status.StartedAt != startedAt)
         {
             throw new InvalidOperationException($"Unable to set JobId for active batch for {userEmail}.");
         }
