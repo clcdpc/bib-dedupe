@@ -86,14 +86,6 @@ public class DecisionSubmissionService(
         catch (Exception ex)
         {
             logger.LogError(ex, "Failed to attach job id {JobId} to decision batch {BatchId} for {UserEmail}", jobId, pendingBatch.BatchId, userEmail);
-            try
-            {
-                await tracker.FailAsync(userEmail, DateTimeOffset.UtcNow, "Failed to attach decision processing job id to batch.");
-            }
-            catch (Exception failEx)
-            {
-                logger.LogError(failEx, "Failed to mark decision batch {BatchId} as failed after job-id attach error for {UserEmail}", pendingBatch.BatchId, userEmail);
-            }
             return DecisionSubmissionResult.ProcessingUnavailable();
         }
 

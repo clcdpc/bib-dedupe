@@ -345,8 +345,6 @@ public class DecisionSubmissionServiceTests
             .Returns("job-77");
         trackerMock.Setup(t => t.SetJobIdAsync(77, "job-77"))
             .ThrowsAsync(new InvalidOperationException("transient SQL"));
-        trackerMock.Setup(t => t.FailAsync(UserEmail, It.IsAny<DateTimeOffset>(), "Failed to attach decision processing job id to batch."))
-            .Returns(Task.CompletedTask);
 
         var service = new DecisionSubmissionService(
             storeMock.Object,
@@ -360,6 +358,5 @@ public class DecisionSubmissionServiceTests
         result.Success.Should().BeFalse();
         result.ErrorMessage.Should().Be("Decision processing is not available.");
         result.BatchStatus.Should().BeNull();
-        trackerMock.Verify(t => t.FailAsync(UserEmail, It.IsAny<DateTimeOffset>(), "Failed to attach decision processing job id to batch."), Times.Once);
     }
 }
