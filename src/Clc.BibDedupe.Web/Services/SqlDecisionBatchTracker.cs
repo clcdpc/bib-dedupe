@@ -56,6 +56,25 @@ public class SqlDecisionBatchTracker(IDbConnection db) : IDecisionBatchTracker
         };
     }
 
+    public async Task<DecisionBatchStatus?> GetByBatchIdAsync(int batchId)
+    {
+        var row = await db.QueryFirstOrDefaultAsync<DecisionBatchRow>($"SELECT TOP 1 BatchId, JobId, StartedAt, CompletedAt, FailedAt, FailureMessage FROM {Table} WHERE BatchId = @BatchId", new { BatchId = batchId });
+        if (row is null)
+        {
+            return null;
+        }
+
+        return new DecisionBatchStatus
+        {
+            BatchId = row.BatchId,
+            JobId = row.JobId,
+            StartedAt = new DateTimeOffset(DateTime.SpecifyKind(row.StartedAt, DateTimeKind.Utc)),
+            CompletedAt = row.CompletedAt is null ? null : new DateTimeOffset(DateTime.SpecifyKind(row.CompletedAt.Value, DateTimeKind.Utc)),
+            FailedAt = row.FailedAt is null ? null : new DateTimeOffset(DateTime.SpecifyKind(row.FailedAt.Value, DateTimeKind.Utc)),
+            FailureMessage = row.FailureMessage
+        };
+    }
+
     public async Task<DecisionBatchStatus> StartAsync(string userEmail, DateTimeOffset startedAt)
     {
         try

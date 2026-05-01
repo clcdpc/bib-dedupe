@@ -326,7 +326,7 @@ public class DecisionSubmissionServiceTests
     }
 
     [TestMethod]
-    public async Task Submitting_When_SetJobId_Fails_Returns_Processing_Unavailable()
+    public async Task Submitting_When_SetJobId_Fails_Reconciles_Using_Persisted_Batch()
     {
         var storeMock = new Mock<IDecisionStore>();
         var trackerMock = new Mock<IDecisionBatchTracker>();
@@ -345,6 +345,8 @@ public class DecisionSubmissionServiceTests
             .Returns("job-77");
         trackerMock.Setup(t => t.SetJobIdAsync(77, "job-77"))
             .ThrowsAsync(new InvalidOperationException("transient SQL"));
+        trackerMock.Setup(t => t.GetByBatchIdAsync(77))
+            .ReturnsAsync(new DecisionBatchStatus { BatchId = 77, JobId = string.Empty, StartedAt = DateTimeOffset.UtcNow });
 
         var service = new DecisionSubmissionService(
             storeMock.Object,
@@ -355,8 +357,9 @@ public class DecisionSubmissionServiceTests
 
         var result = await service.SubmitAsync(UserEmail);
 
-        result.Success.Should().BeFalse();
-        result.ErrorMessage.Should().Be("Decision processing is not available.");
-        result.BatchStatus.Should().BeNull();
+        result.Success.Should().BeTrue();
+        result.BatchStatus.Should().NotBeNull();
+        result.BatchStatus!.BatchId.Should().Be(77);
+        result.BatchStatus.JobId.Should().Be("job-77");
     }
 }

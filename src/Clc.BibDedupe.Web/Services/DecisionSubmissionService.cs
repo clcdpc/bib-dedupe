@@ -58,7 +58,7 @@ public class DecisionSubmissionService(
             var activeBatch = await tracker.GetCurrentAsync(userEmail);
             return activeBatch is not null
                 ? DecisionSubmissionResult.AlreadyInProgress(activeBatch)
-                : DecisionSubmissionResult.AlreadyInProgress(new DecisionBatchStatus { JobId = string.Empty, StartedAt = startedAt });
+                : DecisionSubmissionResult.ProcessingUnavailable();
         }
         string jobId;
         try
@@ -86,6 +86,13 @@ public class DecisionSubmissionService(
         catch (Exception ex)
         {
             logger.LogError(ex, "Failed to attach job id {JobId} to decision batch {BatchId} for {UserEmail}", jobId, pendingBatch.BatchId, userEmail);
+            var persisted = await tracker.GetByBatchIdAsync(pendingBatch.BatchId);
+            if (persisted is not null)
+            {
+                return DecisionSubmissionResult.Started(
+                    string.IsNullOrWhiteSpace(persisted.JobId) ? persisted with { JobId = jobId } : persisted);
+            }
+
             return DecisionSubmissionResult.ProcessingUnavailable();
         }
 

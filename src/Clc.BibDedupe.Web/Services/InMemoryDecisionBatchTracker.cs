@@ -50,6 +50,12 @@ public class InMemoryDecisionBatchTracker : IDecisionBatchTracker
         return Task.FromResult<DecisionBatchStatus?>(null);
     }
 
+    public Task<DecisionBatchStatus?> GetByBatchIdAsync(int batchId)
+    {
+        var status = batches.Values.FirstOrDefault(s => s.BatchId == batchId);
+        return Task.FromResult<DecisionBatchStatus?>(status);
+    }
+
     public Task<DecisionBatchStatus> StartAsync(string userEmail, DateTimeOffset startedAt)
     {
         var status = new DecisionBatchStatus
