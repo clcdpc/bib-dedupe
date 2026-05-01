@@ -324,4 +324,39 @@ public class DecisionSubmissionServiceTests
         trackerMock.Verify(t => t.FailAsync(UserEmail, It.IsAny<DateTimeOffset>(), "Decision processing job enqueue was cancelled."), Times.Once);
         trackerMock.Verify(t => t.SetJobIdAsync(It.IsAny<int>(), It.IsAny<string>()), Times.Never);
     }
+
+    [TestMethod]
+    public async Task Submitting_When_SetJobId_Fails_Returns_Started_Without_Throwing()
+    {
+        var storeMock = new Mock<IDecisionStore>();
+        var trackerMock = new Mock<IDecisionBatchTracker>();
+        var executorMock = new Mock<IDecisionProcessingExecutor>();
+        var backgroundJobsMock = new Mock<IBackgroundJobClient>();
+        var logger = new TestLogger<DecisionSubmissionService>();
+
+        trackerMock.Setup(t => t.FailOrphanedPendingAsync(It.IsAny<DateTimeOffset>(), "Decision processing job was not enqueued."))
+            .Returns(Task.CompletedTask);
+        trackerMock.Setup(t => t.GetCurrentAsync(UserEmail)).ReturnsAsync((DecisionBatchStatus?)null);
+        executorMock.Setup(e => e.CanProcessAsync()).ReturnsAsync(true);
+        storeMock.Setup(s => s.CountAsync(UserEmail)).ReturnsAsync(1);
+        trackerMock.Setup(t => t.StartAsync(UserEmail, It.IsAny<DateTimeOffset>()))
+            .ReturnsAsync((string _, DateTimeOffset start) => new DecisionBatchStatus { BatchId = 77, JobId = string.Empty, StartedAt = start });
+        backgroundJobsMock.Setup(b => b.Create(It.IsAny<Job>(), It.IsAny<IState>()))
+            .Returns("job-77");
+        trackerMock.Setup(t => t.SetJobIdAsync(77, "job-77"))
+            .ThrowsAsync(new InvalidOperationException("transient SQL"));
+
+        var service = new DecisionSubmissionService(
+            storeMock.Object,
+            trackerMock.Object,
+            executorMock.Object,
+            backgroundJobsMock.Object,
+            logger);
+
+        var result = await service.SubmitAsync(UserEmail);
+
+        result.Success.Should().BeTrue();
+        result.BatchStatus.Should().NotBeNull();
+        result.BatchStatus!.JobId.Should().Be("job-77");
+    }
 }

@@ -78,7 +78,17 @@ public class DecisionSubmissionService(
             return DecisionSubmissionResult.ProcessingUnavailable();
         }
 
-        var status = await tracker.SetJobIdAsync(pendingBatch.BatchId, jobId);
+        DecisionBatchStatus status;
+        try
+        {
+            status = await tracker.SetJobIdAsync(pendingBatch.BatchId, jobId);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to attach job id {JobId} to decision batch {BatchId} for {UserEmail}", jobId, pendingBatch.BatchId, userEmail);
+            status = pendingBatch with { JobId = jobId };
+        }
+
         logger.LogInformation("Queued decision processing job {JobId} for {UserEmail}", jobId, userEmail);
 
         return DecisionSubmissionResult.Started(status);

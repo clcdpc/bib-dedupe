@@ -86,7 +86,7 @@ public class SqlDecisionBatchTracker(IDbConnection db) : IDecisionBatchTracker
     public async Task<DecisionBatchStatus> SetJobIdAsync(int batchId, string jobId)
     {
         var rows = await db.ExecuteAsync(
-            $"UPDATE {Table} SET JobId = @JobId WHERE BatchId = @BatchId AND CompletedAt IS NULL AND FailedAt IS NULL",
+            $"UPDATE {Table} SET JobId = @JobId WHERE BatchId = @BatchId AND CompletedAt IS NULL AND FailedAt IS NULL AND (JobId IS NULL OR JobId = '')",
             new { BatchId = batchId, JobId = jobId });
 
         if (rows == 0)
