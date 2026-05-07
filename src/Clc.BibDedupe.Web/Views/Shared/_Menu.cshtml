@@ -52,6 +52,8 @@
         </div>
     }
     <div class="menu-signout">
-        <a class="signout" asp-controller="Account" asp-action="SignOut">Sign out</a>
+        <form asp-controller="Account" asp-action="SignOut" method="post">
+            <button type="submit" class="signout">Sign out</button>
+        </form>
     </div>
 </nav>
