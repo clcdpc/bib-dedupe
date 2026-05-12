@@ -1,6 +1,6 @@
 using Clc.BibDedupe.Web.Options;
-using Clc.Postmark.Api;
-using Clc.Postmark.Api.Models;
+using Clc.Postmark;
+using Clc.Postmark.Models;
 using Microsoft.Extensions.Options;
 
 namespace Clc.BibDedupe.Web.Services;
@@ -25,14 +25,14 @@ public class PostmarkEmailSender(
         }
 
         var client = new PostmarkClient(serverToken);
-        var request = new PostmarkMessageRequest
+        var request = new EmailMessage
         {
             From = senderEmail,
-            To = recipientEmail,
+            To = [recipientEmail],
             Subject = subject,
             TextBody = body
         };
 
-        await client.SendMessageAsync(request);
+        await Task.Run(() => { client.Send(request); });
     }
 }
