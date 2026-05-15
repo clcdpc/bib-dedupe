@@ -6,9 +6,11 @@ namespace Clc.BibDedupe.Web.Services;
 
 public class SqlDecisionBatchTracker(IDbConnection db) : IDecisionBatchTracker
 {
+    private const string Table = "BibDedupe.DecisionBatches";
+
     public async Task CompleteAsync(string userEmail, DateTimeOffset completedAt)
     {
-        await db.ExecuteAsync("UPDATE BibDedupe.DecisionBatches SET CompletedAt = @CompletedAt, FailedAt = NULL, FailureMessage = NULL WHERE UserEmail = @UserEmail AND CompletedAt IS NULL AND FailedAt IS NULL", new
+        await db.ExecuteAsync($"UPDATE {Table} SET CompletedAt = @CompletedAt, FailedAt = NULL, FailureMessage = NULL WHERE UserEmail = @UserEmail AND CompletedAt IS NULL AND FailedAt IS NULL", new
         {
             UserEmail = userEmail,
             CompletedAt = completedAt.LocalDateTime
@@ -17,7 +19,7 @@ public class SqlDecisionBatchTracker(IDbConnection db) : IDecisionBatchTracker
 
     public async Task FailAsync(string userEmail, DateTimeOffset failedAt, string errorMessage)
     {
-        await db.ExecuteAsync("UPDATE BibDedupe.DecisionBatches SET FailedAt = @FailedAt, FailureMessage = @FailureMessage WHERE UserEmail = @UserEmail AND CompletedAt IS NULL AND FailedAt IS NULL", new
+        await db.ExecuteAsync($"UPDATE {Table} SET FailedAt = @FailedAt, FailureMessage = @FailureMessage WHERE UserEmail = @UserEmail AND CompletedAt IS NULL AND FailedAt IS NULL", new
         {
             UserEmail = userEmail,
             FailedAt = failedAt.LocalDateTime,
@@ -27,7 +29,7 @@ public class SqlDecisionBatchTracker(IDbConnection db) : IDecisionBatchTracker
 
     public async Task<DecisionBatchStatus?> GetCurrentAsync(string userEmail)
     {
-        var row = await db.QueryFirstOrDefaultAsync<DecisionBatchRow>("SELECT TOP 1 JobId, StartedAt, CompletedAt, FailedAt, FailureMessage FROM BibDedupe.DecisionBatches WHERE UserEmail = @UserEmail ORDER BY StartedAt DESC", new { UserEmail = userEmail });
+        var row = await db.QueryFirstOrDefaultAsync<DecisionBatchRow>($"SELECT TOP 1 JobId, StartedAt, CompletedAt, FailedAt, FailureMessage FROM {Table} WHERE UserEmail = @UserEmail ORDER BY StartedAt DESC", new { UserEmail = userEmail });
 
         if (row is null || row.CompletedAt.HasValue || row.FailedAt.HasValue)
         {
@@ -50,7 +52,7 @@ public class SqlDecisionBatchTracker(IDbConnection db) : IDecisionBatchTracker
 
     public async Task<DecisionBatchStatus> StartAsync(string userEmail, DateTimeOffset startedAt, string jobId)
     {
-        await db.ExecuteAsync("INSERT INTO BibDedupe.DecisionBatches (UserEmail, JobId, StartedAt) VALUES (@UserEmail, @JobId, @StartedAt)", new
+        await db.ExecuteAsync($"INSERT INTO {Table} (UserEmail, JobId, StartedAt) VALUES (@UserEmail, @JobId, @StartedAt)", new
         {
             UserEmail = userEmail,
             JobId = jobId,
