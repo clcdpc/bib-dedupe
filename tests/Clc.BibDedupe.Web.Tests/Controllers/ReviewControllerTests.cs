@@ -225,7 +225,12 @@ public class ReviewControllerTests
 
         var result = await controller.Resolve("KeepLeft", 10, 20);
 
-        result.Should().BeOfType<ConflictObjectResult>();
+        var conflict = result.Should().BeOfType<ConflictObjectResult>().Subject;
+        conflict.StatusCode.Should().Be(StatusCodes.Status409Conflict);
+
+        var payload = ToDictionary(conflict.Value!);
+        payload["error"].Should().Be("conflict");
+
         pairAssignmentStoreMock.Verify(s => s.ReleaseAsync(UserEmail, 10, 20), Times.Once);
         currentPairStoreMock.Verify(s => s.ClearAsync(UserEmail), Times.Once);
         navigationServiceMock.VerifyNoOtherCalls();
