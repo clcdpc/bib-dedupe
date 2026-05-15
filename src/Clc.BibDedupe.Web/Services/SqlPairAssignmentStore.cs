@@ -6,11 +6,9 @@ namespace Clc.BibDedupe.Web.Services;
 
 public class SqlPairAssignmentStore(IDbConnection db) : IPairAssignmentStore
 {
-    private const string Table = "BibDedupe.PairAssignments";
-
     public Task AssignAsync(string userId, int leftBibId, int rightBibId) =>
         db.ExecuteAsync(
-            $@"MERGE {Table} WITH (HOLDLOCK) AS target
+            @"MERGE BibDedupe.PairAssignments WITH (HOLDLOCK) AS target
 USING (SELECT @LeftBibId AS LeftBibId, @RightBibId AS RightBibId) AS source
     ON target.LeftBibId = source.LeftBibId AND target.RightBibId = source.RightBibId
 WHEN MATCHED AND target.UserEmail = @UserEmail THEN
@@ -22,11 +20,11 @@ WHEN NOT MATCHED THEN
 
     public Task ReleaseAsync(string userId, int leftBibId, int rightBibId) =>
         db.ExecuteAsync(
-            $"DELETE FROM {Table} WHERE LeftBibId = @LeftBibId AND RightBibId = @RightBibId AND UserEmail = @UserEmail",
+            "DELETE FROM BibDedupe.PairAssignments WHERE LeftBibId = @LeftBibId AND RightBibId = @RightBibId AND UserEmail = @UserEmail",
             new { UserEmail = userId, LeftBibId = leftBibId, RightBibId = rightBibId });
 
     public Task<int> ReleaseExpiredAsync(DateTimeOffset olderThan) =>
         db.ExecuteAsync(
-            $"DELETE FROM {Table} WHERE AssignedAt < @Cutoff",
+            "DELETE FROM BibDedupe.PairAssignments WHERE AssignedAt < @Cutoff",
             new { Cutoff = olderThan });
 }
