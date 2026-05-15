@@ -11,28 +11,15 @@ public class SqlDecisionStore(IDbConnection db) : IDecisionStore
 {
     public async Task AddAsync(string userId, PairDecision decision)
     {
-        var decisions = await LoadDecisionSummariesAsync(userId);
-        var existing = decisions.FirstOrDefault(d =>
-            d.Pair.LeftBibId == decision.Pair.LeftBibId &&
-            d.Pair.RightBibId == decision.Pair.RightBibId);
-        if (existing is not null)
-        {
-            existing.Action = decision.Action;
-        }
-        else
-        {
-            decisions.Add(new PairDecision
-            {
-                Pair = new BibDupePair
-                {
-                    LeftBibId = decision.Pair.LeftBibId,
-                    RightBibId = decision.Pair.RightBibId
-                },
-                Action = decision.Action
-            });
-        }
+        var keepLeftId = (int)BibDupePairAction.KeepLeft;
+        var keepRightId = (int)BibDupePairAction.KeepRight;
 
-        DecisionConflictValidator.EnsureNoMergeConflicts(decisions);
+        var existingMergesQuery = $@"
+            SELECT LeftBibId, RightBibId, ActionId
+            FROM BibDedupe.DecisionQueue
+            WHERE UserEmail = @UserEmail
+              AND ActionId IN ({keepLeftId}, {keepRightId})
+              AND NOT (LeftBibId = @LeftBibId AND RightBibId = @RightBibId)";
 
         var parameters = new
         {
@@ -42,11 +29,27 @@ public class SqlDecisionStore(IDbConnection db) : IDecisionStore
             ActionId = (int)decision.Action
         };
 
-        var updated = await db.ExecuteAsync("UPDATE BibDedupe.DecisionQueue SET ActionId = @ActionId WHERE UserEmail = @UserEmail AND LeftBibId = @LeftBibId AND RightBibId = @RightBibId", parameters);
+        var mergeRows = await db.QueryAsync<DecisionSummaryRow>(existingMergesQuery, parameters);
+
+        var decisions = mergeRows.Select(r => new PairDecision
+        {
+            Pair = new BibDupePair
+            {
+                LeftBibId = r.LeftBibId,
+                RightBibId = r.RightBibId
+            },
+            Action = (BibDupePairAction)r.ActionId
+        }).ToList();
+
+        decisions.Add(decision);
+
+        DecisionConflictValidator.EnsureNoMergeConflicts(decisions);
+
+        var updated = await db.ExecuteAsync($"UPDATE BibDedupe.DecisionQueue SET ActionId = @ActionId WHERE UserEmail = @UserEmail AND LeftBibId = @LeftBibId AND RightBibId = @RightBibId", parameters);
 
         if (updated == 0)
         {
-            await db.ExecuteAsync("INSERT INTO BibDedupe.DecisionQueue(UserEmail, LeftBibId, RightBibId, ActionId) VALUES (@UserEmail, @LeftBibId, @RightBibId, @ActionId)", parameters);
+            await db.ExecuteAsync($"INSERT INTO BibDedupe.DecisionQueue(UserEmail, LeftBibId, RightBibId, ActionId) VALUES (@UserEmail, @LeftBibId, @RightBibId, @ActionId)", parameters);
         }
     }
 
@@ -125,13 +128,13 @@ public class SqlDecisionStore(IDbConnection db) : IDecisionStore
     }
 
     public Task RemoveAsync(string userId, int leftBibId, int rightBibId) =>
-        db.ExecuteAsync("DELETE FROM BibDedupe.DecisionQueue WHERE UserEmail = @UserEmail AND LeftBibId = @LeftBibId AND RightBibId = @RightBibId",
+        db.ExecuteAsync($"DELETE FROM BibDedupe.DecisionQueue WHERE UserEmail = @UserEmail AND LeftBibId = @LeftBibId AND RightBibId = @RightBibId",
             new { UserEmail = userId, LeftBibId = leftBibId, RightBibId = rightBibId });
 
     public Task UpdateAsync(string userId, PairDecision decision) => AddAsync(userId, decision);
 
     public async Task<int> CountAsync(string userId) =>
-        await db.ExecuteScalarAsync<int>("SELECT COUNT(*) FROM BibDedupe.DecisionQueue WHERE UserEmail = @UserEmail", new { UserEmail = userId });
+        await db.ExecuteScalarAsync<int>($"SELECT COUNT(*) FROM BibDedupe.DecisionQueue WHERE UserEmail = @UserEmail", new { UserEmail = userId });
 
     private static PairDecision MapRow(DecisionRow row) => new()
     {
@@ -162,23 +165,6 @@ public class SqlDecisionStore(IDbConnection db) : IDecisionStore
         public string? RightAuthor { get; init; }
         public string? TOM { get; init; }
         public string? MatchesJson { get; init; }
-    }
-
-    private async Task<List<PairDecision>> LoadDecisionSummariesAsync(string userId)
-    {
-        var rows = await db.QueryAsync<DecisionSummaryRow>(
-            "SELECT LeftBibId, RightBibId, ActionId FROM BibDedupe.DecisionQueue WHERE UserEmail = @UserEmail",
-            new { UserEmail = userId });
-
-        return rows.Select(r => new PairDecision
-        {
-            Pair = new BibDupePair
-            {
-                LeftBibId = r.LeftBibId,
-                RightBibId = r.RightBibId
-            },
-            Action = (BibDupePairAction)r.ActionId
-        }).ToList();
     }
 
     private sealed class DecisionSummaryRow
