@@ -26,7 +26,9 @@
             <a asp-controller="Pairs" asp-action="Index" class="btn btn-primary">Log in</a>
             @if (!string.IsNullOrEmpty(Model.CurrentUserName))
             {
-                <a asp-controller="Account" asp-action="SwitchUser" class="btn btn-outline-secondary switch-user-btn">Sign in as a different user</a>
+                <form asp-controller="Account" asp-action="SwitchUser" method="post">
+                    <button type="submit" class="btn btn-outline-secondary switch-user-btn">Sign in as a different user</button>
+                </form>
             }
         </div>
     </div>
