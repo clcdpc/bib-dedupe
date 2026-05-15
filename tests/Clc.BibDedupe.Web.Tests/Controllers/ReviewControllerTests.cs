@@ -60,6 +60,29 @@ public class ReviewControllerTests
     }
 
     [TestMethod]
+    public async Task Resolve_InvalidAction_ReturnsBadRequest()
+    {
+        var repositoryMock = new Mock<IBibDupePairRepository>(MockBehavior.Strict);
+        var decisionStoreMock = new Mock<IDecisionStore>(MockBehavior.Strict);
+        var currentPairStoreMock = new Mock<ICurrentPairStore>(MockBehavior.Strict);
+        var pairAssignmentStoreMock = new Mock<IPairAssignmentStore>(MockBehavior.Strict);
+        var reviewPageServiceMock = new Mock<IReviewPageService>(MockBehavior.Strict);
+        var navigationServiceMock = new Mock<IPostDecisionNavigationService>(MockBehavior.Strict);
+
+        var controller = CreateController(
+            repositoryMock,
+            decisionStoreMock,
+            currentPairStoreMock,
+            pairAssignmentStoreMock,
+            reviewPageServiceMock,
+            navigationServiceMock);
+
+        var result = await controller.Resolve("InvalidAction", 10, 20);
+
+        result.Should().BeOfType<BadRequestResult>();
+    }
+
+    [TestMethod]
     public async Task Resolve_Returns_Payload_And_Releases_Pair_For_Normal_Review()
     {
         var repositoryMock = new Mock<IBibDupePairRepository>(MockBehavior.Strict);
