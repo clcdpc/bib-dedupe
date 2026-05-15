@@ -1,5 +1,4 @@
 using Clc.BibDedupe.Web.Options;
-using Clc.Postmark;
 using Clc.Postmark.Models;
 using Microsoft.Extensions.Options;
 
@@ -7,7 +6,8 @@ namespace Clc.BibDedupe.Web.Services;
 
 public class PostmarkEmailSender(
     IOptions<PostmarkOptions> postmarkOptions,
-    IOptions<DecisionBatchNotificationOptions> notificationOptions) : IEmailSender
+    IOptions<DecisionBatchNotificationOptions> notificationOptions,
+    IPostmarkClientFactory clientFactory) : IEmailSender
 {
     public async Task SendAsync(string recipientEmail, string subject, string body)
     {
@@ -24,7 +24,7 @@ public class PostmarkEmailSender(
             throw new InvalidOperationException("DecisionBatchNotifications SenderEmail is required to send decision batch notifications.");
         }
 
-        var client = new PostmarkClient(serverToken);
+        var client = clientFactory.Create(serverToken);
         var request = new EmailMessage
         {
             From = senderEmail,

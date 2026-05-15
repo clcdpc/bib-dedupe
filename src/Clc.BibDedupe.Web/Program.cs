@@ -58,6 +58,7 @@ namespace Clc.BibDedupe.Web
                 options.UrlTemplate = builder.Configuration.GetValue<string>(BibliographicRecordLinkOptions.ConfigurationKey));
             builder.Services.Configure<DecisionBatchNotificationOptions>(builder.Configuration.GetSection(DecisionBatchNotificationOptions.SectionName));
             builder.Services.Configure<PostmarkOptions>(builder.Configuration.GetSection(PostmarkOptions.SectionName));
+            builder.Services.AddSingleton<IPostmarkClientFactory, PostmarkClientFactory>();
 
             if (string.IsNullOrWhiteSpace(bibDedupeConn))
             {
